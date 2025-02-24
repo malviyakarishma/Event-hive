@@ -57,7 +57,7 @@ function Registration() {
   };
 
   return (
-    <div className="container mt-5">
+    <div className="container mt-5" style={{ paddingTop: "70px" }}>
       <div className="card shadow p-4">
         <h2 className="text-center mb-4">Register</h2>
 
@@ -76,7 +76,7 @@ function Registration() {
                 <label className="form-label">Username</label>
                 <div className="input-group">
                   <span className="input-group-text">
-                    <FaUser />
+                    <FaUser className="text-primary" />
                   </span>
                   <Field type="text" className="form-control" name="username" placeholder="Enter username" />
                 </div>
@@ -88,7 +88,7 @@ function Registration() {
                 <label className="form-label">Password</label>
                 <div className="input-group">
                   <span className="input-group-text">
-                    <FaLock />
+                    <FaLock className="text-primary" />
                   </span>
                   <Field type="password" className="form-control" name="password" placeholder="Enter password" />
                 </div>

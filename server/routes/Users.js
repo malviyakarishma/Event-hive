@@ -4,7 +4,7 @@ const { Users } = require("../models");
 const bcrypt = require("bcrypt");
 const { sign } = require("jsonwebtoken");
 require("dotenv").config();
-const { validateToken } = require('../middlewares/AuthMiddleware')
+const { validateToken } = require('../middlewares/AuthMiddleware');
 
 const SECRET_KEY = process.env.JWT_SECRET || "defaultsecret";
 
@@ -27,6 +27,7 @@ router.post("/", async (req, res) => {
         // Hash password before storing it
         const hash = await bcrypt.hash(password, 10);
 
+        // Create new user in the database
         const newUser = await Users.create({ username, password: hash });
 
         return res.json({ message: "SUCCESS", user: newUser });
@@ -63,8 +64,9 @@ router.post("/login", async (req, res) => {
     }
 });
 
+// Auth route to get the authenticated user's details
 router.get('/auth', validateToken, (req, res) => {
-    res.json(req.user)
-})
+    res.json(req.user);
+});
 
 module.exports = router;

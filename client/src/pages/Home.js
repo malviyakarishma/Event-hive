@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { Tooltip } from "bootstrap";
 import "bootstrap-icons/font/bootstrap-icons.min.css";
 import { AuthContext } from "../helpers/AuthContext";
 
@@ -15,6 +16,7 @@ export default function Home() {
   const [dateSelected, setDateSelected] = useState(new Date());
   const [visibleEvents, setVisibleEvents] = useState(4);
   const { authState } = useContext(AuthContext);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   let navigate = useNavigate();
 
   useEffect(() => {
@@ -24,7 +26,7 @@ export default function Home() {
       axios
         .get("http://localhost:3001/events")
         .then((response) => {
-          console.log("Fetched Events:", response.data); // Log fetched events data
+          console.log("Fetched Events:", response.data);
           setListOfEvents(response.data);
           setLoading(false);
         })
@@ -36,14 +38,39 @@ export default function Home() {
     }
   }, [authState, navigate]);
 
+  useEffect(() => {
+    // Show scroll-to-top button when user scrolls down
+    const handleScroll = () => {
+      if (window.scrollY > 200) {
+        setShowScrollButton(true);
+      } else {
+        setShowScrollButton(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Initialize Bootstrap tooltips
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltipTriggerList.forEach((tooltip) => new Tooltip(tooltip));
+  }, [listOfEvents]); // Re-run when events update
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   if (loading) return <p>Loading events...</p>;
   if (error) return <p className="text-danger">{error}</p>;
 
   const today = new Date();
-  const upcomingEvents = listOfEvents.filter((event) => new Date(event.date) >= today);
+  const upcomingEvents = listOfEvents.filter((event) => new Date(event.date) >= today)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
   const pastEvents = listOfEvents.filter((event) => new Date(event.date) < today);
-
-  console.log("Upcoming Events Count:", upcomingEvents.length); // Log upcoming events count
 
   const filteredEvents = upcomingEvents
     .filter((event) =>
@@ -57,11 +84,11 @@ export default function Home() {
   };
 
   return (
-    <div className="container mt-4">
+    <div className="container" style={{ paddingTop: "70px" }}>
       <div className="row">
         {/* Left Column: Events List */}
         <div className="col-md-8">
-          <h2 className="mb-3 text-light">
+          <h2 className="mb-3 text-primary">
             <span className="text-danger">Upcoming</span> Events
           </h2>
           {filteredEvents.length === 0 ? (
@@ -80,10 +107,7 @@ export default function Home() {
                       <p className="card-text text-center text-dark">
                         <i className="bi bi-geo-alt-fill text-success"></i> <span className="fw-bold text-success">{event.location}</span>
                       </p>
-                      <p className="card-text text-center text-dark">
-                        <i className="bi bi-person-fill"></i> {event.username}
-                      </p>
-                      <p className="card-text text-center text-dark">
+                      <p className="card-text text-center fw-bold text-success">
                         <i className="bi bi-calendar-event-fill"></i> {new Date(event.date).toDateString()}
                       </p>
                     </div>
@@ -94,7 +118,7 @@ export default function Home() {
           )}
 
           {/* Past Events Section */}
-          <h3 className="mt-4 text-light">Past Events</h3>
+          <h3 className="mt-5 text-primary">Past Events</h3>
           <div className="row">
             {pastEvents.slice(0, visibleEvents).map((event) => (
               <div className="col-md-6 mb-3" key={event.id}>
@@ -109,9 +133,6 @@ export default function Home() {
                   <div className="card-body bg-light">
                     <p className="card-text text-center text-dark">
                       <i className="bi bi-geo-alt-fill text-success"></i> <span className="fw-bold text-success">{event.location}</span>
-                    </p>
-                    <p className="card-text text-center text-dark">
-                      <i className="bi bi-person-fill"></i> {event.username}
                     </p>
                     <p className="card-text text-center text-dark">
                       <i className="bi bi-calendar-event-fill"></i> {new Date(event.date).toDateString()}
@@ -145,15 +166,22 @@ export default function Home() {
             onChange={setDateSelected}
             value={dateSelected}
             tileContent={({ date }) => {
-              const eventDates = listOfEvents.map((event) =>
-                new Date(event.date).toDateString()
+              const event = listOfEvents.find(
+                (event) => new Date(event.date).toDateString() === date.toDateString()
               );
-              return eventDates.includes(date.toDateString()) ? (
-                <div className="event-dot"></div>
+
+              return event ? (
+                <div
+                  className="event-dot"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="top"
+                  title={event.title} // Tooltip text
+                ></div>
               ) : null;
             }}
           />
-          <h5 className="mt-3 text-light">Events on {dateSelected.toDateString()}</h5>
+
+          <h5 className="mt-3 text-primary">Events on {dateSelected.toDateString()}</h5>
           <ul className="list-group">
             {listOfEvents
               .filter((event) => new Date(event.date).toDateString() === dateSelected.toDateString())
@@ -169,6 +197,24 @@ export default function Home() {
           </ul>
         </div>
       </div>
+
+      {/* Scroll to Top Button */}
+      {showScrollButton && (
+        <button
+          onClick={scrollToTop}
+          className="btn btn-primary scroll-top-btn"
+          style={{
+            position: "fixed",
+            bottom: "20px",
+            right: "20px",
+            borderRadius: "50%",
+            fontSize: "24px",
+            padding: "10px 15px",
+          }}
+        >
+          <i className="bi bi-arrow-up"></i>
+        </button>
+      )}
     </div>
   );
 }

@@ -9,8 +9,11 @@ import Registration from "./pages/Registration";
 import { AuthContext } from "./helpers/AuthContext";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import Chatbot from "./pages/Chatbot";
 import "bootstrap/dist/css/bootstrap.min.css";
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import logo from "./images/logo.png"; // Adjust the path based on your project structure
+
 
 
 function App() {
@@ -101,66 +104,78 @@ function App() {
       <div className="App">
         {/* Bootstrap Navbar */}
         <nav className="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
-          <div className="container-fluid">
-            {/* Brand Name */}
-            <Link className="navbar-brand fw-bold fs-3" to="/">
-              {authState.status ? `Welcome, ${authState.username}` : "EVENTIFY"}
-            </Link>
+  <div className="container-fluid">
+    {/* Logo Link */}
+    <Link className="navbar-brand fw-bold fs-3 d-flex align-items-center" to="/">
+      <img src={logo} alt="Logo" style={{ width: "100px", height: "auto" }} />
+    </Link>
 
-            {/* Navbar Toggler for Mobile View */}
-            <button
-              className="navbar-toggler"
-              type="button"
-              data-bs-toggle="collapse"
-              data-bs-target="#navbarNav"
-              aria-controls="navbarNav"
-              aria-expanded="false"
-              aria-label="Toggle navigation"
-            >
-              <span className="navbar-toggler-icon"></span>
-            </button>
+    {/* New Link Next to Logo */}
+    <Link className="navbar-brand fw-bold fs-4 ms-2" to="/">
+      {authState.status ? `Welcome, ${authState.username}` : "Dashboard"}
+    </Link>
 
-            {/* Navbar Links */}
-            <div className="collapse navbar-collapse" id="navbarNav">
-              <ul className="navbar-nav mx-auto">
-                {!authState.status ? (
-                  <>
-                    <li className="nav-item">
-                      <Link className="nav-link fw-bold fs-5" to="/login">
-                        Login
-                      </Link>
-                    </li>
-                    <li className="nav-item">
-                      <Link className="nav-link fw-bold fs-5" to="/registration">
-                        Register
-                      </Link>
-                    </li>
-                  </>
-                ) : (
-                  <>
-                    <li className="nav-item">
-                      <Link className="nav-link fw-bold fs-5" to="/">
-                        Home Page
-                      </Link>
-                    </li>
-                    <li className="nav-item">
-                      <Link className="nav-link fw-bold fs-5" to="/create_event">
-                        Create An Event
-                      </Link>
-                    </li>
-                  </>
-                )}
-              </ul>
+    {/* Navbar Toggler for Mobile View */}
+    <button
+      className="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav"
+      aria-controls="navbarNav"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span className="navbar-toggler-icon"></span>
+    </button>
 
-              {/* Logout Button Positioned to the Right */}
-              {authState.status && (
-                <button className="btn btn-danger ms-auto" onClick={logout}>
-                  Logout
-                </button>
-              )}
-            </div>
-          </div>
-        </nav>
+    {/* Navbar Links */}
+    <div className="collapse navbar-collapse" id="navbarNav">
+      <ul className="navbar-nav mx-auto">
+        {!authState.status ? (
+          <>
+            <li className="nav-item">
+              <Link className="nav-link fw-bold fs-5" to="/login">
+                Login
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link fw-bold fs-5" to="/registration">
+                Register
+              </Link>
+            </li>
+          </>
+        ) : (
+          <>
+            <li className="nav-item">
+              <Link className="nav-link fw-bold fs-5" to="/">
+                Home Page
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link fw-bold fs-5" to="/create_event">
+                Create An Event
+              </Link>
+            </li>
+            <li className="nav-item">
+  <Link className="nav-link fw-bold fs-5" to="/chatbot">
+    Chatbot
+  </Link>
+</li>
+
+          </>
+        )}
+      </ul>
+
+      {/* Logout Button Positioned to the Right */}
+      {authState.status && (
+        <button className="btn btn-danger ms-auto" onClick={logout}>
+          Logout
+        </button>
+      )}
+    </div>
+  </div>
+</nav>
+
 
         {/* Routes */}
         <Routes>
@@ -169,6 +184,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/registration" element={<Registration />} />
           <Route path="/event/:id" element={<Event />} />
+          <Route path="/chatbot" element={<Chatbot />} />
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </div>

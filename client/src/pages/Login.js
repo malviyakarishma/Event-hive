@@ -2,6 +2,7 @@ import React, { useContext, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../helpers/AuthContext";
+import { FaUser, FaLock } from "react-icons/fa"; // ✅ Import icons
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function Login() {
@@ -50,32 +51,44 @@ function Login() {
   };
 
   return (
-    <div className="container mt-5">
+    <div className="container mt-5" style={{ paddingTop: "70px" }}>
       <div className="card shadow p-4">
         <h2 className="text-center mb-4">Login</h2>
 
         {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}
 
+        {/* Username Field with Icon */}
         <div className="mb-3">
           <label className="form-label">Username</label>
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Enter username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
+          <div className="input-group">
+            <span className="input-group-text">
+              <FaUser className="text-primary" /> {/* ✅ Blue Icon */}
+            </span>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Enter username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </div>
         </div>
 
+        {/* Password Field with Icon */}
         <div className="mb-3">
           <label className="form-label">Password</label>
-          <input
-            type="password"
-            className="form-control"
-            placeholder="Enter password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div className="input-group">
+            <span className="input-group-text">
+              <FaLock className="text-primary" /> {/* ✅ Blue Icon */}
+            </span>
+            <input
+              type="password"
+              className="form-control"
+              placeholder="Enter password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
         </div>
 
         <button className="btn btn-primary w-100" onClick={login}>

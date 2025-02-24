@@ -12,15 +12,21 @@ body {
 /* Navbar Styles */
 .navbar {
   background-color: #34495e !important; /* Dark blue-grey */
-  padding: 7px 70px;
+  padding: 10px 50px;
   position: fixed;
-  width: 100%; /* Full width */
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 1000;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border-radius: 10px; /* Fixed to 0 to remove rounded corners */
 }
 
-/* Navbar Content Alignment */
+.navbar .navbar-brand img {
+  height: 100%; /* Adjust logo height to fit navbar */
+  width: auto; /* Maintain aspect ratio */
+}
+
+/* Navbar Links */
 .navbar-nav {
   margin: auto;
 }
@@ -29,10 +35,9 @@ body {
   color: white !important;
   font-size: 1.2rem;
   font-weight: bold !important;
-  text-align: center !important;
+  text-align: center;
   transition: color 0.3s ease-in-out;
-  justify-content: space-around !important;
-  margin: 0 10px; /* Added spacing between navbar items */
+  margin: 0 10px;
 }
 
 .nav-item .nav-link:hover {
@@ -47,23 +52,22 @@ body {
   text-transform: uppercase;
 }
 
-/* Home Page Container */
+/* Adjust for fixed navbar on all screens */
 .container.mt-4 {
   margin-top: 80px; /* Adjust for navbar height */
   padding-top: 20px;
-  background-image: url('./images/event.jpg');
+  background-color: #ffffff;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   width: 100%; /* Full width */
-  max-width: 1200px; /* Keep content centered */
+  max-width: 1200px; /* Center content */
   position: relative;
   color: white;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-  border-radius: 8px; /* Optional */
+  border-radius: 8px;
 }
 
-/* Dark Overlay for Text Readability */
 .container.mt-4::before {
   content: "";
   position: absolute;
@@ -80,30 +84,27 @@ body {
   z-index: 1;
 }
 
-/* Container Width Control */
-.container {
-  max-width: 1200px !important; /* Force full width */
-}
-
 /* Card Styling */
 .card {
   width: 100% !important;
   max-width: 900px; /* Ensure proper size */
   margin: auto;
-  padding: 15px; /* Added padding for a cleaner look */
+  padding: 15px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Light shadow for depth */
 }
 
 /* React Calendar Tile */
 .react-calendar__tile {
   position: relative;
+  /* background-color: #0d6efd !important;
+  color:white; */
 }
 
 /* Event Indicator Dot */
 .event-dot {
   width: 6px;
   height: 6px;
-  background-color: #0d6efd;
+  background-color: #ff0033;
   border-radius: 50%;
   position: absolute;
   bottom: 4px;
@@ -136,4 +137,23 @@ body {
   font-weight: bold;
   font-size: 2.5rem;
   text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive Design Adjustments for Navbar */
+@media (max-width: 991px) {
+  .navbar-nav {
+    text-align: center;
+  }
+
+  .navbar-nav .nav-link {
+    font-size: 1rem;
+  }
+
+  .navbar-toggler {
+    border-color: #ffffff;
+  }
+
+  .navbar-toggler-icon {
+    background-color: #ffffff;
+  }
 }

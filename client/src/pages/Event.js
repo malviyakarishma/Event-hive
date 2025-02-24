@@ -136,7 +136,7 @@ export default function Event() {
   if (error) return <p className="text-center mt-5 text-danger">{error}</p>;
 
   return (
-    <div className="container mt-5">
+    <div className="container mt-5" style={{ paddingTop: "70px" }}>
       <div className="row">
         <div className="col-md-6">
           <div className="card text-center">
@@ -147,18 +147,21 @@ export default function Event() {
               <p className="card-text"><strong>Location:</strong> {eventData?.location || "Location not specified"}</p>
               <p className="card-text"><strong>Date:</strong> {eventData?.date || "Date not provided"}</p>
             </div>
-            <div className="card-footer text-muted">
-              Posted By: {eventData?.username || "Anonymous"}
-              {eventData?.username && authState.username === eventData.username && (
-                <button className="btn btn-danger btn-sm ml-2" onClick={() => deleteEvent(eventData.id)}>Delete Event</button>
-              )}
-            </div>
+            <div className="card-footer text-muted d-flex justify-content-between align-items-center">
+  <span>Posted By: {eventData?.username || "Anonymous"}</span>
+  {eventData?.username && authState.username === eventData.username && (
+    <button className="btn btn-danger btn-sm" onClick={() => deleteEvent(eventData.id)}>
+      Delete Event
+    </button>
+  )}
+</div>
+
           </div>
         </div>
 
         <div className="col-md-6">
           <div className="card text-center">
-            <div className="card-header bg-success text-white">Reviews</div>
+            <div className="card-header bg-primary text-white">Reviews</div>
             <div className="card-body">
               <textarea
                 className="form-control mb-2"
@@ -181,7 +184,7 @@ export default function Event() {
                 </div>
               </div>
 
-              <button onClick={addReview} className="btn btn-success mt-3">Add a Review</button>
+              <button onClick={addReview} className="btn btn-primary mt-3">Add a Review</button>
             </div>
           </div>
 
