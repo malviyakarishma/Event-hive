@@ -4,7 +4,7 @@ const { Users } = require("../models");
 const bcrypt = require("bcrypt");
 const { sign } = require("jsonwebtoken");
 require("dotenv").config();
-const { validateToken } = require('../middlewares/AuthMiddleware');
+const { validateToken } = require("../middlewares/AuthMiddleware");
 
 const SECRET_KEY = process.env.JWT_SECRET || "defaultsecret";
 
@@ -13,10 +13,20 @@ const sendError = (res, statusCode, message) => {
     return res.status(statusCode).json({ error: message });
 };
 
-// Register a new user
+// Middleware to check if the user is an admin
+const validateAdmin = (req, res, next) => {
+    if (!req.user || !req.user.isAdmin) {
+        return sendError(res, 403, "Access denied. Admins only.");
+    }
+    next();
+};
+
+// Register a new user (Admin or Regular User)
 router.post("/", async (req, res) => {
     try {
-        const { username, password } = req.body;
+        console.log("Received Registration Request:", req.body);
+
+        const { username, password, isAdmin } = req.body;
 
         // Check if user already exists
         const existingUser = await Users.findOne({ where: { username } });
@@ -28,12 +38,17 @@ router.post("/", async (req, res) => {
         const hash = await bcrypt.hash(password, 10);
 
         // Create new user in the database
-        const newUser = await Users.create({ username, password: hash });
+        const newUser = await Users.create({ 
+            username, 
+            password: hash, 
+            isAdmin: isAdmin || false 
+        });
 
+        console.log("New User Created:", newUser);
         return res.json({ message: "SUCCESS", user: newUser });
     } catch (error) {
-        console.error("Registration error:", error);
-        return sendError(res, 500, "Server error");
+        console.error("Registration Error Details:", error);
+        return sendError(res, 500, `Registration failed: ${error.message}`);
     }
 });
 
@@ -55,9 +70,17 @@ router.post("/login", async (req, res) => {
             return sendError(res, 401, "Wrong Username and Password Combination");
         }
 
-        const accessToken = sign({ username: user.username, id: user.id }, SECRET_KEY, { expiresIn: "1h" });
+        // Generate JWT with user role
+        const accessToken = sign(
+            { username: user.username, id: user.id, isAdmin: user.isAdmin }, 
+            SECRET_KEY, 
+            { expiresIn: "1h" }
+        );
 
-        return res.json({ token: accessToken, user: { id: user.id, username: user.username } });
+        return res.json({ 
+            token: accessToken, 
+            user: { id: user.id, username: user.username, isAdmin: user.isAdmin } 
+        });
     } catch (error) {
         console.error("Login error:", error);
         return sendError(res, 500, "Server error");
@@ -67,6 +90,11 @@ router.post("/login", async (req, res) => {
 // Auth route to get the authenticated user's details
 router.get('/auth', validateToken, (req, res) => {
     res.json(req.user);
+});
+
+// Admin-only route
+router.get('/admin', validateToken, validateAdmin, (req, res) => {
+    res.json({ message: "Welcome Admin!", user: req.user });
 });
 
 module.exports = router;

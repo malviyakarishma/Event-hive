@@ -2,18 +2,19 @@ import React, { useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // For redirection
+import { useNavigate } from "react-router-dom"; 
 import "bootstrap/dist/css/bootstrap.min.css";
-import { FaUser, FaLock } from "react-icons/fa"; 
+import { FaUser, FaLock } from "react-icons/fa";
 
 function Registration() {
-  const [message, setMessage] = useState(""); // Can be success or error message
-  const [messageType, setMessageType] = useState(""); // "success" or "error"
-  const navigate = useNavigate(); // For redirection
+  const [message, setMessage] = useState(""); 
+  const [messageType, setMessageType] = useState(""); 
+  const navigate = useNavigate(); 
 
   const initialValues = {
     username: "",
     password: "",
+    isAdmin: false,  // New field for admin selection
   };
 
   const validationSchema = Yup.object().shape({
@@ -28,14 +29,14 @@ function Registration() {
   });
 
   const onSubmit = (data, { setSubmitting, resetForm }) => {
-    setMessage(""); // Clear previous messages before submitting
+    setMessage("");
 
     axios
-      .post("http://localhost:3001/auth", data)
+      .post("http://localhost:3001/auth", data)  // Send isAdmin field too
       .then((response) => {
         setMessage("Successfully registered!");
         setMessageType("success");
-        resetForm(); // Clear form fields
+        resetForm();
 
         // Redirect to login after 1 second
         setTimeout(() => {
@@ -43,17 +44,10 @@ function Registration() {
         }, 1000);
       })
       .catch((error) => {
-        // Handle error if username already exists
-        if (error.response && error.response.data) {
-          setMessage(error.response.data.message || "Registration failed. Try again.");
-        } else {
-          setMessage("An error occurred. Please try again.");
-        }
+        setMessage(error.response?.data?.message || "Registration failed. Try again.");
         setMessageType("error");
       })
-      .finally(() => {
-        setSubmitting(false);
-      });
+      .finally(() => setSubmitting(false));
   };
 
   return (
@@ -61,7 +55,6 @@ function Registration() {
       <div className="card shadow p-4">
         <h2 className="text-center mb-4">Register</h2>
 
-        {/* Display messages (Success or Error) */}
         {message && (
           <div className={`alert ${messageType === "success" ? "alert-success" : "alert-danger"}`}>
             {message}
@@ -93,6 +86,12 @@ function Registration() {
                   <Field type="password" className="form-control" name="password" placeholder="Enter password" />
                 </div>
                 <ErrorMessage name="password" component="div" className="text-danger" />
+              </div>
+
+              {/* Admin Checkbox */}
+              <div className="mb-3 form-check">
+                <Field type="checkbox" className="form-check-input" name="isAdmin" id="isAdmin" />
+                <label className="form-check-label" htmlFor="isAdmin">Register as Admin</label>
               </div>
 
               {/* Submit Button */}

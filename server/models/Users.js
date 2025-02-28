@@ -9,13 +9,19 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false,
         },
+        isAdmin: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,  // Default to false for regular users
+        },
     });
 
     Users.associate = (models) => {
         // Association with Events (if needed)
         Users.belongsTo(models.Events, {
-            foreignKey: "eventId",  // Ensure this matches with your actual column name in Users
+            foreignKey: "eventId",  // Ensure this matches your actual column name in Users
             onDelete: "CASCADE",
+            allowNull: true,  // ✅ Ensure users can be created without an event
         });
 
         // Association with Reviews

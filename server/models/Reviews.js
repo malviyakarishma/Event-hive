@@ -3,28 +3,25 @@ module.exports = (sequelize, DataTypes) => {
         username: {
             type: DataTypes.STRING,
             allowNull: false,
-            validate: {
-                notEmpty: true,
-            },
+            validate: { notEmpty: true },
         },
         review_text: {
             type: DataTypes.TEXT,
             allowNull: false,
-            validate: {
-                notEmpty: true,
-            },
+            validate: { notEmpty: true },
         },
         rating: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            validate: {
-                min: 1,
-                max: 5,
-            },
+            validate: { min: 1, max: 5 },
         },
-        sentiment: {  // NEW COLUMN
+        sentiment: {  
             type: DataTypes.STRING,
-            allowNull: true, // Allow null in case sentiment is not analyzed
+            allowNull: true, 
+        },
+        admin_response: {  // ✅ NEW COLUMN
+            type: DataTypes.TEXT,
+            allowNull: true, // Allow null if not responded yet
         }
     }, { timestamps: true });
 
@@ -33,7 +30,6 @@ module.exports = (sequelize, DataTypes) => {
             foreignKey: "EventId",
             onDelete: "CASCADE",
         });
-    
         Reviews.belongsTo(models.Users, {
             foreignKey: "UserId",
             onDelete: "CASCADE",

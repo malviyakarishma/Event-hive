@@ -11,8 +11,8 @@ app.use(cors()); // Enable CORS for all routes
 const db = require("./models");
 
 // Import the chatbot router
-const chatbotRouter = require('./routes/Chatbot');
-app.use("/chatbot", chatbotRouter); // Use chatbotRouter for routes starting with /chatbot
+// const chatbotRouter = require('./routes/Chatbot');
+// app.use("/chatbot", chatbotRouter); // Use chatbotRouter for routes starting with /chatbot
 
 // Import your event router
 const eventRouter = require('./routes/Events');

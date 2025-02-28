@@ -11,25 +11,25 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import Chatbot from "./pages/Chatbot";
 import "bootstrap/dist/css/bootstrap.min.css";
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-import logo from "./images/logo.png"; // Adjust the path based on your project structure
-
-
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import logo from "./images/logo.png";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   const [authState, setAuthState] = useState({
     username: "",
     id: 0,
     status: false,
+    isAdmin: false,
   });
 
-  const navigate = useNavigate(); // ⬅️ To navigate after deleting an event
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
 
     if (!token) {
-      setAuthState({ username: "", id: 0, status: false });
+      setAuthState({ username: "", id: 0, status: false, isAdmin: false });
       return;
     }
 
@@ -39,147 +39,151 @@ function App() {
       })
       .then((response) => {
         if (response.data.error) {
-          setAuthState({ username: "", id: 0, status: false });
-          localStorage.removeItem("accessToken"); // Remove invalid token
+          setAuthState({ username: "", id: 0, status: false, isAdmin: false });
+          localStorage.removeItem("accessToken");
         } else {
           setAuthState({
             username: response.data.username || "User",
             id: response.data.id,
             status: true,
+            isAdmin: response.data.isAdmin || false,
           });
+
+          if (response.data.isAdmin) {
+            navigate("/admin");
+          }
         }
       })
-      .catch((error) => {
-        console.error("Auth error:", error);
-        setAuthState({ username: "", id: 0, status: false });
-        localStorage.removeItem("accessToken"); // Remove token if API call fails
+      .catch(() => {
+        setAuthState({ username: "", id: 0, status: false, isAdmin: false });
+        localStorage.removeItem("accessToken");
       });
-  }, []);
+  }, [navigate]);
 
   const logout = () => {
     localStorage.removeItem("accessToken");
-    setAuthState({ username: "", id: 0, status: false });
-    navigate("/login"); // ⬅️ Redirect to login after logout
+    setAuthState({ username: "", id: 0, status: false, isAdmin: false });
+    navigate("/login");
   };
 
-  // ✅ Fix: Ensure event deletion doesn't trigger logout
   const deleteEvent = async (eventId) => {
     try {
       const token = localStorage.getItem("accessToken");
-  
+
       if (!token) {
-        console.warn("No access token found, redirecting to login.");
-        navigate("/login"); // Redirect only if token is missing
+        navigate("/login");
         return;
       }
-  
+
       const response = await axios.delete(`http://localhost:3001/events/${eventId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-  
+
       if (response.status === 200) {
-        console.log("Event deleted successfully. Redirecting to home...");
-        navigate("/"); // ✅ Correctly navigate to home
+        navigate("/");
       }
     } catch (error) {
-      console.error("Error deleting event:", error);
-  
-      if (error.response) {
-        console.log("API Response Status:", error.response.status);
-  
-        // ✅ Logout ONLY if we get 401 Unauthorized
-        if (error.response.status === 401) {
-          console.warn("Unauthorized! Logging out...");
-          localStorage.removeItem("accessToken");
-          setAuthState({ username: "", id: 0, status: false });
-          navigate("/login");
-        }
+      if (error.response?.status === 401) {
+        localStorage.removeItem("accessToken");
+        setAuthState({ username: "", id: 0, status: false, isAdmin: false });
+        navigate("/login");
       }
     }
   };
-  
 
   return (
     <AuthContext.Provider value={{ authState, setAuthState, deleteEvent }}>
       <div className="App">
-        {/* Bootstrap Navbar */}
+        {/* Navbar */}
         <nav className="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
-  <div className="container-fluid">
-    {/* Logo Link */}
-    <Link className="navbar-brand fw-bold fs-3 d-flex align-items-center" to="/">
-      <img src={logo} alt="Logo" style={{ width: "100px", height: "auto" }} />
-    </Link>
+          <div className="container-fluid">
+            {/* Logo */}
+            <Link className="navbar-brand fw-bold fs-3 d-flex align-items-center" to="/">
+              <img src={logo} alt="Logo" style={{ width: "100px", height: "auto" }} />
+            </Link>
 
-    {/* New Link Next to Logo */}
-    <Link className="navbar-brand fw-bold fs-4 ms-2" to="/">
-      {authState.status ? `Welcome, ${authState.username}` : "Dashboard"}
-    </Link>
+            {/* Welcome Message */}
+            <Link className="navbar-brand fw-bold fs-4 ms-2" to="/">
+              {authState.status ? `Welcome, ${authState.username}` : "Dashboard"}
+            </Link>
 
-    {/* Navbar Toggler for Mobile View */}
-    <button
-      className="navbar-toggler"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#navbarNav"
-      aria-controls="navbarNav"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
-      <span className="navbar-toggler-icon"></span>
-    </button>
+            {/* Navbar Toggler */}
+            <button
+              className="navbar-toggler"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#navbarNav"
+              aria-controls="navbarNav"
+              aria-expanded="false"
+              aria-label="Toggle navigation"
+            >
+              <span className="navbar-toggler-icon"></span>
+            </button>
 
-    {/* Navbar Links */}
-    <div className="collapse navbar-collapse" id="navbarNav">
-      <ul className="navbar-nav mx-auto">
-        {!authState.status ? (
-          <>
-            <li className="nav-item">
-              <Link className="nav-link fw-bold fs-5" to="/login">
-                Login
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link fw-bold fs-5" to="/registration">
-                Register
-              </Link>
-            </li>
-          </>
-        ) : (
-          <>
-            <li className="nav-item">
-              <Link className="nav-link fw-bold fs-5" to="/">
-                Home Page
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link fw-bold fs-5" to="/create_event">
-                Create An Event
-              </Link>
-            </li>
-            <li className="nav-item">
-  <Link className="nav-link fw-bold fs-5" to="/chatbot">
-    Chatbot
-  </Link>
-</li>
+            {/* Navbar Links */}
+            <div className="collapse navbar-collapse" id="navbarNav">
+              <ul className="navbar-nav mx-auto">
+                {!authState.status ? (
+                  <>
+                    <li className="nav-item">
+                      <Link className="nav-link fw-bold fs-5" to="/login">
+                        Login
+                      </Link>
+                    </li>
+                    <li className="nav-item">
+                      <Link className="nav-link fw-bold fs-5" to="/registration">
+                        Register
+                      </Link>
+                    </li>
+                  </>
+                ) : (
+                  <>
+                    <li className="nav-item">
+                      <Link className="nav-link fw-bold fs-5" to="/">
+                        Home Page
+                      </Link>
+                    </li>
+                    {/* Show Create Event link only for admins */}
+                    {authState.isAdmin && (
+                      <li className="nav-item">
+                        <Link className="nav-link fw-bold fs-5" to="/create_event">
+                          Create An Event
+                        </Link>
+                      </li>
+                    )}
+                    <li className="nav-item">
+                      <Link className="nav-link fw-bold fs-5" to="/chatbot">
+                        Chatbot
+                      </Link>
+                    </li>
+                    {/* Admin Dashboard Link */}
+                    {authState.isAdmin && (
+                      <li className="nav-item">
+                        <Link className="nav-link fw-bold fs-5" to="/admin">
+                          Admin Dashboard
+                        </Link>
+                      </li>
+                    )}
+                  </>
+                )}
+              </ul>
 
-          </>
-        )}
-      </ul>
-
-      {/* Logout Button Positioned to the Right */}
-      {authState.status && (
-        <button className="btn btn-danger ms-auto" onClick={logout}>
-          Logout
-        </button>
-      )}
-    </div>
-  </div>
-</nav>
-
+              {/* Logout Button */}
+              {authState.status && (
+                <div className="ms-auto">
+                  <button className="btn btn-danger" onClick={logout}>
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </nav>
 
         {/* Routes */}
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/create_event" element={<CreateEvent />} />
           <Route path="/login" element={<Login />} />
           <Route path="/registration" element={<Registration />} />

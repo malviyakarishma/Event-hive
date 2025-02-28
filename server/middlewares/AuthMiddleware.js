@@ -30,7 +30,11 @@ const validateToken = (req, res, next) => {
             return sendError(res, 401, "Invalid token: Missing username or user ID");
         }
 
+        // ✅ Allow access for both regular users and admins
         req.user = validToken;
+        req.isAdmin = validToken.role === "admin"; // Mark if user is an admin
+
+        console.log(`User Role: ${validToken.role || "user"}`); // Log role for debugging
         next();
     } catch (err) {
         console.error("JWT Verification Error:", err.message);
