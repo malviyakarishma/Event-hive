@@ -3,28 +3,49 @@ const cors = require("cors");
 const app = express();
 require("dotenv").config();
 
-// Use middleware
+// Middleware
 app.use(express.json()); // Middleware to parse JSON bodies
 app.use(cors()); // Enable CORS for all routes
 
 // Import the database models (assuming you have a 'models' folder with Sequelize)
 const db = require("./models");
 
-// Import the chatbot router
-// const chatbotRouter = require('./routes/Chatbot');
-// app.use("/chatbot", chatbotRouter); // Use chatbotRouter for routes starting with /chatbot
+// Import routers
+const eventRouter = require("./routes/Events");
+app.use(express.json());
+const reviewRouter = require("./routes/Reviews");
+const usersRouter = require("./routes/Users");
+const responseRouter = require("./routes/Response"); // Ensure this exists and is properly set up
 
-// Import your event router
-const eventRouter = require('./routes/Events');
-app.use("/events", eventRouter); // Use eventRouter for routes starting with /events
+// Sentiment Analysis Route
+app.post("/sentiment", (req, res) => {
+  const { review } = req.body;
 
-// Import your reviews router
-const reviewRouter = require('./routes/Reviews');
-app.use("/reviews", reviewRouter); // Use reviewRouter for routes starting with /reviews
+  // Ensure review exists in the body
+  if (!review) {
+    return res.status(400).json({ error: "Review text is required." });
+  }
 
-// Import your users router
-const usersRouter = require('./routes/Users');
-app.use("/auth", usersRouter); // Use usersRouter for routes starting with /auth
+  // Analyze sentiment
+  const sentimentResult = analyzeSentiment(review);
+
+  // Return sentiment result
+  res.json({ sentiment: sentimentResult });
+});
+
+// Simple sentiment analysis function
+function analyzeSentiment(review) {
+  if (review.includes("good") || review.includes("amazing")) {
+    return "positive";
+  }
+  return "negative";
+}
+
+// Use routers
+app.use("/events", eventRouter); // Routes for events
+app.use("/reviews", reviewRouter); // Routes for reviews
+app.use("/auth", usersRouter); // Routes for authentication
+app.use("/respond", responseRouter); // Routes for responding to reviews
 
 // Sync database and start the server
 db.sequelize.sync().then(() => {

@@ -1,8 +1,9 @@
 import "./App.css";
-import { Routes, Route, Link, useNavigate } from "react-router-dom";
+import { Routes, Route, Link, useNavigate, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import CreateEvent from "./pages/CreateEvent";
 import Event from "./pages/Event";
+import Response from "./pages/Response";
 import Login from "./pages/Login";
 import PageNotFound from "./pages/PageNotFound";
 import Registration from "./pages/Registration";
@@ -49,9 +50,10 @@ function App() {
             isAdmin: response.data.isAdmin || false,
           });
 
-          if (response.data.isAdmin) {
+          if (response.data.isAdmin && window.location.pathname === "/login") {
             navigate("/admin");
           }
+          
         }
       })
       .catch(() => {
@@ -183,11 +185,19 @@ function App() {
         {/* Routes */}
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/create_event" element={<CreateEvent />} />
+          {/* Admin Routes */}
+          <Route
+            path="/admin"
+            element={authState.isAdmin ? <AdminDashboard /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/create_event"
+            element={authState.isAdmin ? <CreateEvent /> : <Navigate to="/" />}
+          />
           <Route path="/login" element={<Login />} />
           <Route path="/registration" element={<Registration />} />
           <Route path="/event/:id" element={<Event />} />
+          <Route path="/response/:id" element={<Response />} />
           <Route path="/chatbot" element={<Chatbot />} />
           <Route path="*" element={<PageNotFound />} />
         </Routes>
