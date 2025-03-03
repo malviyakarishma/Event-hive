@@ -4,6 +4,7 @@ import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { AuthContext } from "../helpers/AuthContext";
+import { useNotifications } from "../helpers/NotificationContext"; // Import the notification context
 
 export default function Event() {
   const { id } = useParams();
@@ -14,6 +15,9 @@ export default function Event() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { authState } = useContext(AuthContext);
+  
+  // Use the notification context
+  const { addNotification } = useNotifications();
 
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -75,12 +79,29 @@ export default function Event() {
         setNewReview("");
         setRating(0);
         alert("Your review was added successfully!");
+
+        // Send notification to server
+        const notificationResponse = await axios.post("http://localhost:3001/notifications", {
+          message: `New review added for Event ID ${id}`,
+          type: "review",
+          status: "unread",
+        });
+        
+        // Use the addNotification function if it exists
+        if (addNotification) {
+          addNotification({
+            message: `New review added for Event ID ${id}`,
+            type: "review",
+            status: "unread",
+            id: notificationResponse.data.id || Date.now()
+          });
+        }
       }
     } catch (err) {
       console.error("Error adding review:", err);
       alert("There was an error adding your review. Please try again.");
     }
-  }, [newReview, rating, id]);
+  }, [newReview, rating, id, addNotification]);
 
   const deleteReview = useCallback(async (reviewId) => {
     const accessToken = localStorage.getItem("accessToken");
@@ -143,7 +164,6 @@ export default function Event() {
     }
   };
 
-
   if (loading) return <p className="text-center mt-5">Loading event details...</p>;
   if (error) return <p className="text-center mt-5 text-danger">{error}</p>;
 
@@ -167,7 +187,6 @@ export default function Event() {
                 </button>
               )}
             </div>
-
           </div>
         </div>
 
@@ -210,22 +229,12 @@ export default function Event() {
                   )}
                   <p>{review.review_text || "No review text available"}</p>
                   {review.rating ? (
-                    <p>{Array.from({ length: review.rating }, (_, i) => (<span key={i} style={{ color: "gold", fontSize: "1.5rem" }}>⭐</span>))}</p>
-                  ) : (
-                    <p>No rating provided</p>
-                  )}
-                  {review.sentiment && (
-                    <p>
-                      <strong>Sentiment:</strong>
-                      <span className={`text-${review.sentiment === 'positive' ? 'success' : review.sentiment === 'negative' ? 'danger' : 'secondary'}`}>
-                        {review.sentiment}
-                      </span>
-                    </p>
-                  )}
+                    <p>{Array.from({ length: review.rating }, (_, i) => (<span key={i} style={{ color: "gold", fontSize: "1.5rem" }}>★</span>))}</p>
+                  ) : null}
                 </div>
               ))
             ) : (
-              <p className="text-muted">No reviews yet.</p>
+              <p>No reviews yet. Be the first to write a review!</p>
             )}
           </div>
         </div>

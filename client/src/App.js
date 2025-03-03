@@ -8,12 +8,13 @@ import Login from "./pages/Login";
 import PageNotFound from "./pages/PageNotFound";
 import Registration from "./pages/Registration";
 import { AuthContext } from "./helpers/AuthContext";
+import { NotificationProvider } from "./helpers/NotificationContext";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Chatbot from "./pages/Chatbot";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
-import logo from "./images/logo.png";
+import logo from "./images/logo.png"; // Ensure this path is correct
 import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
@@ -53,7 +54,6 @@ function App() {
           if (response.data.isAdmin && window.location.pathname === "/login") {
             navigate("/admin");
           }
-          
         }
       })
       .catch(() => {
@@ -95,6 +95,7 @@ function App() {
 
   return (
     <AuthContext.Provider value={{ authState, setAuthState, deleteEvent }}>
+      <NotificationProvider>
       <div className="App">
         {/* Navbar */}
         <nav className="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
@@ -202,6 +203,7 @@ function App() {
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </div>
+      </NotificationProvider>
     </AuthContext.Provider>
   );
 }

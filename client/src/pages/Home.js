@@ -17,7 +17,7 @@ export default function Home() {
   const [visibleEvents, setVisibleEvents] = useState(4);
   const { authState } = useContext(AuthContext);
   const [showScrollButton, setShowScrollButton] = useState(false);
-  let navigate = useNavigate();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!authState.status) {
@@ -26,26 +26,20 @@ export default function Home() {
       axios
         .get("http://localhost:3001/events")
         .then((response) => {
-          console.log("Fetched Events:", response.data);
           setListOfEvents(response.data);
           setLoading(false);
         })
         .catch((error) => {
-          console.error("Error fetching events:", error);
           setError("There was an error loading events. Please try again later.");
           setLoading(false);
         });
     }
   }, [authState, navigate]);
+  
 
   useEffect(() => {
-    // Show scroll-to-top button when user scrolls down
     const handleScroll = () => {
-      if (window.scrollY > 200) {
-        setShowScrollButton(true);
-      } else {
-        setShowScrollButton(false);
-      }
+      setShowScrollButton(window.scrollY > 200);
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -55,10 +49,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // Initialize Bootstrap tooltips
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     tooltipTriggerList.forEach((tooltip) => new Tooltip(tooltip));
-  }, [listOfEvents]); // Re-run when events update
+  }, [listOfEvents]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -68,14 +61,17 @@ export default function Home() {
   if (error) return <p className="text-danger">{error}</p>;
 
   const today = new Date();
-  const upcomingEvents = listOfEvents.filter((event) => new Date(event.date) >= today)
+  const upcomingEvents = listOfEvents
+    .filter((event) => new Date(event.date) >= today)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
+
   const pastEvents = listOfEvents.filter((event) => new Date(event.date) < today);
 
   const filteredEvents = upcomingEvents
-    .filter((event) =>
-      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.location.toLowerCase().includes(searchQuery.toLowerCase())
+    .filter(
+      (event) =>
+        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.location.toLowerCase().includes(searchQuery.toLowerCase())
     )
     .slice(0, visibleEvents);
 
@@ -105,7 +101,8 @@ export default function Home() {
                     <div className="card-header bg-primary text-white">{event.title}</div>
                     <div className="card-body bg-light">
                       <p className="card-text text-center text-dark">
-                        <i className="bi bi-geo-alt-fill text-success"></i> <span className="fw-bold text-success">{event.location}</span>
+                        <i className="bi bi-geo-alt-fill text-success"></i>{" "}
+                        <span className="fw-bold text-success">{event.location}</span>
                       </p>
                       <p className="card-text text-center fw-bold text-success">
                         <i className="bi bi-calendar-event-fill"></i> {new Date(event.date).toDateString()}
@@ -132,7 +129,8 @@ export default function Home() {
                   </div>
                   <div className="card-body bg-light">
                     <p className="card-text text-center text-dark">
-                      <i className="bi bi-geo-alt-fill text-success"></i> <span className="fw-bold text-success">{event.location}</span>
+                      <i className="bi bi-geo-alt-fill text-success"></i>{" "}
+                      <span className="fw-bold text-success">{event.location}</span>
                     </p>
                     <p className="card-text text-center text-dark">
                       <i className="bi bi-calendar-event-fill"></i> {new Date(event.date).toDateString()}

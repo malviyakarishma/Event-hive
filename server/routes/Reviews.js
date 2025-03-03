@@ -123,6 +123,14 @@ router.post("/", validateToken, async (req, res) => {
             sentiment: sentimentCategory,
         });
 
+           // ✅ Create a notification for the admin
+           await Notifications.create({
+            message: `New review added for Event ID ${eventId}`,
+            type: "review",
+            userId: userId,
+            status: "unread",
+        });
+
         return res.status(201).json({
             message: "Review added successfully",
             review: {

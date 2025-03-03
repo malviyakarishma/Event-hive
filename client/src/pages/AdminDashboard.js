@@ -1,12 +1,17 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useMemo } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.min.css";
 import { AuthContext } from "../helpers/AuthContext";
 import { format } from "date-fns";
+import { useNotifications } from "../helpers/NotificationContext";
 
 export default function Dashboard() {
+  // Add a fallback for notifications to prevent the error
+  const notificationContext = useNotifications();
+  const notifications = notificationContext?.notifications || [];
+  
   const [listOfEvents, setListOfEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,6 +44,8 @@ export default function Dashboard() {
     );
   };
 
+  const filteredEvents = useMemo(() => filterEvents(listOfEvents, searchQuery), [listOfEvents, searchQuery]);
+
   if (loading) return (
     <div className="d-flex justify-content-center">
       <div className="spinner-border" role="status">
@@ -49,17 +56,36 @@ export default function Dashboard() {
 
   if (error) return (
     <div className="alert alert-danger" role="alert">
-      {error}
+      {error}{" "}
+      <button
+        className="btn btn-warning btn-sm"
+        onClick={() => setLoading(true)}
+      >
+        Retry
+      </button>
     </div>
   );
 
   const today = new Date();
   const upcomingEvents = listOfEvents.filter((event) => new Date(event.date) >= today);
   const pastEvents = listOfEvents.filter((event) => new Date(event.date) < today);
-  const filteredEvents = filterEvents(listOfEvents, searchQuery);
 
   return (
     <div className="container" style={{ paddingTop: "70px" }}>
+      {/* Admin Notifications */}
+      <div className="container mt-4">
+        <h2>Admin Notifications</h2>
+        {notifications.length > 0 ? (
+          notifications.map((notification) => (
+            <div key={notification.id} className="alert alert-info">
+              {notification.message}
+            </div>
+          ))
+        ) : (
+          <p>No new notifications.</p>
+        )}
+      </div>
+
       {/* Statistics Section */}
       <div className="row text-center mb-4">
         <div className="col-md-4">
@@ -96,7 +122,7 @@ export default function Dashboard() {
         <div className="col-md-2">
           <button
             className="btn btn-primary w-100"
-            onClick={() => setSearchQuery(searchQuery.trim())} // On click, trim the search query
+            onClick={() => setSearchQuery(searchQuery.trim())}
           >
             Search
           </button>
