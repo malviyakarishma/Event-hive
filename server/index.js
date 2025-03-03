@@ -14,6 +14,7 @@ const db = require("./models");
 
 // Import routers
 const eventRouter = require("./routes/Events");
+const userRoutes = require("./routes/userRoutes");
 const reviewRouter = require("./routes/Reviews");
 const usersRouter = require("./routes/Users");
 const responseRouter = require("./routes/Response"); // Ensure this exists and is properly set up
@@ -72,7 +73,9 @@ function analyzeSentiment(review) {
 app.use("/events", eventRouter); // Routes for events
 app.use("/reviews", reviewRouter); // Routes for reviews
 app.use("/auth", usersRouter); // Routes for authentication
-app.use("/respond", responseRouter); // Routes for responding to reviews
+app.use("/respond", responseRouter);
+app.use("/api/user", userRoutes); // Routes for responding to reviews
+
 
 // Example of sending a notification to a user
 const sendNotificationToUser = async (userId, message, type = "update", relatedId = null) => {

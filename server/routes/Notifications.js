@@ -1,112 +1,132 @@
-const express = require('express');
-const router = express.Router();
-const Notification = require('../models/Notifications');
-const AuthMiddleware = require('../middlewares/AuthMiddleware');
+const express = require("express")
+const router = express.Router()
+const { Notifications, Users } = require("../models")
+const { validateToken } = require("../middlewares/AuthMiddleware")
+const { Op } = require("sequelize")
 
 // Get user notifications
-router.get('/', AuthMiddleware, async (req, res) => {
+router.get("/", validateToken, async (req, res) => {
   try {
-    const notifications = await Notification.find({ 
-      userId: req.user._id,
-      isAdminNotification: false 
-    }).sort({ createdAt: -1 }).limit(50);
-    
-    res.json(notifications);
+    const notifications = await Notifications.findAll({
+      where: {
+        userId: req.user.id,
+        isAdminNotification: req.user.isAdmin,
+      },
+      order: [["createdAt", "DESC"]],
+      limit: 50,
+    })
+
+    res.json(notifications)
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching notifications', error: error.message });
+    console.error("Error fetching notifications:", error)
+    res.status(500).json({ message: "Error fetching notifications", error: error.message })
   }
-});
+})
 
 // Mark notification as read
-router.put('/:id/read', AuthMiddleware, async (req, res) => {
+router.put("/:id/read", validateToken, async (req, res) => {
   try {
-    const notification = await Notification.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user._id },
+    const [updatedRows] = await Notifications.update(
       { isRead: true },
-      { new: true }
-    );
-    
-    if (!notification) {
-      return res.status(404).json({ message: 'Notification not found' });
+      {
+        where: {
+          id: req.params.id,
+          userId: req.user.id,
+          isAdminNotification: req.user.isAdmin,
+        },
+      },
+    )
+
+    if (updatedRows === 0) {
+      return res.status(404).json({ message: "Notification not found" })
     }
-    
-    res.json(notification);
+
+    const updatedNotification = await Notifications.findByPk(req.params.id)
+    res.json(updatedNotification)
   } catch (error) {
-    res.status(500).json({ message: 'Error updating notification', error: error.message });
+    console.error("Error updating notification:", error)
+    res.status(500).json({ message: "Error updating notification", error: error.message })
   }
-});
+})
 
 // Mark all notifications as read
-router.put('/read-all', AuthMiddleware, async (req, res) => {
+router.put("/read-all", validateToken, async (req, res) => {
   try {
-    await Notification.updateMany(
-      { userId: req.user._id, isRead: false },
-      { isRead: true }
-    );
-    
-    res.json({ success: true });
+    await Notifications.update(
+      { isRead: true },
+      {
+        where: {
+          userId: req.user.id,
+          isRead: false,
+          isAdminNotification: req.user.isAdmin,
+        },
+      },
+    )
+
+    res.json({ success: true })
   } catch (error) {
-    res.status(500).json({ message: 'Error updating notifications', error: error.message });
+    console.error("Error updating notifications:", error)
+    res.status(500).json({ message: "Error updating notifications", error: error.message })
   }
-});
+})
 
 // Admin routes
-router.get('/admin', AuthMiddleware, async (req, res) => {
-  // Check if user is admin
+router.get("/admin", validateToken, async (req, res) => {
   if (!req.user.isAdmin) {
-    return res.status(403).json({ message: 'Unauthorized' });
+    return res.status(403).json({ message: "Unauthorized" })
   }
-  
-  try {
-    const notifications = await Notification.find({ 
-      isAdminNotification: true 
-    }).sort({ createdAt: -1 }).limit(50);
-    
-    res.json(notifications);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching admin notifications', error: error.message });
-  }
-});
 
-router.put('/admin/:id/read', AuthMiddleware, async (req, res) => {
-  // Check if user is admin
-  if (!req.user.isAdmin) {
-    return res.status(403).json({ message: 'Unauthorized' });
-  }
-  
   try {
-    const notification = await Notification.findByIdAndUpdate(
-      req.params.id,
+    const notifications = await Notifications.findAll({
+      where: { isAdminNotification: true },
+      order: [["createdAt", "DESC"]],
+      limit: 50,
+    })
+
+    res.json(notifications)
+  } catch (error) {
+    console.error("Error fetching admin notifications:", error)
+    res.status(500).json({ message: "Error fetching admin notifications", error: error.message })
+  }
+})
+
+router.put("/admin/:id/read", validateToken, async (req, res) => {
+  if (!req.user.isAdmin) {
+    return res.status(403).json({ message: "Unauthorized" })
+  }
+
+  try {
+    const [updatedRows] = await Notifications.update(
       { isRead: true },
-      { new: true }
-    );
-    
-    if (!notification) {
-      return res.status(404).json({ message: 'Notification not found' });
+      { where: { id: req.params.id, isAdminNotification: true } },
+    )
+
+    if (updatedRows === 0) {
+      return res.status(404).json({ message: "Notification not found" })
     }
-    
-    res.json(notification);
-  } catch (error) {
-    res.status(500).json({ message: 'Error updating notification', error: error.message });
-  }
-});
 
-router.put('/admin/read-all', AuthMiddleware, async (req, res) => {
-  // Check if user is admin
+    const updatedNotification = await Notifications.findByPk(req.params.id)
+    res.json(updatedNotification)
+  } catch (error) {
+    console.error("Error updating notification:", error)
+    res.status(500).json({ message: "Error updating notification", error: error.message })
+  }
+})
+
+router.put("/admin/read-all", validateToken, async (req, res) => {
   if (!req.user.isAdmin) {
-    return res.status(403).json({ message: 'Unauthorized' });
+    return res.status(403).json({ message: "Unauthorized" })
   }
-  
-  try {
-    await Notification.updateMany(
-      { isAdminNotification: true, isRead: false },
-      { isRead: true }
-    );
-    
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ message: 'Error updating notifications', error: error.message });
-  }
-});
 
-module.exports = router;
+  try {
+    await Notifications.update({ isRead: true }, { where: { isAdminNotification: true, isRead: false } })
+
+    res.json({ success: true })
+  } catch (error) {
+    console.error("Error updating notifications:", error)
+    res.status(500).json({ message: "Error updating notifications", error: error.message })
+  }
+})
+
+module.exports = router
+

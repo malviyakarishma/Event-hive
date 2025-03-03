@@ -27,7 +27,14 @@ router.put("/respond/:reviewId", validateToken, async (req, res) => {
 
         await Reviews.update({ admin_response: adminResponse }, { where: { id: reviewId } });
 
-        return res.json({ message: "Admin response added successfully.", response: adminResponse });
+        // Log successful response
+        console.log(`Review ID ${reviewId} updated with admin response.`);
+
+        const updatedReview = await Reviews.findByPk(reviewId);
+        return res.json({
+            message: "Admin response added successfully.",
+            response: updatedReview.admin_response,
+        });
     } catch (error) {
         console.error("Error responding to review:", error);
         return res.status(500).json({ error: "Internal Server Error" });
@@ -106,7 +113,7 @@ router.post("/", validateToken, async (req, res) => {
 
         const existingReview = await Reviews.findOne({ where: { EventId: eventId, UserId: userId } });
         if (existingReview) {
-            return res.status(400).json({ error: "You have already reviewed this event." });
+            return res.status(400).json({ error: `You have already reviewed event ID ${eventId}.` });
         }
 
         // Perform Sentiment Analysis
@@ -123,13 +130,8 @@ router.post("/", validateToken, async (req, res) => {
             sentiment: sentimentCategory,
         });
 
-           // ✅ Create a notification for the admin
-           await Notifications.create({
-            message: `New review added for Event ID ${eventId}`,
-            type: "review",
-            userId: userId,
-            status: "unread",
-        });
+        // Log successful review creation
+        console.log(`New review created by user ${username} for event ID ${eventId}`);
 
         return res.status(201).json({
             message: "Review added successfully",
@@ -192,14 +194,13 @@ router.delete("/:reviewId", validateToken, async (req, res) => {
             return res.status(404).json({ error: "Review not found" });
         }
 
-        // Ensure only the review owner can delete it
-        if (review.UserId !== userId) {
+        // Ensure only the review owner or an admin can delete it
+        if (req.isAdmin || review.UserId === userId) {
+            await review.destroy();
+            return res.status(200).json({ message: "Review deleted successfully" });
+        } else {
             return res.status(403).json({ error: "You are not authorized to delete this review" });
         }
-
-        await review.destroy();
-
-        return res.status(200).json({ message: "Review deleted successfully" });
     } catch (error) {
         console.error("Error deleting review:", error.message);
         return res.status(500).json({ error: "Internal Server Error" });

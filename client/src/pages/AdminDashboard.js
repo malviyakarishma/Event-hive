@@ -1,84 +1,108 @@
-import React, { useEffect, useState, useContext, useMemo } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap-icons/font/bootstrap-icons.min.css";
-import { AuthContext } from "../helpers/AuthContext";
-import { format } from "date-fns";
-import { useNotifications } from "../helpers/NotificationContext";
+"use client"
 
-export default function Dashboard() {
-  // Add a fallback for notifications to prevent the error
-  const notificationContext = useNotifications();
-  const notifications = notificationContext?.notifications || [];
-  
-  const [listOfEvents, setListOfEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const { authState } = useContext(AuthContext);
-  let navigate = useNavigate();
+// Update the AdminDashboard.js file to display notifications
+import { useEffect, useState, useContext, useMemo, useCallback } from "react"
+import axios from "axios"
+import { useNavigate } from "react-router-dom"
+import "bootstrap/dist/css/bootstrap.min.css"
+import "bootstrap-icons/font/bootstrap-icons.min.css"
+import { AuthContext } from "../helpers/AuthContext"
+import { format } from "date-fns"
+import { useNotifications } from "../helpers/NotificationContext"
+
+export default function AdminDashboard() {
+  const { notifications, markAsRead } = useNotifications() // Access notifications via the hook
+  const [listOfEvents, setListOfEvents] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const { authState } = useContext(AuthContext)
+  const navigate = useNavigate()
+
+  // Filter admin notifications only
+  const adminNotifications = useMemo(
+    () => notifications.filter((notification) => notification.isAdminNotification),
+    [notifications],
+  )
 
   useEffect(() => {
-    if (!authState.status) {
-      navigate("/login");
+    if (!authState.status || !authState.isAdmin) {
+      navigate("/login")
     } else {
       axios
         .get("http://localhost:3001/events")
         .then((response) => {
-          setListOfEvents(response.data);
-          setLoading(false);
+          setListOfEvents(response.data)
+          setLoading(false)
         })
         .catch((error) => {
-          setError("There was an error loading events. Please try again later.");
-          setLoading(false);
-        });
+          setError("There was an error loading events. Please try again later.")
+          setLoading(false)
+        })
     }
-  }, [authState, navigate]);
+  }, [authState, navigate])
 
-  const filterEvents = (events, query) => {
+  const filterEvents = useCallback((events, query) => {
     return events.filter(
       (event) =>
         event.title.toLowerCase().includes(query.toLowerCase()) ||
-        event.location.toLowerCase().includes(query.toLowerCase())
-    );
-  };
+        event.location.toLowerCase().includes(query.toLowerCase()),
+    )
+  }, [])
 
-  const filteredEvents = useMemo(() => filterEvents(listOfEvents, searchQuery), [listOfEvents, searchQuery]);
+  const filteredEvents = useMemo(
+    () => filterEvents(listOfEvents, searchQuery),
+    [listOfEvents, searchQuery, filterEvents],
+  )
 
-  if (loading) return (
-    <div className="d-flex justify-content-center">
-      <div className="spinner-border" role="status">
-        <span className="visually-hidden">Loading...</span>
+  if (loading)
+    return (
+      <div className="d-flex justify-content-center">
+        <div className="spinner-border" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
       </div>
-    </div>
-  );
+    )
 
-  if (error) return (
-    <div className="alert alert-danger" role="alert">
-      {error}{" "}
-      <button
-        className="btn btn-warning btn-sm"
-        onClick={() => setLoading(true)}
-      >
-        Retry
-      </button>
-    </div>
-  );
+  if (error)
+    return (
+      <div className="alert alert-danger" role="alert">
+        {error}{" "}
+        <button className="btn btn-warning btn-sm" onClick={() => setLoading(true)}>
+          Retry
+        </button>
+      </div>
+    )
 
-  const today = new Date();
-  const upcomingEvents = listOfEvents.filter((event) => new Date(event.date) >= today);
-  const pastEvents = listOfEvents.filter((event) => new Date(event.date) < today);
+  const today = new Date()
+  const upcomingEvents = listOfEvents.filter((event) => new Date(event.date) >= today)
+  const pastEvents = listOfEvents.filter((event) => new Date(event.date) < today)
 
   return (
     <div className="container" style={{ paddingTop: "70px" }}>
       {/* Admin Notifications */}
       <div className="container mt-4">
         <h2>Admin Notifications</h2>
-        {notifications.length > 0 ? (
-          notifications.map((notification) => (
-            <div key={notification.id} className="alert alert-info">
+        {adminNotifications.length > 0 ? (
+          adminNotifications.map((notification) => (
+            <div
+              key={notification.id}
+              className={`alert ${notification.isRead ? "alert-secondary" : "alert-info"}`}
+              onClick={() => {
+                // Mark as read when clicked
+                if (!notification.isRead) {
+                  markAsRead(notification.id)
+                }
+
+                // Navigate based on notification type
+                if (notification.type === "review" && notification.relatedId) {
+                  navigate(`/response/${notification.relatedId}`)
+                }
+              }}
+              style={{ cursor: "pointer" }}
+            >
               {notification.message}
+              <div className="mt-1 small text-muted">{new Date(notification.createdAt).toLocaleString()}</div>
             </div>
           ))
         ) : (
@@ -120,10 +144,7 @@ export default function Dashboard() {
           />
         </div>
         <div className="col-md-2">
-          <button
-            className="btn btn-primary w-100"
-            onClick={() => setSearchQuery(searchQuery.trim())}
-          >
+          <button className="btn btn-primary w-100" onClick={() => setSearchQuery(searchQuery.trim())}>
             Search
           </button>
         </div>
@@ -147,7 +168,7 @@ export default function Dashboard() {
                     <i className="bi bi-geo-alt-fill text-success"></i> {event.location}
                   </p>
                   <p className="card-text text-center">
-                    <i className="bi bi-calendar-event-fill"></i> {format(new Date(event.date), 'MMM dd, yyyy')}
+                    <i className="bi bi-calendar-event-fill"></i> {format(new Date(event.date), "MMM dd, yyyy")}
                   </p>
                 </div>
               </div>
@@ -156,5 +177,6 @@ export default function Dashboard() {
         )}
       </div>
     </div>
-  );
+  )
 }
+

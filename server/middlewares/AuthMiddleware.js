@@ -30,16 +30,19 @@ const validateToken = (req, res, next) => {
         console.debug("Decoded Token:", validToken); // Log decoded token for debugging
 
         // Check if the token contains valid user data
-        if (!validToken.username || !validToken.id) {
-            console.warn("Invalid token: Missing username or user ID");
-            return sendError(res, 401, "Invalid token: Missing username or user ID");
+        if (!validToken.id || !validToken.username) {
+            console.warn("Invalid token: Missing required user information");
+            return sendError(res, 401, "Invalid token: Missing required user information");
         }
 
-        // Set user data and admin status in the request object
-        req.user = validToken;
-        req.isAdmin = validToken.isAdmin === true; // Ensure isAdmin is a boolean
+        // Attach user data and admin status to the request object
+        req.user = {
+            id: validToken.id,
+            username: validToken.username,
+            isAdmin: validToken.isAdmin === true, // Ensure isAdmin is a boolean
+        };
 
-        console.info(`User authenticated: ${validToken.username}, Admin status: ${req.isAdmin}`);
+        console.info(`User authenticated: ${validToken.username}, Admin status: ${req.user.isAdmin}`);
         
         // Proceed to the next middleware or route handler
         next();

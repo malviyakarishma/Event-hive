@@ -1,42 +1,50 @@
 module.exports = (sequelize, DataTypes) => {
     const Notifications = sequelize.define("Notifications", {
-        userId: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-        },
-        type: {
-            type: DataTypes.ENUM('event', 'review', 'update'),
-            allowNull: false,
-        },
-        message: {
-            type: DataTypes.STRING,
-            allowNull: true,
-        },
-        relatedId: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-        },
-        isRead: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: false,
-        },
-        isAdminNotification: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: false,
-        },
-        createdAt: {
-            type: DataTypes.DATE,
-            defaultValue: sequelize.fn('NOW'),
-        },
-    });
-
-    // ✅ Association with Users
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      userId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      message: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      type: {
+        type: DataTypes.STRING, // 'event', 'review', 'review_response'
+        allowNull: false,
+      },
+      eventId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      reviewId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      read: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      createdAt: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
+    })
+  
     Notifications.associate = (models) => {
-        Notifications.belongsTo(models.Users, {  // Changed User to Users
-            foreignKey: "userId",  // Reference to the Users model
-            onDelete: "CASCADE",
-        });
-    };
-
-    return Notifications;
-};
+      Notifications.belongsTo(models.Users, {
+        foreignKey: "userId",
+      })
+  
+      Notifications.belongsTo(models.Events, {
+        foreignKey: "eventId",
+      })
+    }
+  
+    return Notifications
+  }
+    

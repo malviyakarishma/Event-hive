@@ -1,107 +1,100 @@
-import React, { useContext, useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
-import axios from "axios";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "@fortawesome/fontawesome-free/css/all.min.css";
-import { AuthContext } from "../helpers/AuthContext";
-import { useNotifications } from "../helpers/NotificationContext"; // Import the notification context
+import { useContext, useEffect, useState, useCallback } from "react"
+import { useParams } from "react-router-dom"
+import axios from "axios"
+import "bootstrap/dist/css/bootstrap.min.css"
+import "@fortawesome/fontawesome-free/css/all.min.css"
+import { AuthContext } from "../helpers/AuthContext"
 
 export default function Event() {
-  const { id } = useParams();
-  const [eventData, setEventData] = useState(null);
-  const [reviews, setReviews] = useState([]);
-  const [newReview, setNewReview] = useState("");
-  const [rating, setRating] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const { authState } = useContext(AuthContext);
-  
-  // Use the notification context
-  const { addNotification } = useNotifications();
+  const { id } = useParams()
+  const [eventData, setEventData] = useState(null)
+  const [reviews, setReviews] = useState([])
+  const [newReview, setNewReview] = useState("")
+  const [rating, setRating] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const { authState } = useContext(AuthContext)
 
   useEffect(() => {
     const fetchEventDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:3001/events/${id}`);
+        const response = await axios.get(`http://localhost:3001/events/${id}`)
         if (response.data.event) {
-          setEventData(response.data.event);
+          setEventData(response.data.event)
         } else {
-          setEventData(null);
-          setError("Event not found.");
+          setEventData(null)
+          setError("Event not found.")
         }
         if (response.data.reviews) {
-          setReviews(response.data.reviews);
+          setReviews(response.data.reviews)
         }
-        setLoading(false);
+        setLoading(false)
       } catch (err) {
-        setError("Failed to load event details.");
-        setLoading(false);
-        console.error("Error fetching event details:", err);
+        setError("Failed to load event details.")
+        setLoading(false)
+        console.error("Error fetching event details:", err)
       }
-    };
-    fetchEventDetails();
-  }, [id]);
+    }
+    fetchEventDetails()
+  }, [id])
 
   const addReview = useCallback(async () => {
     if (!newReview.trim() || rating === 0) {
-      alert("Please provide both a review and a rating.");
-      return;
+      alert("Please provide both a review and a rating.")
+      return
     }
 
-    const accessToken = localStorage.getItem("accessToken");
+    const accessToken = localStorage.getItem("accessToken")
     if (!accessToken) {
-      alert("You must be logged in to add a review.");
-      return;
+      alert("You must be logged in to add a review.")
+      return
     }
 
     try {
-      let sentiment = "neutral";
+      let sentiment = "neutral"
       try {
-        const { data: sentimentData } = await axios.post(
-          "http://localhost:3001/sentiment",
-          { text: newReview }
-        );
-        sentiment = sentimentData.sentiment;
+        const { data: sentimentData } = await axios.post("http://localhost:3001/sentiment", { text: newReview })
+        sentiment = sentimentData.sentiment
       } catch (err) {
-        console.warn("Sentiment API not found, skipping sentiment analysis.");
+        console.warn("Sentiment API not found, skipping sentiment analysis.")
       }
 
       const { data: reviewResponse } = await axios.post(
         "http://localhost:3001/reviews",
         { review_text: newReview, rating, eventId: id, sentiment },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      )
 
       if (reviewResponse.error) {
-        alert(reviewResponse.error);
+        alert(reviewResponse.error)
       } else {
-        setReviews((prevReviews) => [...prevReviews, reviewResponse.review]);
-        setNewReview("");
-        setRating(0);
-        alert("Your review was added successfully!");
+        setReviews((prevReviews) => [...prevReviews, reviewResponse.review])
+        setNewReview("")
+        setRating(0)
 
-        // Send notification to server
-        const notificationResponse = await axios.post("http://localhost:3001/notifications", {
-          message: `New review added for Event ID ${id}`,
-          type: "review",
-          status: "unread",
-        });
-        
-        // Use the addNotification function if it exists
-        if (addNotification) {
-          addNotification({
-            message: `New review added for Event ID ${id}`,
-            type: "review",
-            status: "unread",
-            id: notificationResponse.data.id || Date.now()
-          });
+        // Create notification for admins about the new review
+        try {
+          await axios.post(
+            "http://localhost:3001/notifications",
+            {
+              message: `New review for event "${eventData?.title}"`,
+              type: "review",
+              relatedId: id,
+              forAdmins: true, // Send to all admins
+            },
+            { headers: { Authorization: `Bearer ${accessToken}` } },
+          )
+        } catch (notifError) {
+          console.error("Error creating notification:", notifError)
         }
+
+        alert("Your review was added successfully!")
       }
     } catch (err) {
-      console.error("Error adding review:", err);
-      alert("There was an error adding your review. Please try again.");
+      console.error("Error adding review:", err)
+      alert("There was an error adding your review. Please try again.")
     }
-  }, [newReview, rating, id, addNotification]);
+  }, [newReview, rating, id, eventData?.title]);
 
   const deleteReview = useCallback(async (reviewId) => {
     const accessToken = localStorage.getItem("accessToken");
@@ -164,6 +157,7 @@ export default function Event() {
     }
   };
 
+
   if (loading) return <p className="text-center mt-5">Loading event details...</p>;
   if (error) return <p className="text-center mt-5 text-danger">{error}</p>;
 
@@ -187,6 +181,7 @@ export default function Event() {
                 </button>
               )}
             </div>
+
           </div>
         </div>
 
@@ -229,12 +224,19 @@ export default function Event() {
                   )}
                   <p>{review.review_text || "No review text available"}</p>
                   {review.rating ? (
-                    <p>{Array.from({ length: review.rating }, (_, i) => (<span key={i} style={{ color: "gold", fontSize: "1.5rem" }}>★</span>))}</p>
-                  ) : null}
+                    <p>{Array.from({ length: review.rating }, (_, i) => (<span key={i} style={{ color: "gold", fontSize: "1.5rem" }}>⭐</span>))}</p>
+                  ) : (
+                    <p>No rating provided</p>
+                  )}
+                    {review.admin_response && (
+                        <div className="alert alert-info mt-2">
+                          <strong>Admin Response:</strong> {review.admin_response}
+                        </div>
+                      )}
                 </div>
               ))
             ) : (
-              <p>No reviews yet. Be the first to write a review!</p>
+              <p className="text-muted">No reviews yet.</p>
             )}
           </div>
         </div>
