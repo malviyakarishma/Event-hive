@@ -4,11 +4,14 @@ const { Reviews, Events, Users } = require("../models");
 const { validateToken } = require("../middlewares/AuthMiddleware");
 const Sentiment = require("sentiment");
 
+const sentimentAnalyzer = new Sentiment(); // Initialize once
+
 /**
  * Admin Response to a Review
  */
 router.put("/respond/:reviewId", validateToken, async (req, res) => {
     try {
+        console.log("Admin status:", req.isAdmin);
         if (!req.isAdmin) {
             return res.status(403).json({ error: "Only administrators can respond to reviews" });
         }
@@ -25,19 +28,17 @@ router.put("/respond/:reviewId", validateToken, async (req, res) => {
             return res.status(404).json({ error: "Review not found" });
         }
 
-        await Reviews.update({ admin_response: adminResponse }, { where: { id: reviewId } });
+        review.admin_response = adminResponse;
+        console.log("Updating review:", review.toJSON());
+        await review.save();
 
-        // Log successful response
-        console.log(`Review ID ${reviewId} updated with admin response.`);
-
-        const updatedReview = await Reviews.findByPk(reviewId);
         return res.json({
             message: "Admin response added successfully.",
-            response: updatedReview.admin_response,
+            response: review.admin_response,
         });
     } catch (error) {
-        console.error("Error responding to review:", error);
-        return res.status(500).json({ error: "Internal Server Error" });
+        console.error("Error responding to review:", error.stack);
+        return res.status(500).json({ error: "Internal Server Error", details: error.message  });
     }
 });
 
@@ -46,6 +47,7 @@ router.put("/respond/:reviewId", validateToken, async (req, res) => {
  */
 router.get("/", validateToken, async (req, res) => {
     try {
+        console.log("Admin status:", req.isAdmin);
         if (!req.isAdmin) {
             return res.status(403).json({ error: "Access denied" });
         }
@@ -66,7 +68,7 @@ router.get("/", validateToken, async (req, res) => {
             createdAt: review.createdAt,
         })));
     } catch (error) {
-        console.error("Error fetching reviews:", error.message);
+        console.error("Error fetching reviews:", error.stack);
         return res.status(500).json({ error: "Internal Server Error" });
     }
 });
@@ -81,13 +83,12 @@ router.post("/sentiment", async (req, res) => {
             return res.status(400).json({ error: "Text is required for sentiment analysis" });
         }
 
-        const sentimentAnalyzer = new Sentiment();
         const result = sentimentAnalyzer.analyze(text);
         const sentimentCategory = result.score > 0 ? "positive" : result.score < 0 ? "negative" : "neutral";
 
         return res.json({ sentiment: sentimentCategory, score: result.score });
     } catch (error) {
-        console.error("Error analyzing sentiment:", error.message);
+        console.error("Error analyzing sentiment:", error.stack);
         return res.status(500).json({ error: "Internal Server Error" });
     }
 });
@@ -117,7 +118,6 @@ router.post("/", validateToken, async (req, res) => {
         }
 
         // Perform Sentiment Analysis
-        const sentimentAnalyzer = new Sentiment();
         const result = sentimentAnalyzer.analyze(review_text);
         const sentimentCategory = result.score > 0 ? "positive" : result.score < 0 ? "negative" : "neutral";
 
@@ -130,7 +130,6 @@ router.post("/", validateToken, async (req, res) => {
             sentiment: sentimentCategory,
         });
 
-        // Log successful review creation
         console.log(`New review created by user ${username} for event ID ${eventId}`);
 
         return res.status(201).json({
@@ -145,7 +144,7 @@ router.post("/", validateToken, async (req, res) => {
             },
         });
     } catch (error) {
-        console.error("Error adding review:", error.message);
+        console.error("Error adding review:", error.stack);
         return res.status(500).json({ error: "Internal Server Error" });
     }
 });
@@ -157,20 +156,21 @@ router.get("/:eventId", async (req, res) => {
     try {
         const { eventId } = req.params;
 
-        const event = await Events.findByPk(eventId);
+        const event = await Events.findByPk(eventId, {
+            include: {
+                model: Reviews,
+                include: [{ model: Users, attributes: ["username"] }],
+                order: [["createdAt", "DESC"]],
+            },
+        });
+
         if (!event) {
             return res.status(404).json({ error: "Event not found" });
         }
 
-        const reviews = await Reviews.findAll({
-            where: { EventId: eventId },
-            include: [{ model: Users, attributes: ["username"] }],
-            order: [["createdAt", "DESC"]],
-        });
-
-        return res.status(200).json({ event, reviews });
+        return res.status(200).json(event);
     } catch (error) {
-        console.error("Error fetching event details and reviews:", error.message);
+        console.error("Error fetching event details and reviews:", error.stack);
         return res.status(500).json({ error: "Internal Server Error" });
     }
 });
@@ -182,6 +182,7 @@ router.delete("/:reviewId", validateToken, async (req, res) => {
     try {
         const reviewId = parseInt(req.params.reviewId, 10);
         const userId = req.user?.id;
+
         if (isNaN(reviewId) || reviewId <= 0) {
             return res.status(400).json({ error: "Invalid review ID" });
         }
@@ -189,12 +190,12 @@ router.delete("/:reviewId", validateToken, async (req, res) => {
             return res.status(401).json({ error: "Unauthorized" });
         }
 
-        const review = await Reviews.findOne({ where: { id: reviewId } });
+        const review = await Reviews.findByPk(reviewId);
         if (!review) {
             return res.status(404).json({ error: "Review not found" });
         }
 
-        // Ensure only the review owner or an admin can delete it
+        // Allow Admin or Review Owner to delete
         if (req.isAdmin || review.UserId === userId) {
             await review.destroy();
             return res.status(200).json({ message: "Review deleted successfully" });
@@ -202,7 +203,7 @@ router.delete("/:reviewId", validateToken, async (req, res) => {
             return res.status(403).json({ error: "You are not authorized to delete this review" });
         }
     } catch (error) {
-        console.error("Error deleting review:", error.message);
+        console.error("Error deleting review:", error.stack);
         return res.status(500).json({ error: "Internal Server Error" });
     }
 });

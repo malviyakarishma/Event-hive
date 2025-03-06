@@ -11,7 +11,7 @@ body {
 
 /* Navbar Styles */
 .navbar {
-  background-color: #34495e !important; /* Dark blue-grey */
+  background-color: #001F3F !important; /* Dark blue-grey */
   padding: 10px 50px;
   position: fixed;
   top: 0;
@@ -43,13 +43,12 @@ body {
 .nav-item .nav-link:hover {
   text-decoration: underline;
   color: #ff0033 !important;
-  text-transform: uppercase;
+
 }
 
 .navbar-brand:hover {
   text-decoration: underline;
   color: #ff0033 !important;
-  text-transform: uppercase;
 }
 
 /* Adjust for fixed navbar on all screens */

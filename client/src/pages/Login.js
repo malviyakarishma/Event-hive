@@ -23,29 +23,34 @@ function Login() {
 
   const login = async () => {
     if (!validateFields()) return;
-
+  
     setLoading(true);
-
+  
     try {
       const { data } = await axios.post("http://localhost:3001/auth/login", { username, password });
-
+  
       if (data?.error) {
         setMessage({ text: data.error, type: "danger" });
       } else {
         setMessage({ text: "Login successful!", type: "success" });
-
+  
         // Store token in localStorage
         localStorage.setItem("accessToken", data.token);
-
+  
         // Set the AuthContext
         setAuthState({
-          username: data.username || username,
-          id: data.id,
+          username: data.user.username || username,
+          id: data.user.id,
+          isAdmin: data.user.isAdmin, // Set isAdmin in auth state
           status: true,
         });
-
+  
         setTimeout(() => {
-          navigate("/home");
+          if (data.user.isAdmin) {
+            navigate("/admin"); // Redirect Admins
+          } else {
+            navigate("/home"); // Redirect Normal Users
+          }
         }, 1000);
       }
     } catch (error) {
@@ -55,7 +60,7 @@ function Login() {
       setLoading(false);
     }
   };
-
+  
   return (
     <div className="container mt-5" style={{ paddingTop: "70px" }}>
       <div className="card shadow p-4">

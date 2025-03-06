@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import io from 'socket.io-client';
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import { io } from 'socket.io-client';
 
-const NotificationContext = createContext();
+export const NotificationContext = createContext();
 
 export function NotificationProvider({ children }) {
   const [socket, setSocket] = useState(null);
@@ -128,6 +128,10 @@ export function NotificationProvider({ children }) {
     }
   };
 
+  const removeNotification = (notificationId) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+  };
+
   return (
     <NotificationContext.Provider
       value={{
@@ -136,6 +140,7 @@ export function NotificationProvider({ children }) {
         isConnected,
         markAsRead,
         markAllAsRead,
+        removeNotification,  // Add removeNotification here
       }}
     >
       {children}
@@ -143,4 +148,7 @@ export function NotificationProvider({ children }) {
   );
 }
 
-export const useNotifications = () => useContext(NotificationContext);
+// Custom hook to access the notifications
+export const useNotifications = () => {
+  return useContext(NotificationContext);
+};

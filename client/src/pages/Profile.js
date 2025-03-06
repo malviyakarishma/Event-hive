@@ -73,7 +73,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="bg-light min-vh-100">
+    <div className="bg-light min-vh-100" style={{ paddingTop: "70px" }}>
       <div className="container py-5">
         <div className="row">
           {/* User Info */}

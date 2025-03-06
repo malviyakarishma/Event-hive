@@ -34,6 +34,11 @@ router.post("/", async (req, res) => {
             return sendError(res, 400, "Username already taken");
         }
 
+        // Password strength check
+        if (password.length < 8) {
+            return sendError(res, 400, "Password must be at least 8 characters long");
+        }
+
         // Hash password before storing it
         const hash = await bcrypt.hash(password, 10);
 
