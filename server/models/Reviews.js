@@ -1,5 +1,10 @@
 module.exports = (sequelize, DataTypes) => {
     const Reviews = sequelize.define("Reviews", {
+        id: {
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true,
+        },
         username: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -19,19 +24,19 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: true, 
         },
-        admin_response: {  // ✅ NEW COLUMN
+        admin_response: {
             type: DataTypes.TEXT,
-            allowNull: true, // Allow null if not responded yet
+            allowNull: true, 
         }
     }, { timestamps: true });
 
     Reviews.associate = (models) => {
         Reviews.belongsTo(models.Events, {
-            foreignKey: "EventId",
+            foreignKey: "eventId",  // ✅ Match SQL script
             onDelete: "CASCADE",
         });
         Reviews.belongsTo(models.Users, {
-            foreignKey: "UserId",
+            foreignKey: "userId",  // ✅ Match SQL script
             onDelete: "CASCADE",
         });
     };
