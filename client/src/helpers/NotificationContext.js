@@ -1,154 +1,76 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
-import { io } from 'socket.io-client';
+"use client"
 
-export const NotificationContext = createContext();
+import { createContext, useState, useContext, useEffect } from "react"
+import io from "socket.io-client"
 
-export function NotificationProvider({ children }) {
-  const [socket, setSocket] = useState(null);
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isConnected, setIsConnected] = useState(false);
+const NotificationContext = createContext()
 
-  // Initialize socket connection
-  useEffect(() => {
-    const newSocket = io(process.env.REACT_APP_API_URL || 'http://localhost:5000');
-    setSocket(newSocket);
+export const useNotifications = () => useContext(NotificationContext)
 
-    return () => newSocket.disconnect();
-  }, []);
+export const NotificationProvider = ({ children }) => {
+  const [notifications, setNotifications] = useState([])
+  const [socket, setSocket] = useState(null)
 
   useEffect(() => {
-    if (!socket) return;
+    const newSocket = io("http://localhost:3001")
+    setSocket(newSocket)
 
-    socket.on('connect', () => {
-      setIsConnected(true);
+    return () => newSocket.close()
+  }, [])
 
-      // Get user ID from localStorage (adjust based on your auth implementation)
-      const userId = localStorage.getItem('userId');
-      if (userId) {
-        socket.emit('authenticate', userId);
-      }
+  useEffect(() => {
+    if (!socket) return
 
-      // If admin, join admin channel
-      const token = localStorage.getItem('token');
-      const isAdmin = localStorage.getItem('isAdmin') === 'true';
-      if (token && isAdmin) {
-        socket.emit('join-admin-channel', token);
-      }
-    });
+    const token = localStorage.getItem("accessToken")
+    if (token) {
+      socket.emit("authenticate", token)
+    }
 
-    socket.on('disconnect', () => {
-      setIsConnected(false);
-    });
-
-    socket.on('notification', (notification) => {
-      setNotifications((prev) => [notification, ...prev]);
-      setUnreadCount((prev) => prev + 1);
-
-      // Play notification sound if enabled
-      if (localStorage.getItem('notificationSound') !== 'disabled') {
-        try {
-          const notificationSound = new Audio('/notification-sound.mp3');
-          notificationSound.play();
-        } catch (e) {
-          console.log('Audio play error:', e);
-        }
-      }
-    });
+    socket.on("notification", (notification) => {
+      setNotifications((prev) => [notification, ...prev])
+    })
 
     return () => {
-      socket.off('connect');
-      socket.off('disconnect');
-      socket.off('notification');
-    };
-  }, [socket]);
-
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-
-        const response = await fetch('/api/notifications', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setNotifications(data);
-          setUnreadCount(data.filter((n) => !n.isRead).length);
-        }
-      } catch (error) {
-        console.error('Failed to fetch notifications', error);
-      }
-    };
-
-    fetchNotifications();
-  }, []);
+      socket.off("notification")
+    }
+  }, [socket])
 
   const markAsRead = async (notificationId) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/notifications/${notificationId}/read`, {
-        method: 'PUT',
+      const token = localStorage.getItem("accessToken")
+      await fetch(`http://localhost:3001/notifications/${notificationId}/read`, {
+        method: "PUT",
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-      });
+      })
 
-      if (response.ok) {
-        setNotifications((prev) =>
-          prev.map((n) => (n._id === notificationId ? { ...n, isRead: true } : n))
-        );
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      }
+      setNotifications((prev) => prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)))
     } catch (error) {
-      console.error('Failed to mark notification as read', error);
+      console.error("Error marking notification as read:", error)
     }
-  };
+  }
 
   const markAllAsRead = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/notifications/read-all', {
-        method: 'PUT',
+      const token = localStorage.getItem("accessToken")
+      await fetch("http://localhost:3001/notifications/read-all", {
+        method: "PUT",
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-      });
+      })
 
-      if (response.ok) {
-        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-        setUnreadCount(0);
-      }
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
     } catch (error) {
-      console.error('Failed to mark all notifications as read', error);
+      console.error("Error marking all notifications as read:", error)
     }
-  };
-
-  const removeNotification = (notificationId) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-  };
+  }
 
   return (
-    <NotificationContext.Provider
-      value={{
-        notifications,
-        unreadCount,
-        isConnected,
-        markAsRead,
-        markAllAsRead,
-        removeNotification,  // Add removeNotification here
-      }}
-    >
+    <NotificationContext.Provider value={{ notifications, markAsRead, markAllAsRead }}>
       {children}
     </NotificationContext.Provider>
-  );
+  )
 }
 
-// Custom hook to access the notifications
-export const useNotifications = () => {
-  return useContext(NotificationContext);
-};

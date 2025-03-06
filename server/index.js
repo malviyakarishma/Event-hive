@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const http = require("http");
 const socketIo = require("socket.io");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 // Middleware
@@ -18,14 +19,49 @@ const userRoutes = require("./routes/userRoutes");
 const reviewRouter = require("./routes/Reviews");
 const usersRouter = require("./routes/Users");
 const responseRouter = require("./routes/Response");
+const notificationRouter = require("./routes/Notifications"); // Add this line
 
 // Create HTTP server and initialize socket.io
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
 
-// Setup socket.io (simplified, no notifications)
+// Make io accessible to routes
+app.io = io;
+
+// Setup socket.io with authentication
 io.on("connection", (socket) => {
     console.log("New client connected");
+
+    socket.on('authenticate', (token) => {
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            socket.userId = decoded.id;
+            socket.join(`user-${decoded.id}`);
+            
+            if (decoded.isAdmin) {
+                socket.join('admin-channel');
+            }
+        } catch (error) {
+            console.error('Socket authentication error:', error);
+        }
+    });
+
+    socket.on('join-admin-channel', (token) => {
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            if (decoded.isAdmin) {
+                socket.join('admin-channel');
+            }
+        } catch (error) {
+            console.error('Admin channel join error:', error);
+        }
+    });
 
     socket.on("disconnect", () => {
         console.log("Client disconnected");
@@ -60,10 +96,12 @@ app.use("/reviews", reviewRouter);
 app.use("/auth", usersRouter);
 app.use("/respond", responseRouter);
 app.use("/api/user", userRoutes);
+app.use("/notifications", notificationRouter); // Add this line
 
 // Sync database and start the server
 db.sequelize.sync().then(() => {
-    server.listen(3001, () => {
-        console.log("Server running on port 3001");
+    const PORT = process.env.PORT || 3001;
+    server.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
     });
 });
