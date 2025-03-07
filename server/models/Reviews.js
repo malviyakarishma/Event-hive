@@ -32,11 +32,11 @@ module.exports = (sequelize, DataTypes) => {
 
     Reviews.associate = (models) => {
         Reviews.belongsTo(models.Events, {
-            foreignKey: "eventId",  // ✅ Match SQL script
+            foreignKey: "EventId",  // ✅ Match SQL script
             onDelete: "CASCADE",
         });
         Reviews.belongsTo(models.Users, {
-            foreignKey: "userId",  // ✅ Match SQL script
+            foreignKey: "UserId",  // ✅ Match SQL script
             onDelete: "CASCADE",
         });
     };
