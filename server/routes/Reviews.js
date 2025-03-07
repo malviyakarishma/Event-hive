@@ -12,7 +12,7 @@ const sentimentAnalyzer = new Sentiment(); // Initialize once
 router.put("/respond/:reviewId", validateToken, async (req, res) => {
     try {
         console.log("Admin status:", req.isAdmin);
-        if (!req.isAdmin) {
+        if (!req.user.isAdmin) {
             return res.status(403).json({ error: "Only administrators can respond to reviews" });
         }
 

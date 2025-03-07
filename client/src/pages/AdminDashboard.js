@@ -8,10 +8,8 @@ import "bootstrap/dist/css/bootstrap.min.css"
 import "bootstrap-icons/font/bootstrap-icons.min.css"
 import { AuthContext } from "../helpers/AuthContext"
 import { format } from "date-fns"
-import { useNotifications } from "../helpers/NotificationContext"
 
 export default function AdminDashboard() {
-  const { notifications, markAsRead } = useNotifications() // Access notifications via the hook
   const [listOfEvents, setListOfEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -19,11 +17,6 @@ export default function AdminDashboard() {
   const { authState } = useContext(AuthContext)
   const navigate = useNavigate()
 
-  // Filter admin notifications only
-  const adminNotifications = useMemo(
-    () => notifications.filter((notification) => notification.isAdminNotification),
-    [notifications],
-  )
 
   useEffect(() => {
     if (!authState.status || !authState.isAdmin) {
@@ -80,35 +73,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="container" style={{ paddingTop: "70px" }}>
-      {/* Admin Notifications */}
-      <div className="container mt-4">
-        <h2>Admin Notifications</h2>
-        {adminNotifications.length > 0 ? (
-          adminNotifications.map((notification) => (
-            <div
-              key={notification.id}
-              className={`alert ${notification.isRead ? "alert-secondary" : "alert-info"}`}
-              onClick={() => {
-                // Mark as read when clicked
-                if (!notification.isRead) {
-                  markAsRead(notification.id)
-                }
-
-                // Navigate based on notification type
-                if (notification.type === "review" && notification.relatedId) {
-                  navigate(`/response/${notification.relatedId}`)
-                }
-              }}
-              style={{ cursor: "pointer" }}
-            >
-              {notification.message}
-              <div className="mt-1 small text-muted">{new Date(notification.createdAt).toLocaleString()}</div>
-            </div>
-          ))
-        ) : (
-          <p>No new notifications.</p>
-        )}
-      </div>
 
       {/* Statistics Section */}
       <div className="row text-center mb-4">

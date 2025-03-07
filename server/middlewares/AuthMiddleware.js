@@ -35,11 +35,19 @@ const validateToken = (req, res, next) => {
             return sendError(res, 401, "Invalid token: Missing required user information");
         }
 
+        // Ensure `isAdmin` is explicitly defined and a boolean
+        const isAdmin = validToken.isAdmin === true;
+        if (validToken.isAdmin === undefined) {
+            console.warn(`Token does not contain 'isAdmin'. Defaulting to false.`);
+        } else if (typeof validToken.isAdmin !== "boolean") {
+            console.warn(`Unexpected 'isAdmin' value in token:`, validToken.isAdmin);
+        }
+
         // Attach user data and admin status to the request object
         req.user = {
             id: validToken.id,
             username: validToken.username,
-            isAdmin: validToken.isAdmin === true, // Ensure isAdmin is a boolean
+            isAdmin, // Ensures it's a boolean
         };
 
         console.info(`User authenticated: ${validToken.username}, Admin status: ${req.user.isAdmin}`);

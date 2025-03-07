@@ -1,5 +1,3 @@
-// routes/Notifications.js
-
 const express = require("express");
 const router = express.Router();
 const { Notifications, Users } = require("../models");
@@ -9,45 +7,49 @@ const { validateToken } = require("../middlewares/AuthMiddleware");
 router.post("/", validateToken, async (req, res) => {
   try {
     const { message, type, relatedId, isAdminNotification = false } = req.body;
-    
+
+    // Validate required fields
     if (!message) {
       return res.status(400).json({ error: "Message is required" });
     }
 
-    // Create the notification
+    // Create the notification for the current user
     const notification = await Notifications.create({
       message,
       type: type || "general",
       relatedId: relatedId || null,
       isAdminNotification,
       userId: req.user.id,
-      isRead: false
+      isRead: false,
     });
+
+    // Emit socket events based on notification type
+    if (req.app.io) {
+      if (isAdminNotification) {
+        // Emit to admin channel for admin notifications
+        req.app.io.to("admin-channel").emit("admin-notification", notification);
+      } else {
+        // Emit to user channel for user notifications
+        req.app.io.to("user-channel").emit("user-notification", notification);
+      }
+    }
 
     // If this is a notification for all users, create copies for each user
     if (!isAdminNotification) {
       const users = await Users.findAll({ where: { isAdmin: false } });
-      
+
       for (const user of users) {
-        if (user.id !== req.user.id) { // Don't create duplicate for the creator
+        if (user.id !== req.user.id) {
+          // Don't create a duplicate for the creator
           await Notifications.create({
             message,
             type: type || "general",
             relatedId: relatedId || null,
             isAdminNotification: false,
             userId: user.id,
-            isRead: false
+            isRead: false,
           });
         }
-      }
-    }
-
-    // Emit socket event
-    if (req.app.io) {
-      if (isAdminNotification) {
-        req.app.io.to('admin-channel').emit('notification', notification);
-      } else {
-        req.app.io.emit('notification', notification);
       }
     }
 

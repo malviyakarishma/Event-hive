@@ -1,45 +1,45 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useLocation, Routes, Route, Link, useNavigate, Navigate } from "react-router-dom"
-import axios from "axios"
-import "bootstrap/dist/css/bootstrap.min.css"
-import "bootstrap/dist/js/bootstrap.bundle.min.js"
-import logo from "./images/logo.png"
+import { useState, useEffect } from "react";
+import { useLocation, Routes, Route, Link, useNavigate, Navigate } from "react-router-dom";
+import axios from "axios";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import logo from "./images/logo.png";
 
-import Home from "./pages/Home"
-import CreateEvent from "./pages/CreateEvent"
-import Event from "./pages/Event"
-import LandingPage from "./pages/LandingPage"
-import Profile from "./pages/Profile"
-import Response from "./pages/Response"
-import Login from "./pages/Login"
-import PageNotFound from "./pages/PageNotFound"
-import Registration from "./pages/Registration"
-import Chatbot from "./pages/Chatbot"
-import AdminDashboard from "./pages/AdminDashboard"
+import Home from "./pages/Home";
+import CreateEvent from "./pages/CreateEvent";
+import Event from "./pages/Event";
+import LandingPage from "./pages/LandingPage";
+import Profile from "./pages/Profile";
+import Response from "./pages/Response";
+import Login from "./pages/Login";
+import PageNotFound from "./pages/PageNotFound";
+import Registration from "./pages/Registration";
+import Chatbot from "./pages/Chatbot";
+import AdminDashboard from "./pages/AdminDashboard";
 
-import { AuthContext } from "./helpers/AuthContext"
-import { NotificationProvider, useNotifications } from "./helpers/NotificationContext"
-import NotificationIcon from "./pages/NotificationIcon" 
+import { AuthContext } from "./helpers/AuthContext";
+import { NotificationProvider, useNotifications } from "./helpers/NotificationContext";
+import NotificationIcon from "./pages/NotificationIcon";
 
 function App() {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const { notifications, markAsRead, markAllAsRead } = useNotifications()
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { notifications, markAsRead, markAllAsRead } = useNotifications(); // Use the hook here
   const [authState, setAuthState] = useState({
     username: "",
     id: 0,
     status: false,
     isAdmin: false,
-  })
+  });
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken")
+    const token = localStorage.getItem("accessToken");
 
     if (!token) {
-      setAuthState({ username: "", id: 0, status: false, isAdmin: false })
-      return
+      setAuthState({ username: "", id: 0, status: false, isAdmin: false });
+      return;
     }
 
     axios
@@ -48,59 +48,59 @@ function App() {
       })
       .then((response) => {
         if (response.data.error) {
-          setAuthState({ username: "", id: 0, status: false, isAdmin: false })
-          localStorage.removeItem("accessToken")
+          setAuthState({ username: "", id: 0, status: false, isAdmin: false });
+          localStorage.removeItem("accessToken");
         } else {
           setAuthState({
             username: response.data.username || "User",
             id: response.data.id,
             status: true,
             isAdmin: response.data.isAdmin || false,
-          })
+          });
 
           if (response.data.isAdmin && window.location.pathname === "/login") {
-            navigate("/admin")
+            navigate("/admin");
           }
         }
       })
       .catch(() => {
-        setAuthState({ username: "", id: 0, status: false, isAdmin: false })
-        localStorage.removeItem("accessToken")
-      })
-  }, [navigate])
+        setAuthState({ username: "", id: 0, status: false, isAdmin: false });
+        localStorage.removeItem("accessToken");
+      });
+  }, [navigate]);
 
   const logout = () => {
-    localStorage.removeItem("accessToken")
-    setAuthState({ username: "", id: 0, status: false, isAdmin: false })
-    navigate("/login")
-  }
+    localStorage.removeItem("accessToken");
+    setAuthState({ username: "", id: 0, status: false, isAdmin: false });
+    navigate("/login");
+  };
 
   const deleteEvent = async (eventId) => {
     try {
-      const token = localStorage.getItem("accessToken")
+      const token = localStorage.getItem("accessToken");
 
       if (!token) {
-        navigate("/login")
-        return
+        navigate("/login");
+        return;
       }
 
       const response = await axios.delete(`http://localhost:3001/events/${eventId}`, {
         headers: { Authorization: `Bearer ${token}` },
-      })
+      });
 
       if (response.status === 200) {
-        navigate("/home")
+        navigate("/home");
       }
     } catch (error) {
       if (error.response?.status === 401) {
-        localStorage.removeItem("accessToken")
-        setAuthState({ username: "", id: 0, status: false, isAdmin: false })
-        navigate("/login")
+        localStorage.removeItem("accessToken");
+        setAuthState({ username: "", id: 0, status: false, isAdmin: false });
+        navigate("/login");
       }
     }
-  }
+  };
 
-  const hideNavbarRoutes = ["/", "/landingPage"]
+  const hideNavbarRoutes = ["/", "/landingPage"];
 
   return (
     <AuthContext.Provider value={{ authState, setAuthState, deleteEvent }}>
@@ -183,7 +183,7 @@ function App() {
                   {/* Notification Icon - Right Corner, Only for Logged-in Users */}
                   {authState.status && (
                     <NotificationIcon
-                      notifications={notifications}
+                      notifications={notifications} // Use the notifications from useNotifications
                       markAsRead={markAsRead}
                       markAllAsRead={markAllAsRead}
                     />
@@ -218,8 +218,7 @@ function App() {
         </div>
       </NotificationProvider>
     </AuthContext.Provider>
-  )
+  );
 }
 
-export default App
-
+export default App;
