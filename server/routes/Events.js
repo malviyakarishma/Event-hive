@@ -40,7 +40,6 @@ router.post("/", validateToken, async (req, res) => {
     }
 });
 
-// Fetch specific event details and its reviews (moved this to the event route)
 // Fetch specific event details and its reviews
 router.get("/:eventId", async (req, res) => {
     try {

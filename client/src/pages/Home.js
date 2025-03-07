@@ -1,10 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Calendar from "react-calendar";
-import "react-calendar/dist/Calendar.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { Tooltip } from "bootstrap";
 import "bootstrap-icons/font/bootstrap-icons.min.css";
 import { AuthContext } from "../helpers/AuthContext";
 
@@ -13,8 +10,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [dateSelected, setDateSelected] = useState(new Date());
-  const [visibleEvents, setVisibleEvents] = useState(4);
+  const [searchType, setSearchType] = useState("title"); // Default search by title
+  const [visibleUpcomingEvents, setVisibleUpcomingEvents] = useState(8);
+  const [visiblePastEvents, setVisiblePastEvents] = useState(8);
   const { authState } = useContext(AuthContext);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const navigate = useNavigate();
@@ -36,7 +34,6 @@ export default function Home() {
     }
   }, [authState, navigate]);
   
-
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollButton(window.scrollY > 200);
@@ -48,11 +45,6 @@ export default function Home() {
     };
   }, []);
 
-  useEffect(() => {
-    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    tooltipTriggerList.forEach((tooltip) => new Tooltip(tooltip));
-  }, [listOfEvents]);
-
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -63,144 +55,186 @@ export default function Home() {
   const today = new Date();
   const upcomingEvents = listOfEvents
     .filter((event) => new Date(event.date) >= today)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  const pastEvents = listOfEvents
+    .filter((event) => new Date(event.date) < today)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  const pastEvents = listOfEvents.filter((event) => new Date(event.date) < today);
+  const filteredUpcomingEvents = upcomingEvents.filter((event) => {
+    if (searchType === "title") {
+      return event.title.toLowerCase().includes(searchQuery.toLowerCase());
+    } else if (searchType === "location") {
+      return event.location.toLowerCase().includes(searchQuery.toLowerCase());
+    }
+    return true;
+  });
 
-  const filteredEvents = upcomingEvents
-    .filter(
-      (event) =>
-        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.location.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .slice(0, visibleEvents);
+  const filteredPastEvents = pastEvents.filter((event) => {
+    if (searchType === "title") {
+      return event.title.toLowerCase().includes(searchQuery.toLowerCase());
+    } else if (searchType === "location") {
+      return event.location.toLowerCase().includes(searchQuery.toLowerCase());
+    }
+    return true;
+  });
 
-  const loadMore = () => {
-    setVisibleEvents((prev) => prev + 4);
+  const loadMoreUpcoming = () => {
+    setVisibleUpcomingEvents((prev) => prev + 8);
+  };
+
+  const loadMorePast = () => {
+    setVisiblePastEvents((prev) => prev + 8);
+  };
+
+  // Create placeholder arrays for even distribution
+  const createEventGrid = (events, visibleCount) => {
+    const visibleEvents = events.slice(0, visibleCount);
+    
+    // Display a placeholder message if no events found
+    if (visibleEvents.length === 0) {
+      return (
+        <div className="col-12 text-center py-4">
+          <p className="fs-5 text-muted">No events found matching your search criteria.</p>
+          {searchQuery && (
+            <button 
+              className="btn btn-outline-secondary mt-2" 
+              onClick={() => setSearchQuery("")}
+            >
+              <i className="bi bi-x-circle me-1"></i> Clear Search
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    // Return the actual events
+    return visibleEvents.map((event) => (
+      <div className="col-md-3 mb-4" key={event.id}>
+        <div
+          className="card event-card h-100 shadow-sm mx-auto"
+          onClick={() => navigate(`/event/${event.id}`)}
+          style={{ cursor: "pointer", maxWidth: "280px" }}
+        >
+          <div 
+            className="card-header" 
+            style={{ 
+              backgroundColor: new Date(event.date) >= today ? "#0d6efd" : "#6c7b6d", 
+              color: "white" 
+            }}
+          >
+            {event.title}
+          </div>
+          <div className="card-body bg-light">
+            <p className="card-text text-center text-dark">
+              <i className="bi bi-geo-alt-fill text-success"></i>{" "}
+              <span className="fw-bold text-success">{event.location}</span>
+            </p>
+            <p className="card-text text-center fw-bold" style={{ color: new Date(event.date) >= today ? "#198754" : "#6c757d" }}>
+              <i className="bi bi-calendar-event-fill"></i> {new Date(event.date).toDateString()}
+            </p>
+          </div>
+        </div>
+      </div>
+    ));
   };
 
   return (
     <div className="container" style={{ paddingTop: "70px" }}>
-      <div className="row">
-        {/* Left Column: Events List */}
-        <div className="col-md-8">
-          <h2 className="mb-3 text-primary">
-            <span className="text-danger">Upcoming</span> Events
-          </h2>
-          {filteredEvents.length === 0 ? (
-            <p>No upcoming events found.</p>
-          ) : (
-            <div className="row">
-              {filteredEvents.map((event) => (
-                <div className="col-md-6 mb-3" key={event.id}>
-                  <div
-                    className="card event-card"
-                    onClick={() => navigate(`/event/${event.id}`)}
-                    style={{ cursor: "pointer", maxWidth: "18rem" }}
-                  >
-                    <div className="card-header bg-primary text-white">{event.title}</div>
-                    <div className="card-body bg-light">
-                      <p className="card-text text-center text-dark">
-                        <i className="bi bi-geo-alt-fill text-success"></i>{" "}
-                        <span className="fw-bold text-success">{event.location}</span>
-                      </p>
-                      <p className="card-text text-center fw-bold text-success">
-                        <i className="bi bi-calendar-event-fill"></i> {new Date(event.date).toDateString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Past Events Section */}
-          <h3 className="mt-5 text-primary">Past Events</h3>
-          <div className="row">
-            {pastEvents.slice(0, visibleEvents).map((event) => (
-              <div className="col-md-6 mb-3" key={event.id}>
-                <div
-                  className="card event-card"
-                  onClick={() => navigate(`/event/${event.id}`)}
-                  style={{ cursor: "pointer", maxWidth: "18rem" }}
-                >
-                  <div className="card-header" style={{ backgroundColor: "#6c7b6d", color: "white" }}>
-                    {event.title}
-                  </div>
-                  <div className="card-body bg-light">
-                    <p className="card-text text-center text-dark">
-                      <i className="bi bi-geo-alt-fill text-success"></i>{" "}
-                      <span className="fw-bold text-success">{event.location}</span>
-                    </p>
-                    <p className="card-text text-center text-dark">
-                      <i className="bi bi-calendar-event-fill"></i> {new Date(event.date).toDateString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
+      {/* Centered Search Bar with Options and Icon */}
+      <div className="row mb-4">
+        <div className="col-md-8 mx-auto">
+          <div className="input-group shadow-sm">
+            <span className="input-group-text bg-white border-end-0">
+              <i className="bi bi-search text-primary"></i>
+            </span>
+            <input
+              type="text"
+              className="form-control border-start-0"
+              placeholder="Search events..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ boxShadow: "none" }}
+            />
+            <select 
+              className="form-select border-start"
+              style={{ maxWidth: "130px", boxShadow: "none" }}
+              value={searchType}
+              onChange={(e) => setSearchType(e.target.value)}
+            >
+              <option value="title">By Title</option>
+              <option value="location">By Location</option>
+            </select>
           </div>
-
-          {/* Load More Button */}
-          {visibleEvents < upcomingEvents.length && (
-            <div className="text-center">
-              <button className="btn btn-success mt-3" onClick={loadMore}>
-                Load More
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Right Column: Search Bar & Calendar */}
-        <div className="col-md-4">
-          <input
-            type="text"
-            className="form-control mb-3"
-            placeholder="Search events..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <Calendar
-            onChange={setDateSelected}
-            value={dateSelected}
-            tileContent={({ date }) => {
-              const event = listOfEvents.find(
-                (event) => new Date(event.date).toDateString() === date.toDateString()
-              );
-
-              return event ? (
-                <div
-                  className="event-dot"
-                  data-bs-toggle="tooltip"
-                  data-bs-placement="top"
-                  title={event.title} // Tooltip text
-                ></div>
-              ) : null;
-            }}
-          />
-
-          <h5 className="mt-3 text-primary">Events on {dateSelected.toDateString()}</h5>
-          <ul className="list-group">
-            {listOfEvents
-              .filter((event) => new Date(event.date).toDateString() === dateSelected.toDateString())
-              .map((event) => (
-                <li
-                  key={event.id}
-                  className="list-group-item list-group-item-action"
-                  onClick={() => navigate(`/event/${event.id}`)}
-                >
-                  {event.title}
-                </li>
-              ))}
-          </ul>
         </div>
       </div>
+
+      {/* Events Count Indicator - appears when searching */}
+      {searchQuery && (
+        <div className="row mb-3">
+          <div className="col-12 text-center">
+            <span className="badge bg-light text-dark p-2">
+              Found {filteredUpcomingEvents.length + filteredPastEvents.length} events 
+              {searchType === "title" ? " with title" : " in location"} 
+              containing "{searchQuery}"
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Upcoming Events Section - Centered */}
+      <div className="row">
+        <div className="col-12 text-center">
+          <h2 className="mb-4 text-primary">
+            <span className="text-danger">Upcoming</span> Events
+          </h2>
+        </div>
+      </div>
+
+      {/* Centered Events Display with Grid System */}
+      <div className="row justify-content-center">
+        {createEventGrid(filteredUpcomingEvents, visibleUpcomingEvents)}
+      </div>
+
+      {/* Load More Button for Upcoming Events - Centered */}
+      {visibleUpcomingEvents < filteredUpcomingEvents.length && (
+        <div className="row">
+          <div className="col-12 text-center mb-5">
+            <button className="btn btn-success px-4" onClick={loadMoreUpcoming}>
+              View More <i className="bi bi-arrow-down-circle ms-1"></i>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Past Events Section - Centered */}
+      <div className="row mt-4">
+        <div className="col-12 text-center">
+          <h3 className="mb-4 text-primary">Past Events</h3>
+        </div>
+      </div>
+          
+      {/* Centered Past Events Display with Grid System */}
+      <div className="row justify-content-center">
+        {createEventGrid(filteredPastEvents, visiblePastEvents)}
+      </div>
+
+      {/* Load More Button for Past Events - Centered */}
+      {visiblePastEvents < filteredPastEvents.length && (
+        <div className="row">
+          <div className="col-12 text-center mb-5">
+            <button className="btn btn-success px-4" onClick={loadMorePast}>
+              View More <i className="bi bi-arrow-down-circle ms-1"></i>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Scroll to Top Button */}
       {showScrollButton && (
         <button
           onClick={scrollToTop}
-          className="btn btn-primary scroll-top-btn"
+          className="btn btn-primary scroll-top-btn shadow"
           style={{
             position: "fixed",
             bottom: "20px",

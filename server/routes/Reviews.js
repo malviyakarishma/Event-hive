@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { Reviews, Events, Users } = require("../models");
+const { Reviews, Events, Users, Notifications } = require("../models");
 const { validateToken } = require("../middlewares/AuthMiddleware");
 const Sentiment = require("sentiment");
 
@@ -23,7 +23,10 @@ router.put("/respond/:reviewId", validateToken, async (req, res) => {
             return res.status(400).json({ error: "Review ID and admin response are required" });
         }
 
-        const review = await Reviews.findByPk(reviewId);
+        const review = await Reviews.findByPk(reviewId, {
+            include: [{ model: Users }]
+        });
+        
         if (!review) {
             return res.status(404).json({ error: "Review not found" });
         }
@@ -32,13 +35,41 @@ router.put("/respond/:reviewId", validateToken, async (req, res) => {
         console.log("Updating review:", review.toJSON());
         await review.save();
 
+        // Create a notification in the database if Notifications model exists
+        if (Notifications) {
+            try {
+                await Notifications.create({
+                    message: `Admin responded to your review.`,
+                    type: "review_response",
+                    relatedId: review.EventId,
+                    userId: review.UserId,
+                });
+                
+                // Send real-time notification if Socket.IO is configured
+                if (req.app.io && review.UserId) {
+                    req.app.io.to(`user-${review.UserId}`).emit("user-notification", {
+                        message: `Admin responded to your review.`,
+                        type: "review_response",
+                        relatedId: review.EventId,
+                        id: Date.now().toString(),
+                        isRead: false,
+                        createdAt: new Date(),
+                    });
+                    console.log(`Notification sent to user-${review.UserId}`);
+                }
+            } catch (notificationError) {
+                // Log notification error but continue with the response
+                console.error("Error sending notification:", notificationError);
+            }
+        }
+
         return res.json({
             message: "Admin response added successfully.",
             response: review.admin_response,
         });
     } catch (error) {
         console.error("Error responding to review:", error.stack);
-        return res.status(500).json({ error: "Internal Server Error", details: error.message  });
+        return res.status(500).json({ error: "Internal Server Error", details: error.message });
     }
 });
 

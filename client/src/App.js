@@ -22,6 +22,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import { AuthContext } from "./helpers/AuthContext";
 import { NotificationProvider, useNotifications } from "./helpers/NotificationContext";
 import NotificationIcon from "./pages/NotificationIcon";
+import UserNotificationIcon from "./pages/UserNotificationIcon"; // Adjust path as needed
+
 
 function App() {
   const location = useLocation();
@@ -33,6 +35,8 @@ function App() {
     status: false,
     isAdmin: false,
   });
+
+  const useSocketNotifications = true; 
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -180,13 +184,21 @@ function App() {
                     )}
                   </ul>
 
-                  {/* Notification Icon - Right Corner, Only for Logged-in Users */}
-                  {authState.status && (
-                    <NotificationIcon
-                      notifications={notifications} // Use the notifications from useNotifications
-                      markAsRead={markAsRead}
-                      markAllAsRead={markAllAsRead}
-                    />
+                 {/* Notification Icon - Right Corner, Only for Logged-in Users */}
+                 {authState.status && (
+                    <>
+                      {useSocketNotifications ? (
+                        // Use the Socket.io-powered notification component
+                        <UserNotificationIcon />
+                      ) : (
+                        // Use the existing context-based notification component
+                        <NotificationIcon
+                          notifications={notifications}
+                          markAsRead={markAsRead}
+                          markAllAsRead={markAllAsRead}
+                        />
+                      )}
+                    </>
                   )}
 
                   {authState.status && (

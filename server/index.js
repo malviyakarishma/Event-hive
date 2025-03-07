@@ -43,23 +43,12 @@ io.on("connection", (socket) => {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             socket.userId = decoded.id;
             socket.join(`user-${decoded.id}`);
-            
+
             if (decoded.isAdmin) {
                 socket.join('admin-channel');
             }
         } catch (error) {
             console.error('Socket authentication error:', error);
-        }
-    });
-
-    socket.on('join-admin-channel', (token) => {
-        try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            if (decoded.isAdmin) {
-                socket.join('admin-channel');
-            }
-        } catch (error) {
-            console.error('Admin channel join error:', error);
         }
     });
 
