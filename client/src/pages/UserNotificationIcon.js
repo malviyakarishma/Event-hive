@@ -1,95 +1,131 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
-import { io } from "socket.io-client";
-import { AuthContext } from "../helpers/AuthContext";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap-icons/font/bootstrap-icons.css";
+"use client"
+
+import { useState, useEffect, useRef, useContext } from "react"
+import { io } from "socket.io-client"
+import { AuthContext } from "../helpers/AuthContext"
+import "bootstrap/dist/css/bootstrap.min.css"
+import "bootstrap-icons/font/bootstrap-icons.css"
 
 const UserNotificationIcon = () => {
-  const { authState } = useContext(AuthContext);
-  const [userNotifications, setUserNotifications] = useState([]);
-  const [unreadUserCount, setUnreadUserCount] = useState(0);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef(null);
-  const buttonRef = useRef(null);
-  const socketRef = useRef(null);
+  const { authState } = useContext(AuthContext)
+  const [userNotifications, setUserNotifications] = useState([])
+  const [unreadUserCount, setUnreadUserCount] = useState(0)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const dropdownRef = useRef(null)
+  const buttonRef = useRef(null)
+  const socketRef = useRef(null)
 
   useEffect(() => {
     // Close dropdown when clicking outside
     function handleClickOutside(event) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target) &&
-        buttonRef.current !== event.target
-      ) {
-        setShowDropdown(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target) && buttonRef.current !== event.target) {
+        setShowDropdown(false)
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   useEffect(() => {
-    if (!authState.status) return;
+    if (!authState.status) return
 
     const fetchUserNotifications = async () => {
       try {
-        const accessToken = localStorage.getItem("accessToken");
-        if (!accessToken) return;
+        const accessToken = localStorage.getItem("accessToken")
+        if (!accessToken) return
 
         const response = await fetch("http://localhost:3001/notifications", {
           headers: { Authorization: `Bearer ${accessToken}` },
-        });
+        })
 
         if (response.ok) {
-          const data = await response.json();
-          setUserNotifications(data);
-          setUnreadUserCount(data.filter((n) => !n.isRead).length);
+          const data = await response.json()
+
+          // Get read notification IDs from localStorage
+          const readNotificationIds = JSON.parse(localStorage.getItem("readNotifications") || "[]")
+
+          // Mark notifications as read if they're in localStorage
+          const updatedNotifications = data.map((notification) => ({
+            ...notification,
+            isRead: notification.isRead || readNotificationIds.includes(notification.id),
+          }))
+
+          setUserNotifications(updatedNotifications)
+          setUnreadUserCount(updatedNotifications.filter((n) => !n.isRead).length)
         }
       } catch (error) {
-        console.error("Failed to fetch notifications", error);
+        console.error("Failed to fetch notifications", error)
       }
-    };
+    }
 
-    fetchUserNotifications();
+    fetchUserNotifications()
 
-    socketRef.current = io("http://localhost:3001");
+    socketRef.current = io("http://localhost:3001")
 
     socketRef.current.on("connect", () => {
-      const accessToken = localStorage.getItem("accessToken");
+      const accessToken = localStorage.getItem("accessToken")
       if (accessToken && authState.id) {
-        socketRef.current.emit("authenticate", { token: accessToken, userId: authState.id });
-        socketRef.current.emit("join-user-room", authState.id);
+        socketRef.current.emit("authenticate", { token: accessToken, userId: authState.id })
+        socketRef.current.emit("join-user-room", authState.id)
       }
-    });
+    })
 
     socketRef.current.on("user-notification", (notification) => {
-      setUserNotifications((prev) => 
-        prev.some((n) => n.id === notification.id) ? prev : [notification, ...prev]
-      );
-      setUnreadUserCount((prev) => prev + 1);
-    });
+      setUserNotifications((prev) => (prev.some((n) => n.id === notification.id) ? prev : [notification, ...prev]))
+      setUnreadUserCount((prev) => prev + 1)
+    })
 
-    return () => socketRef.current && socketRef.current.disconnect();
-  }, [authState.status, authState.id]);
+    return () => socketRef.current && socketRef.current.disconnect()
+  }, [authState.status, authState.id])
 
   const markUserNotificationAsRead = async (notificationId) => {
     try {
-      const accessToken = localStorage.getItem("accessToken");
+      const accessToken = localStorage.getItem("accessToken")
       const response = await fetch(`http://localhost:3001/notifications/${notificationId}/read`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      })
+
       if (response.ok) {
-        setUserNotifications((prev) =>
-          prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
-        );
-        setUnreadUserCount((prev) => Math.max(0, prev - 1));
+        // Update state
+        setUserNotifications((prev) => prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)))
+        setUnreadUserCount((prev) => Math.max(0, prev - 1))
+
+        // Store read status in localStorage
+        const readNotificationIds = JSON.parse(localStorage.getItem("readNotifications") || "[]")
+        if (!readNotificationIds.includes(notificationId)) {
+          localStorage.setItem("readNotifications", JSON.stringify([...readNotificationIds, notificationId]))
+        }
       }
     } catch (error) {
-      console.error("Failed to mark as read", error);
+      console.error("Failed to mark as read", error)
     }
-  };
+  }
+
+  const markAllAsRead = async () => {
+    try {
+      const accessToken = localStorage.getItem("accessToken")
+      const response = await fetch(`http://localhost:3001/notifications/read-all`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+
+      if (response.ok) {
+        // Get all notification IDs
+        const allNotificationIds = userNotifications.map((n) => n.id)
+
+        // Update state
+        setUserNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+        setUnreadUserCount(0)
+
+        // Store all notification IDs in localStorage
+        localStorage.setItem("readNotifications", JSON.stringify(allNotificationIds))
+      }
+    } catch (error) {
+      console.error("Failed to mark all as read", error)
+    }
+  }
 
   return (
     <div className="position-relative">
@@ -121,15 +157,7 @@ const UserNotificationIcon = () => {
           <div className="d-flex justify-content-between align-items-center p-2 border-bottom">
             <span className="fw-bold">Notifications</span>
             {unreadUserCount > 0 && (
-              <button
-                className="btn btn-sm btn-link text-decoration-none"
-                onClick={() => {
-                  setUserNotifications((prev) =>
-                    prev.map((n) => ({ ...n, isRead: true }))
-                  );
-                  setUnreadUserCount(0);
-                }}
-              >
+              <button className="btn btn-sm btn-link text-decoration-none" onClick={markAllAsRead}>
                 Mark all as read
               </button>
             )}
@@ -146,7 +174,9 @@ const UserNotificationIcon = () => {
                   onClick={() => markUserNotificationAsRead(notification.id)}
                 >
                   <div className="w-100">
-                    <p className="mb-1 text-truncate" title={notification.message}>{notification.message}</p>
+                    <p className="mb-1 text-truncate" title={notification.message}>
+                      {notification.message}
+                    </p>
                     <small className="text-muted">{new Date(notification.createdAt).toLocaleTimeString()}</small>
                   </div>
                   {!notification.isRead && <span className="badge bg-primary rounded-pill">New</span>}
@@ -157,7 +187,8 @@ const UserNotificationIcon = () => {
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default UserNotificationIcon;
+export default UserNotificationIcon
+
