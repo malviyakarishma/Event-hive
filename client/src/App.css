@@ -41,14 +41,13 @@ body {
 }
 
 .nav-item .nav-link:hover {
-  text-decoration: underline;
-  color: #ff0033 !important;
+  color: #FF6B6B !important;
 
 }
 
 .navbar-brand:hover {
   text-decoration: underline;
-  color: #ff0033 !important;
+  color: #FF6B6B !important;
 }
 
 /* Adjust for fixed navbar on all screens */

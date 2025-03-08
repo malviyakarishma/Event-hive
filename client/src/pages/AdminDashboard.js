@@ -108,9 +108,14 @@ export default function AdminDashboard() {
           />
         </div>
         <div className="col-md-2">
-          <button className="btn btn-primary w-100" onClick={() => setSearchQuery(searchQuery.trim())}>
-            Search
-          </button>
+        <button 
+  className="btn w-100 text-white" 
+  style={{ backgroundColor: "#FF6B6B" }} 
+  onClick={() => setSearchQuery(searchQuery.trim())}
+>
+  Search
+</button>
+
         </div>
       </div>
 
@@ -126,7 +131,9 @@ export default function AdminDashboard() {
                 onClick={() => navigate(`/response/${event.id}`)}
                 style={{ cursor: "pointer" }}
               >
-                <div className="card-header bg-primary text-white">{event.title}</div>
+                <div className="card-header text-white" style={{ backgroundColor: "#001F3F" }}>
+  {event.title}
+</div>
                 <div className="card-body">
                   <p className="card-text text-center">
                     <i className="bi bi-geo-alt-fill text-success"></i> {event.location}
