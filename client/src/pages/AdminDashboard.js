@@ -131,7 +131,7 @@ export default function AdminDashboard() {
                 onClick={() => navigate(`/response/${event.id}`)}
                 style={{ cursor: "pointer" }}
               >
-                <div className="card-header text-white" style={{ backgroundColor: "#001F3F" }}>
+                <div className="card-header text-white" style={{ backgroundColor: "#04305c" }}>
   {event.title}
 </div>
                 <div className="card-body">
@@ -139,7 +139,7 @@ export default function AdminDashboard() {
                     <i className="bi bi-geo-alt-fill text-success"></i> {event.location}
                   </p>
                   <p className="card-text text-center">
-                    <i className="bi bi-calendar-event-fill"></i> {format(new Date(event.date), "MMM dd, yyyy")}
+                    <i className="bi bi-calendar-event-fill text-success"></i> {format(new Date(event.date), "MMM dd, yyyy")}
                   </p>
                 </div>
               </div>

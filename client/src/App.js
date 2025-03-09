@@ -113,7 +113,7 @@ function App() {
     <NotificationProvider>
       <div className="App">
         {!hideNavbarRoutes.includes(location.pathname) && (
-          <nav className="navbar navbar-expand-lg navbar-dark bg-primary fixed-top py-3">
+          <nav className="navbar navbar-expand-lg navbar-dark bg-primary fixed-top py-4">
             <div className="container-fluid">
               {/* Brand/Logo - Moved to the left edge */}
               <Link className="navbar-brand fw-bold fs-4" to="/">

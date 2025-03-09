@@ -107,18 +107,6 @@ export default function CalendarView() {
               <i className="bi bi-list-ul me-1"></i> List
             </button>
           </div>
-          <button 
-            className="btn btn-success"
-            onClick={() => navigate("/create-event")}
-          >
-            <i className="bi bi-plus-circle me-1"></i> New Event
-          </button>
-          <button 
-            className="btn btn-outline-secondary ms-2"
-            onClick={() => navigate("/")}
-          >
-            <i className="bi bi-house-door me-1"></i> Home
-          </button>
         </div>
       </div>
 
@@ -215,12 +203,7 @@ export default function CalendarView() {
                   <div className="text-center py-4">
                     <i className="bi bi-calendar-x text-muted" style={{ fontSize: "2.5rem" }}></i>
                     <p className="text-muted mt-3">No events scheduled for this date.</p>
-                    <button 
-                      className="btn btn-sm btn-outline-primary mt-2"
-                      onClick={() => navigate("/create-event")}
-                    >
-                      <i className="bi bi-plus-circle me-1"></i> Add Event
-                    </button>
+                   
                   </div>
                 ) : (
                   <div className="list-group">

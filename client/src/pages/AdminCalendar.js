@@ -109,15 +109,9 @@ export default function CalendarView() {
           </div>
           <button 
             className="btn btn-success"
-            onClick={() => navigate("/create-event")}
+            onClick={() => navigate("/create_event")}
           >
             <i className="bi bi-plus-circle me-1"></i> New Event
-          </button>
-          <button 
-            className="btn btn-outline-secondary ms-2"
-            onClick={() => navigate("/")}
-          >
-            <i className="bi bi-house-door me-1"></i> Home
           </button>
         </div>
       </div>
