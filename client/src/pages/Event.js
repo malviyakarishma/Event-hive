@@ -1,12 +1,17 @@
 import { useContext, useEffect, useState, useCallback } from "react"
-import { useParams } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
 import axios from "axios"
 import "bootstrap/dist/css/bootstrap.min.css"
 import "@fortawesome/fontawesome-free/css/all.min.css"
 import { AuthContext } from "../helpers/AuthContext"
 
 export default function Event() {
+  // Custom colors
+  const primaryColor = "#001F3F" // Navy blue
+  const accentColor = "#FF6B6B"  // Coral red
+
   const { id } = useParams()
+  const navigate = useNavigate()
   const [eventData, setEventData] = useState(null)
   const [reviews, setReviews] = useState([])
   const [newReview, setNewReview] = useState("")
@@ -116,6 +121,8 @@ export default function Event() {
   }, []);
 
   const deleteEvent = async (eventId) => {
+    if (!window.confirm("Are you sure you want to delete this event? This action cannot be undone.")) return;
+    
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
       alert("You must be logged in to delete an event.");
@@ -157,87 +164,219 @@ export default function Event() {
     }
   };
 
+  // const toggleExpandReview = (reviewId) => {
+  //   setExpandedReview(expandedReview === reviewId ? null : reviewId);
+  // };
 
-  if (loading) return <p className="text-center mt-5">Loading event details...</p>;
-  if (error) return <p className="text-center mt-5 text-danger">{error}</p>;
+  if (loading) return (
+    <div className="container d-flex justify-content-center align-items-center" style={{ minHeight: "60vh", paddingTop: "70px" }}>
+      <div className="spinner-border" role="status" style={{ color: accentColor }}>
+        <span className="visually-hidden">Loading event details...</span>
+      </div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="container text-center mt-5" style={{ paddingTop: "70px" }}>
+      <div className="alert" style={{ backgroundColor: accentColor, color: "white" }}>
+        <i className="fas fa-exclamation-circle me-2"></i>{error}
+      </div>
+      <button 
+        className="btn mt-3" 
+        onClick={() => navigate("/")}
+        style={{ backgroundColor: primaryColor, color: "white" }}
+      >
+        <i className="fas fa-home me-2"></i>Back to Home
+      </button>
+    </div>
+  );
 
   return (
     <div className="container mt-5" style={{ paddingTop: "70px" }}>
-      <div className="row">
-        <div className="col-md-6">
-          <div className="card text-center">
-            <div className="card-header bg-primary text-white">Event Details</div>
-            <div className="card-body">
-              <h5 className="card-title">{eventData?.title || "Event Title"}</h5>
-              <p className="card-text"><strong>Description:</strong> {eventData?.description || "No description available"}</p>
-              <p className="card-text"><strong>Location:</strong> {eventData?.location || "Location not specified"}</p>
-              <p className="card-text"><strong>Date:</strong> {eventData?.date || "Date not provided"}</p>
-            </div>
-            <div className="card-footer text-muted d-flex justify-content-between align-items-center">
-              <span>Posted By: {eventData?.username || "Anonymous"}</span>
-              {eventData?.username && authState.username === eventData.username && (
-                <button className="btn btn-danger btn-sm" onClick={() => deleteEvent(eventData.id)}>
-                  Delete Event
-                </button>
-              )}
-            </div>
+      {/* Event Header Section */}
+      <div className="card mb-4 shadow-sm">
+        <div className="card-header d-flex justify-content-between align-items-center" 
+          style={{ backgroundColor: primaryColor, color: "white" }}>
+          <h2 className="mb-0 fs-4">
+            <i className="fas fa-calendar-event me-2"></i>
+            {eventData?.title || "Event Title"}
+          </h2>
+          <span className="badge px-3 py-2" style={{ backgroundColor: accentColor }}>
+            <i className="far fa-clock me-1"></i>
+            {new Date(eventData?.date).toLocaleDateString() || "Date not provided"}
+          </span>
+        </div>
+      </div>
 
+      <div className="row">
+        {/* Event Details Section */}
+        <div className="col-lg-5 mb-4">
+          <div className="card h-100 shadow-sm">
+            <div className="card-header" style={{ backgroundColor: "#F8F9FA" }}>
+              <h3 className="mb-0 fs-5" style={{ color: primaryColor }}>
+                <i className="fas fa-info-circle me-2" style={{ color: accentColor }}></i>
+                Event Details
+              </h3>
+            </div>
+            <div className="card-body">
+              <div className="mb-3 pb-3 border-bottom">
+                <h4 className="fs-6" style={{ color: accentColor }}>Description</h4>
+                <p>{eventData?.description || "No description available"}</p>
+              </div>
+              
+              <div className="mb-3 pb-3 border-bottom">
+                <h4 className="fs-6" style={{ color: accentColor }}>Location</h4>
+                <p><i className="fas fa-map-marker-alt me-2"></i>{eventData?.location || "Location not specified"}</p>
+              </div>
+              
+              <div>
+                <h4 className="fs-6" style={{ color: accentColor }}>Organizer</h4>
+                <p><i className="fas fa-user me-2"></i>{eventData?.username || "Anonymous"}</p>
+              </div>
+            </div>
+            
+            {eventData?.username && authState.username === eventData.username && (
+              <div className="card-footer bg-white text-end border-top-0">
+                <button 
+                  className="btn" 
+                  onClick={() => deleteEvent(eventData.id)}
+                  style={{ backgroundColor: accentColor, color: "white" }}
+                >
+                  <i className="fas fa-trash me-2"></i>Delete Event
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="col-md-6">
-          <div className="card text-center">
-            <div className="card-header bg-primary text-white">Reviews</div>
+        {/* Reviews Section */}
+        <div className="col-lg-7">
+          {/* Add Review Form */}
+          <div className="card mb-4 shadow-sm">
+            <div className="card-header" style={{ backgroundColor: "#F8F9FA" }}>
+              <h3 className="mb-0 fs-5" style={{ color: primaryColor }}>
+                <i className="fas fa-star me-2" style={{ color: accentColor }}></i>
+                Write a Review
+              </h3>
+            </div>
             <div className="card-body">
               <textarea
-                className="form-control mb-2"
-                placeholder="Write a review..."
+                className="form-control"
+                placeholder="Share your experience with this event..."
                 value={newReview}
                 onChange={(event) => setNewReview(event.target.value)}
+                rows="3"
+                style={{ borderColor: primaryColor, borderRadius: "8px" }}
               />
-              <div className="form-group mt-3">
-                <label htmlFor="rating">Rating:</label>
-                <div id="rating">
+              
+              <div className="d-flex justify-content-between align-items-center mt-3">
+                <div>
+                  <label className="me-2">Your Rating:</label>
                   {[1, 2, 3, 4, 5].map((index) => (
                     <i
                       key={index}
                       onClick={() => setRating(index)}
-                      className={`fa-star fa-lg me-1 ${index <= rating ? "fas text-warning" : "far text-secondary"}`}
-                      style={{ cursor: "pointer" }}
+                      className={`fa-star fa-lg me-1 ${index <= rating ? "fas" : "far"}`}
+                      style={{ 
+                        cursor: "pointer",
+                        color: index <= rating ? "#FFD700" : "#aaa" 
+                      }}
                       aria-label={`Rate ${index} stars`}
                     />
                   ))}
                 </div>
+                
+                <button 
+                  onClick={addReview} 
+                  className="btn"
+                  disabled={!newReview.trim() || rating === 0}
+                  style={{ 
+                    backgroundColor: primaryColor, 
+                    color: "white",
+                    opacity: (!newReview.trim() || rating === 0) ? 0.65 : 1 
+                  }}
+                >
+                  <i className="fas fa-paper-plane me-2"></i>
+                  Submit Review
+                </button>
               </div>
-
-              <button onClick={addReview} className="btn btn-primary mt-3">Add a Review</button>
             </div>
           </div>
 
-          <div className="ListOfReviews mt-3">
-            {reviews.length > 0 ? (
-              reviews.map((review) => (
-                <div key={review.id} className="alert alert-secondary">
-                  <p><strong>{review.username || "Anonymous"}</strong> wrote:</p>
-                  {authState.username === review.username && (
-                    <button className="btn btn-danger btn-sm" onClick={() => deleteReview(review.id)}>🗑️</button>
-                  )}
-                  <p>{review.review_text || "No review text available"}</p>
-                  {review.rating ? (
-                    <p>{Array.from({ length: review.rating }, (_, i) => (<span key={i} style={{ color: "gold", fontSize: "1.5rem" }}>⭐</span>))}</p>
-                  ) : (
-                    <p>No rating provided</p>
-                  )}
-                    {review.admin_response && (
-                        <div className="alert alert-info mt-2">
-                          <strong>Admin Response:</strong> {review.admin_response}
+          {/* Reviews List */}
+          <div className="card shadow-sm">
+            <div className="card-header d-flex justify-content-between align-items-center" style={{ backgroundColor: "#F8F9FA" }}>
+              <h3 className="mb-0 fs-5" style={{ color: primaryColor }}>
+                <i className="fas fa-comments me-2" style={{ color: accentColor }}></i>
+                Event Reviews
+              </h3>
+              <span className="badge" style={{ backgroundColor: primaryColor, color: "white" }}>
+                {reviews.length} {reviews.length === 1 ? 'Review' : 'Reviews'}
+              </span>
+            </div>
+            
+            <div className="card-body">
+              {reviews.length > 0 ? (
+                <div className="review-list">
+                  {reviews.map((review) => (
+                    <div key={review.id} className="card mb-3 border-0 shadow-sm">
+                      <div className="card-header bg-white d-flex justify-content-between align-items-center">
+                        <div>
+                          <strong><i className="fas fa-user-circle me-2" style={{ color: accentColor }}></i>{review.username || "Anonymous"}</strong>
+                          <span className="ms-3">
+                            {Array.from({ length: 5 }, (_, i) => (
+                              <i 
+                                key={i} 
+                                className="fas fa-star"
+                                style={{ 
+                                  color: i < review.rating ? '#FFD700' : '#E0E0E0',
+                                  fontSize: "0.9rem" 
+                                }}
+                              />
+                            ))}
+                          </span>
                         </div>
-                      )}
+                        
+                        {authState.username === review.username && (
+                          <button 
+                            className="btn btn-sm" 
+                            onClick={() => deleteReview(review.id)}
+                            style={{ 
+                              backgroundColor: accentColor, 
+                              color: "white",
+                              padding: "2px 8px" 
+                            }}
+                          >
+                            <i className="fas fa-trash-alt"></i>
+                          </button>
+                        )}
+                      </div>
+                      
+                      <div className="card-body">
+                        <p className="card-text">{review.review_text || "No review text available"}</p>
+                        
+                        {review.admin_response && (
+                          <div className="mt-3 p-3 rounded" style={{ backgroundColor: "#F8F9FA" }}>
+                            <p className="mb-1">
+                              <strong>
+                                <i className="fas fa-reply me-2" style={{ color: primaryColor }}></i>
+                                Admin Response:
+                              </strong>
+                            </p>
+                            <p className="mb-0 ms-4">{review.admin_response}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))
-            ) : (
-              <p className="text-muted">No reviews yet.</p>
-            )}
+              ) : (
+                <div className="text-center py-4">
+                  <i className="fas fa-comment-slash fa-3x mb-3" style={{ color: accentColor }}></i>
+                  <p style={{ color: primaryColor }}>No reviews for this event yet. Be the first to share your experience!</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

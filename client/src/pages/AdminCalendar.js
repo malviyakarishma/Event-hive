@@ -46,7 +46,7 @@ export default function CalendarView() {
       </div>
     </div>
   );
-  
+
   if (error) return (
     <div className="alert alert-danger mx-auto mt-5" style={{ maxWidth: "600px" }}>
       <i className="bi bi-exclamation-triangle-fill me-2"></i>
@@ -70,7 +70,7 @@ export default function CalendarView() {
   };
 
   const datesWithEvents = getDatesWithEvents();
-  
+
   // Custom styles for the calendar
   const tileClassName = ({ date }) => {
     const dateStr = date.toDateString();
@@ -88,31 +88,37 @@ export default function CalendarView() {
       <div className="row mb-4">
         <div className="col-md-6">
           <h2 className="text-primary">
-            <i className="bi bi-calendar-event me-2"></i>
-            Events Calendar
+            <i className="bi bi-calendar-event me-2" style={{ color: '#FF6B6B' }}></i>
+            <span style={{ color: '#FF6B6B' }}>Events </span>
+            <span style={{ color: '#001F3F' }}>Calendar</span>
           </h2>
+
         </div>
         <div className="col-md-6 text-end">
           <div className="btn-group me-2">
-            <button 
+            <button
               className={`btn ${viewMode === 'calendar' ? 'btn-primary' : 'btn-outline-primary'}`}
               onClick={() => setViewMode("calendar")}
+              style={{ backgroundColor: '#001F3F', borderColor: '#001F3F' }}
             >
-              <i className="bi bi-calendar3 me-1"></i> Calendar
+              <i className="bi bi-calendar3 me-1" style={{ color: '#FF6B6B' }}></i> Calendar
             </button>
-            <button 
+
+            <button
               className={`btn ${viewMode === 'list' ? 'btn-primary' : 'btn-outline-primary'}`}
               onClick={() => setViewMode("list")}
             >
               <i className="bi bi-list-ul me-1"></i> List
             </button>
           </div>
-          <button 
-            className="btn btn-success"
-            onClick={() => navigate("/create_event")}
-          >
-            <i className="bi bi-plus-circle me-1"></i> New Event
-          </button>
+          <button
+  className="btn"
+  onClick={() => navigate("/create_event")}
+  style={{ backgroundColor: '#FF6B6B' }}
+>
+  <i className="bi bi-plus-circle me-1"></i> New Event
+</button>
+
         </div>
       </div>
 
@@ -123,7 +129,7 @@ export default function CalendarView() {
             <div className="card shadow-sm">
               <div className="card-header bg-white">
                 <h5 className="mb-0">
-                  <i className="bi bi-calendar3-week me-2 text-primary"></i>
+                  <i className="bi bi-calendar3-week me-2" style={{ color: '#FF6B6B' }}></i>
                   Select a Date
                 </h5>
               </div>
@@ -160,14 +166,14 @@ export default function CalendarView() {
                     return null;
                   }}
                 />
-                
+
                 <style>{`
                   .has-event {
                     background-color: rgba(231, 76, 60, 0.1);
                     font-weight: bold;
                   }
                   .react-calendar__tile--active {
-                    background-color: #0d6efd !important;
+                    background-color: #001F3F !important;
                     color: white;
                   }
                   .react-calendar {
@@ -191,13 +197,13 @@ export default function CalendarView() {
           {/* Right Column: Events for Selected Date */}
           <div className="col-md-5">
             <div className="card shadow-sm mb-4">
-              <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+              <div className="card-header text-white d-flex justify-content-between align-items-center" style={{ backgroundColor: '#001F3F' }}>
                 <h5 className="mb-0">
                   <i className="bi bi-calendar-check me-2"></i>
-                  {dateSelected.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    month: 'long', 
-                    day: 'numeric' 
+                  {dateSelected.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric'
                   })}
                 </h5>
                 <span className="badge bg-white text-primary">
@@ -209,7 +215,7 @@ export default function CalendarView() {
                   <div className="text-center py-4">
                     <i className="bi bi-calendar-x text-muted" style={{ fontSize: "2.5rem" }}></i>
                     <p className="text-muted mt-3">No events scheduled for this date.</p>
-                    <button 
+                    <button
                       className="btn btn-sm btn-outline-primary mt-2"
                       onClick={() => navigate("/create_event")}
                     >
@@ -252,9 +258,9 @@ export default function CalendarView() {
                 )}
               </div>
             </div>
-            
+
             <div className="card shadow-sm">
-              <div className="card-header bg-success text-white">
+              <div className="card-header text-white" style={{ backgroundColor: '#FF6B6B' }}>
                 <h5 className="mb-0">
                   <i className="bi bi-trophy me-2"></i>
                   Popular Events
@@ -349,7 +355,7 @@ export default function CalendarView() {
                             </td>
                             <td>
                               <div className="btn-group btn-group-sm">
-                                <button 
+                                <button
                                   className="btn btn-outline-primary"
                                   onClick={() => navigate(`/event/${event.id}`)}
                                 >
@@ -375,7 +381,7 @@ export default function CalendarView() {
               </div>
             </div>
           </div>
-          
+
           <div className="col-md-4">
             <div className="card shadow-sm mb-4">
               <div className="card-header bg-primary text-white">
@@ -414,7 +420,7 @@ export default function CalendarView() {
                 </form>
               </div>
             </div>
-            
+
             <div className="card shadow-sm">
               <div className="card-header bg-info text-white">
                 <h5 className="mb-0">
@@ -441,7 +447,7 @@ export default function CalendarView() {
                       <h2 className="text-info">
                         {
                           new Set(
-                            listOfEvents.map(event => 
+                            listOfEvents.map(event =>
                               new Date(event.date).toLocaleDateString('en-US', { month: 'short' })
                             )
                           ).size

@@ -91,7 +91,7 @@ function CreateEvent() {
   const colors = {
     navy: "#1A2A56",
     navyLight: "#2A3A66",
-    pink: "#FF5D8F",
+    pink: "#FF6B6B",
     pinkLight: "#FF7EA5",
     white: "#FFFFFF",
     lightGray: "#F5F7FA",
