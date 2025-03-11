@@ -41,7 +41,7 @@ export default function CalendarView() {
 
   if (loading) return (
     <div className="d-flex justify-content-center align-items-center" style={{ height: "80vh" }}>
-      <div className="spinner-border text-primary" role="status">
+      <div className="spinner-border" role="status" style={{ color: "#FF6B6B" }}>
         <span className="visually-hidden">Loading...</span>
       </div>
     </div>
@@ -87,7 +87,7 @@ export default function CalendarView() {
     <div className="container" style={{ paddingTop: "70px" }}>
       <div className="row mb-4">
         <div className="col-md-6">
-          <h2 className="text-primary">
+          <h2 style={{ color: "#001F3F" }}>
             <i className="bi bi-calendar-event me-2"></i>
             Events Calendar
           </h2>
@@ -95,14 +95,24 @@ export default function CalendarView() {
         <div className="col-md-6 text-end">
           <div className="btn-group me-2">
             <button 
-              className={`btn ${viewMode === 'calendar' ? 'btn-primary' : 'btn-outline-primary'}`}
+              className={`btn ${viewMode === 'calendar' ? 'btn-' : 'btn-outline-'}`}
               onClick={() => setViewMode("calendar")}
+              style={{ 
+                backgroundColor: viewMode === 'calendar' ? '#FF6B6B' : 'transparent', 
+                borderColor: '#FF6B6B',
+                color: viewMode === 'calendar' ? 'white' : '#FF6B6B'
+              }}
             >
               <i className="bi bi-calendar3 me-1"></i> Calendar
             </button>
             <button 
-              className={`btn ${viewMode === 'list' ? 'btn-primary' : 'btn-outline-primary'}`}
+              className={`btn ${viewMode === 'list' ? 'btn-' : 'btn-outline-'}`}
               onClick={() => setViewMode("list")}
+              style={{ 
+                backgroundColor: viewMode === 'list' ? '#FF6B6B' : 'transparent', 
+                borderColor: '#FF6B6B',
+                color: viewMode === 'list' ? 'white' : '#FF6B6B'
+              }}
             >
               <i className="bi bi-list-ul me-1"></i> List
             </button>
@@ -117,7 +127,7 @@ export default function CalendarView() {
             <div className="card shadow-sm">
               <div className="card-header bg-white">
                 <h5 className="mb-0">
-                  <i className="bi bi-calendar3-week me-2 text-primary"></i>
+                  <i className="bi bi-calendar3-week me-2" style={{ color: "#FF6B6B" }}></i>
                   Select a Date
                 </h5>
               </div>
@@ -138,7 +148,7 @@ export default function CalendarView() {
                           style={{
                             height: "8px",
                             width: "8px",
-                            backgroundColor: "#e74c3c",
+                            backgroundColor: "#FF6B6B",
                             borderRadius: "50%",
                             position: "absolute",
                             bottom: "5px",
@@ -157,11 +167,11 @@ export default function CalendarView() {
                 
                 <style>{`
                   .has-event {
-                    background-color: rgba(231, 76, 60, 0.1);
+                    background-color: rgba(255, 107, 107, 0.1);
                     font-weight: bold;
                   }
                   .react-calendar__tile--active {
-                    background-color: #0d6efd !important;
+                    background-color: #FF6B6B !important;
                     color: white;
                   }
                   .react-calendar {
@@ -185,7 +195,7 @@ export default function CalendarView() {
           {/* Right Column: Events for Selected Date */}
           <div className="col-md-5">
             <div className="card shadow-sm mb-4">
-              <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+              <div className="card-header text-white d-flex justify-content-between align-items-center" style={{ backgroundColor: "#001F3F" }}>
                 <h5 className="mb-0">
                   <i className="bi bi-calendar-check me-2"></i>
                   {dateSelected.toLocaleDateString('en-US', { 
@@ -194,7 +204,7 @@ export default function CalendarView() {
                     day: 'numeric' 
                   })}
                 </h5>
-                <span className="badge bg-white text-primary">
+                <span className="badge bg-white" style={{ color: "#001F3F" }}>
                   {eventsOnSelectedDate.length} event{eventsOnSelectedDate.length !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -216,7 +226,7 @@ export default function CalendarView() {
                       >
                         <div className="d-flex w-100 justify-content-between">
                           <h5 className="mb-1">{event.title}</h5>
-                          <small className="text-primary">
+                          <small style={{ color: "#FF6B6B" }}>
                             {new Date(event.date).toLocaleTimeString([], {
                               hour: '2-digit',
                               minute: '2-digit'
@@ -224,14 +234,14 @@ export default function CalendarView() {
                           </small>
                         </div>
                         <p className="mb-1 text-muted">
-                          <i className="bi bi-geo-alt-fill text-success me-1"></i>
+                          <i className="bi bi-geo-alt-fill me-1" style={{ color: "#001F3F" }}></i>
                           {event.location}
                         </p>
                         <div className="mt-2 d-flex justify-content-between align-items-center">
                           <span className="badge bg-light text-dark">
                             {event.category || "General"}
                           </span>
-                          <button className="btn btn-sm btn-outline-primary">
+                          <button className="btn btn-sm btn-outline" style={{ borderColor: "#FF6B6B", color: "#FF6B6B" }}>
                             <i className="bi bi-arrow-right"></i> Details
                           </button>
                         </div>
@@ -243,7 +253,7 @@ export default function CalendarView() {
             </div>
             
             <div className="card shadow-sm">
-              <div className="card-header bg-success text-white">
+              <div className="card-header text-white" style={{ backgroundColor: "#FF6B6B" }}>
                 <h5 className="mb-0">
                   <i className="bi bi-trophy me-2"></i>
                   Popular Events
@@ -255,7 +265,7 @@ export default function CalendarView() {
                     <div key={event.id} className="list-group-item border-0 px-1">
                       <div className="d-flex">
                         <div className="me-3 text-center">
-                          <span className="badge rounded-pill bg-primary p-2" style={{ fontSize: "1.2rem" }}>
+                          <span className="badge rounded-pill p-2" style={{ fontSize: "1.2rem", backgroundColor: "#001F3F", color: "white" }}>
                             {index + 1}
                           </span>
                         </div>
@@ -271,7 +281,7 @@ export default function CalendarView() {
                   ))}
                 </div>
                 <div className="text-center mt-3">
-                  <button className="btn btn-sm btn-outline-success">
+                  <button className="btn btn-sm btn-outline" style={{ borderColor: "#FF6B6B", color: "#FF6B6B" }}>
                     View All Rankings
                   </button>
                 </div>
@@ -286,7 +296,7 @@ export default function CalendarView() {
             <div className="card shadow-sm">
               <div className="card-header bg-white">
                 <h5 className="mb-0">
-                  <i className="bi bi-calendar-range me-2 text-primary"></i>
+                  <i className="bi bi-calendar-range me-2" style={{ color: "#FF6B6B" }}></i>
                   Upcoming Events
                 </h5>
               </div>
@@ -328,7 +338,7 @@ export default function CalendarView() {
                               </div>
                             </td>
                             <td>
-                              <i className="bi bi-geo-alt-fill text-success me-1"></i>
+                              <i className="bi bi-geo-alt-fill me-1" style={{ color: "#001F3F" }}></i>
                               {event.location}
                             </td>
                             <td>
@@ -339,12 +349,13 @@ export default function CalendarView() {
                             <td>
                               <div className="btn-group btn-group-sm">
                                 <button 
-                                  className="btn btn-outline-primary"
+                                  className="btn btn-outline"
                                   onClick={() => navigate(`/event/${event.id}`)}
+                                  style={{ borderColor: "#001F3F", color: "#001F3F" }}
                                 >
                                   <i className="bi bi-eye"></i>
                                 </button>
-                                <button className="btn btn-outline-success">
+                                <button className="btn btn-outline" style={{ borderColor: "#FF6B6B", color: "#FF6B6B" }}>
                                   <i className="bi bi-calendar-plus"></i>
                                 </button>
                               </div>
@@ -367,7 +378,7 @@ export default function CalendarView() {
           
           <div className="col-md-4">
             <div className="card shadow-sm mb-4">
-              <div className="card-header bg-primary text-white">
+              <div className="card-header text-white" style={{ backgroundColor: "#FF6B6B" }}>
                 <h5 className="mb-0">
                   <i className="bi bi-funnel me-2"></i>
                   Filter Events
@@ -396,7 +407,7 @@ export default function CalendarView() {
                     </select>
                   </div>
                   <div className="d-grid">
-                    <button type="submit" className="btn btn-primary">
+                    <button type="submit" className="btn text-white" style={{ backgroundColor: "#001F3F" }}>
                       <i className="bi bi-search me-1"></i> Apply Filters
                     </button>
                   </div>
@@ -405,7 +416,7 @@ export default function CalendarView() {
             </div>
             
             <div className="card shadow-sm">
-              <div className="card-header bg-info text-white">
+              <div className="card-header text-white" style={{ backgroundColor: "#001F3F" }}>
                 <h5 className="mb-0">
                   <i className="bi bi-info-circle me-2"></i>
                   Quick Stats
@@ -415,19 +426,19 @@ export default function CalendarView() {
                 <div className="row text-center">
                   <div className="col-6 mb-3">
                     <div className="p-3 bg-light rounded">
-                      <h2 className="text-primary">{listOfEvents.length}</h2>
+                      <h2 style={{ color: "#FF6B6B" }}>{listOfEvents.length}</h2>
                       <p className="mb-0 text-muted">Total Events</p>
                     </div>
                   </div>
                   <div className="col-6 mb-3">
                     <div className="p-3 bg-light rounded">
-                      <h2 className="text-success">{upcomingEvents.length}</h2>
+                      <h2 style={{ color: "#001F3F" }}>{upcomingEvents.length}</h2>
                       <p className="mb-0 text-muted">Upcoming</p>
                     </div>
                   </div>
                   <div className="col-6">
                     <div className="p-3 bg-light rounded">
-                      <h2 className="text-info">
+                      <h2 style={{ color: "#FF6B6B" }}>
                         {
                           new Set(
                             listOfEvents.map(event => 
@@ -441,7 +452,7 @@ export default function CalendarView() {
                   </div>
                   <div className="col-6">
                     <div className="p-3 bg-light rounded">
-                      <h2 className="text-warning">
+                      <h2 style={{ color: "#001F3F" }}>
                         {
                           new Set(
                             listOfEvents.map(event => event.location)
