@@ -14,6 +14,7 @@ app.use(cors());
 const db = require("./models");
 
 // Import routers
+const chatRouter = require("./routes/Chatbot");
 const eventRouter = require("./routes/Events");
 const userRoutes = require("./routes/userRoutes");
 const reviewRouter = require("./routes/Reviews");
@@ -83,6 +84,7 @@ function analyzeSentiment(review) {
 app.use("/events", eventRouter);
 app.use("/reviews", reviewRouter);
 app.use("/auth", usersRouter);
+app.use("/api/chat", chatRouter);
 app.use("/respond", responseRouter);
 app.use("/api/user", userRoutes);
 app.use("/notifications", notificationRouter); // Add this line

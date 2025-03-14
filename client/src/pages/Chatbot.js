@@ -1,60 +1,75 @@
-import React, { useState } from "react";
-import axios from "axios";
-import "../App.css";
-import "bootstrap/dist/css/bootstrap.min.css";
+import React, { useContext, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../helpers/AuthContext";
+import ChatbotUI from "../components/ChatbotUI";
 
 export default function Chatbot() {
-  const [userMessage, setUserMessage] = useState("");
-  const [chatHistory, setChatHistory] = useState([]);
+  const { authState } = useContext(AuthContext);
+  const navigate = useNavigate();
 
-  const handleSend = async () => {
-    if (!userMessage.trim()) return;
-
-    const userChat = { role: "user", content: userMessage };
-    setChatHistory([...chatHistory, userChat]);
-
-    try {
-      const response = await axios.post("http://localhost:3001/chatbot", { message: userMessage });
-
-      setChatHistory([...chatHistory, userChat, { role: "bot", content: response.data.reply }]);
-    } catch (error) {
-      console.error("Chatbot error:", error);
+  useEffect(() => {
+    if (!authState.status) {
+      navigate("/login");
     }
-
-    setUserMessage("");
-  };
+  }, [authState, navigate]);
 
   return (
-    <div className="container mt-5" >
-      <div className="card shadow">
-        <div className="card-header bg-primary text-white text-center">
-          <h4>Event Assistant Chatbot</h4>
-        </div>
-        <div className="card-body">
-          <div className="chatbox border rounded p-3 mb-3" style={{ height: "300px", overflowY: "auto" }}>
-            {chatHistory.map((msg, index) => (
-              <div
-                key={index}
-                className={`alert ${msg.role === "user" ? "alert-info text-end" : "alert-success text-start"}`}
-              >
-                <strong>{msg.role === "user" ? "You: " : "Bot: "}</strong> {msg.content}
+    <div className="container" style={{ paddingTop: "70px" }}>
+      <div className="row">
+        <div className="col-md-8 mx-auto">
+          <div className="card shadow-sm">
+            <div className="card-header text-white" style={{ backgroundColor: "#001F3F" }}>
+              <h2 className="mb-0">
+                <i className="bi bi-chat-dots me-2"></i>
+                Event App Assistant
+              </h2>
+            </div>
+            <div className="card-body p-4">
+              <p className="lead">
+                Welcome to the Event App Assistant! This AI-powered chatbot can help you:
+              </p>
+              <ul className="list-group list-group-flush mb-4">
+                <li className="list-group-item">
+                  <i className="bi bi-arrow-right-circle-fill me-2" style={{ color: "#FF6B6B" }}></i>
+                  Navigate through the application
+                </li>
+                <li className="list-group-item">
+                  <i className="bi bi-arrow-right-circle-fill me-2" style={{ color: "#FF6B6B" }}></i>
+                  Learn how to use features effectively
+                </li>
+                <li className="list-group-item">
+                  <i className="bi bi-arrow-right-circle-fill me-2" style={{ color: "#FF6B6B" }}></i>
+                  Get answers about events and reviews
+                </li>
+                <li className="list-group-item">
+                  <i className="bi bi-arrow-right-circle-fill me-2" style={{ color: "#FF6B6B" }}></i>
+                  Contact admins when needed
+                </li>
+              </ul>
+              
+              <div className="alert" style={{ backgroundColor: "#F8F9FA" }}>
+                <div className="d-flex">
+                  <div className="me-3">
+                    <i className="bi bi-info-circle-fill fs-3" style={{ color: "#001F3F" }}></i>
+                  </div>
+                  <div>
+                    <h5>Try asking questions like:</h5>
+                    <ul className="mb-0">
+                      <li>"How do I find events near me?"</li>
+                      <li>"How can I leave a review for an event?"</li>
+                      <li>"Where can I see my notifications?"</li>
+                      <li>"How do I contact an admin?"</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
-          <div className="input-group">
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Ask about events..."
-              value={userMessage}
-              onChange={(e) => setUserMessage(e.target.value)}
-            />
-            <button className="btn btn-primary" onClick={handleSend}>
-              Send
-            </button>
+            </div>
           </div>
         </div>
       </div>
+      
+      {/* Add this line to render the ChatbotUI component */}
+      <ChatbotUI />
     </div>
   );
 }

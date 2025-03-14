@@ -5,6 +5,7 @@ import { useLocation, Routes, Route, Link, useNavigate, Navigate } from "react-r
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import FloatingChatbot from "./components/FloatingChatbot";
 // import logo from "./images/logo.png";
 
 import Home from "./pages/Home";
@@ -113,7 +114,7 @@ function App() {
       <NotificationProvider>
         <div className="App">
           {!hideNavbarRoutes.includes(location.pathname) && (
-            <nav className="navbar navbar-expand-lg navbar-dark bg-primary fixed-top py-4">
+            <nav className="navbar navbar-expand-lg navbar-dark fixed-top py-4" style={{ backgroundColor: '#001F3F' }}>
               <div className="container-fluid">
                 {/* Brand/Logo - Moved to the left edge */}
                 <Link className="navbar-brand fw-bold fs-4" to="/">
@@ -241,6 +242,7 @@ function App() {
             </nav>
           )}
 
+            <div style={{ paddingTop: "80px" }} ></div>
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/landingPage" element={<LandingPage />} />
@@ -257,6 +259,7 @@ function App() {
             <Route path="/chatbot" element={<Chatbot />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
+          {authState.status && !hideNavbarRoutes.includes(location.pathname) && <FloatingChatbot />}
         </div>
       </NotificationProvider>
     </AuthContext.Provider>

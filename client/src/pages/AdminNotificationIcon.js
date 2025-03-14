@@ -1,10 +1,14 @@
+"use client"
+
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 
 const AdminNotificationIcon = () => {
   const [adminNotifications, setAdminNotifications] = useState([]);
   const [unreadAdminCount, setUnreadAdminCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAdminNotifications = async () => {
@@ -57,6 +61,33 @@ const AdminNotificationIcon = () => {
       }
     });
 
+    // Listen specifically for new review notifications
+    socket.on("new-review", (reviewData) => {
+      const notification = {
+        _id: reviewData._id || `review-${Date.now()}`,
+        type: "review",
+        message: `New review submitted by ${reviewData.userName || "a user"}`,
+        relatedId: reviewData.reviewId,
+        createdAt: new Date().toISOString(),
+        isRead: false,
+        // Additional metadata about the review
+        reviewRating: reviewData.rating,
+        productId: reviewData.productId,
+        productName: reviewData.productName
+      };
+      
+      setAdminNotifications((prev) => [notification, ...prev]);
+      setUnreadAdminCount((prev) => prev + 1);
+      
+      // Play review notification sound
+      try {
+        const reviewSound = new Audio("/review-notification.mp3");
+        reviewSound.play();
+      } catch (e) {
+        console.log("Audio play error:", e);
+      }
+    });
+
     return () => {
       socket.disconnect();
     };
@@ -99,6 +130,18 @@ const AdminNotificationIcon = () => {
       }
     } catch (error) {
       console.error("Failed to mark all admin notifications as read", error);
+    }
+  };
+
+  const handleNotificationClick = (notification) => {
+    markAdminNotificationAsRead(notification._id);
+    setShowDropdown(false);
+    
+    // Navigate based on notification type
+    if (notification.type === "event") {
+      navigate(`/admin/events/${notification.relatedId}`);
+    } else if (notification.type === "review") {
+      navigate(`/admin/reviews/${notification.relatedId}`);
     }
   };
 
@@ -156,7 +199,7 @@ const AdminNotificationIcon = () => {
                     className={`px-4 py-3 border-b hover:bg-gray-50 ${
                       notification.isRead ? "bg-white" : "bg-purple-50"
                     }`}
-                    onClick={() => markAdminNotificationAsRead(notification._id)}
+                    onClick={() => handleNotificationClick(notification)}
                   >
                     <div className="flex justify-between items-start">
                       <div>
@@ -181,6 +224,11 @@ const AdminNotificationIcon = () => {
                           >
                             Review Report
                           </a>
+                        )}
+                        {notification.type === "review" && notification.reviewRating && (
+                          <p className="text-xs text-gray-600">
+                            Rating: {notification.reviewRating} ★
+                          </p>
                         )}
                       </div>
                       {!notification.isRead && (

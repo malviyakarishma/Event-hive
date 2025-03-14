@@ -5,7 +5,7 @@ import eventImage from "../images/flex.jpg";
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const [scrolled, setScrolled] = useState(false);
+ const [setScrolled] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   
   // Handle scroll effects
