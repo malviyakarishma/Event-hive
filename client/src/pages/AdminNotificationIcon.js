@@ -1,5 +1,3 @@
-"use client"
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
@@ -13,10 +11,10 @@ const AdminNotificationIcon = () => {
   useEffect(() => {
     const fetchAdminNotifications = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("accessToken");
         if (!token) return;
 
-        const response = await fetch("/api/notifications/admin", {
+        const response = await fetch("http://localhost:3001/notifications/admin", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -35,9 +33,9 @@ const AdminNotificationIcon = () => {
     fetchAdminNotifications();
 
     // Socket connection setup
-    const socket = io(process.env.REACT_APP_API_URL || "http://localhost:5000");
+    const socket = io("http://localhost:3001");
     socket.on("connect", () => {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("accessToken");
       if (token) {
         socket.emit("join-admin-channel", token);
       }
@@ -47,7 +45,7 @@ const AdminNotificationIcon = () => {
     socket.on("admin-notification", (notification) => {
       setAdminNotifications((prev) => {
         // Prevent duplicate notifications
-        if (prev.some((n) => n._id === notification._id)) return prev;
+        if (prev.some((n) => n.id === notification.id)) return prev;
         return [notification, ...prev];
       });
       setUnreadAdminCount((prev) => prev + 1);
@@ -64,16 +62,19 @@ const AdminNotificationIcon = () => {
     // Listen specifically for new review notifications
     socket.on("new-review", (reviewData) => {
       const notification = {
-        _id: reviewData._id || `review-${Date.now()}`,
+        id: reviewData._id || `review-${Date.now()}`,
         type: "review",
         message: `New review submitted by ${reviewData.userName || "a user"}`,
         relatedId: reviewData.reviewId,
         createdAt: new Date().toISOString(),
         isRead: false,
         // Additional metadata about the review
-        reviewRating: reviewData.rating,
-        productId: reviewData.productId,
-        productName: reviewData.productName
+        metadata: {
+          reviewId: reviewData.reviewId,
+          eventId: reviewData.eventId,
+          rating: reviewData.rating,
+          productName: reviewData.productName
+        }
       };
       
       setAdminNotifications((prev) => [notification, ...prev]);
@@ -95,8 +96,8 @@ const AdminNotificationIcon = () => {
 
   const markAdminNotificationAsRead = async (notificationId) => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/notifications/admin/${notificationId}/read`, {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(`http://localhost:3001/notifications/admin/${notificationId}/read`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -105,7 +106,7 @@ const AdminNotificationIcon = () => {
 
       if (response.ok) {
         setAdminNotifications((prev) =>
-          prev.map((n) => (n._id === notificationId ? { ...n, isRead: true } : n))
+          prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
         );
         setUnreadAdminCount((prev) => Math.max(0, prev - 1));
       }
@@ -116,8 +117,8 @@ const AdminNotificationIcon = () => {
 
   const markAllAdminNotificationsAsRead = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/notifications/admin/read-all", {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("http://localhost:3001/notifications/admin/read-all", {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -134,110 +135,87 @@ const AdminNotificationIcon = () => {
   };
 
   const handleNotificationClick = (notification) => {
-    markAdminNotificationAsRead(notification._id);
+    markAdminNotificationAsRead(notification.id);
     setShowDropdown(false);
     
     // Navigate based on notification type
     if (notification.type === "event") {
       navigate(`/admin/events/${notification.relatedId}`);
     } else if (notification.type === "review") {
-      navigate(`/admin/reviews/${notification.relatedId}`);
+      navigate(`/response/${notification.relatedId}`);
     }
   };
 
   return (
-    <div className="relative">
+    <div className="position-relative">
       <button
-        className="relative p-2 rounded-full hover:bg-purple-100"
+        className="btn btn-light position-relative"
         onClick={() => setShowDropdown(!showDropdown)}
         aria-label="Admin Notifications"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6 text-purple-600"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-          />
-        </svg>
-
+        <i className="bi bi-bell-fill fs-5 text-primary"></i>
         {unreadAdminCount > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-purple-600 rounded-full">
+          <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
             {unreadAdminCount > 99 ? "99+" : unreadAdminCount}
           </span>
         )}
       </button>
 
       {showDropdown && (
-        <div className="absolute right-0 mt-2 w-96 bg-white rounded-md shadow-lg overflow-hidden z-50 border border-purple-200">
-          <div className="flex justify-between items-center px-4 py-2 bg-purple-100">
-            <h3 className="text-lg font-medium text-purple-800">Admin Notifications</h3>
+        <div
+          className="dropdown-menu dropdown-menu-end shadow-sm show"
+          style={{
+            width: "320px",
+            position: "absolute",
+            right: 0,
+            top: "100%",
+            zIndex: 1050,
+          }}
+        >
+          <div className="d-flex justify-content-between align-items-center p-2 border-bottom">
+            <span className="fw-bold">Admin Notifications</span>
             {unreadAdminCount > 0 && (
-              <button
-                className="text-sm text-purple-600 hover:text-purple-800"
-                onClick={markAllAdminNotificationsAsRead}
-              >
+              <button className="btn btn-sm btn-link text-decoration-none" onClick={markAllAdminNotificationsAsRead}>
                 Mark all as read
               </button>
             )}
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
+          <div className="list-group list-group-flush" style={{ maxHeight: "300px", overflowY: "auto" }}>
             {adminNotifications.length === 0 ? (
-              <div className="px-4 py-6 text-center text-gray-500">No admin notifications</div>
+              <div className="text-center text-muted py-3">No admin notifications</div>
             ) : (
-              <ul>
-                {adminNotifications.map((notification) => (
-                  <li
-                    key={notification._id}
-                    className={`px-4 py-3 border-b hover:bg-gray-50 ${
-                      notification.isRead ? "bg-white" : "bg-purple-50"
-                    }`}
-                    onClick={() => handleNotificationClick(notification)}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{notification.message}</p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(notification.createdAt).toLocaleString()}
-                        </p>
-                        {notification.type === "event" && (
-                          <a
-                            href={`/admin/events/${notification.relatedId}`}
-                            className="text-xs text-purple-600 hover:underline"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            Manage Event
-                          </a>
-                        )}
-                        {notification.type === "review" && (
-                          <a
-                            href={`/admin/reviews/${notification.relatedId}`}
-                            className="text-xs text-purple-600 hover:underline"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            Review Report
-                          </a>
-                        )}
-                        {notification.type === "review" && notification.reviewRating && (
-                          <p className="text-xs text-gray-600">
-                            Rating: {notification.reviewRating} ★
-                          </p>
+              adminNotifications.map((notification) => (
+                <button
+                  key={notification.id}
+                  className={`list-group-item list-group-item-action d-flex justify-content-between align-items-start ${
+                    notification.isRead ? "bg-white" : "bg-light"
+                  }`}
+                  onClick={() => handleNotificationClick(notification)}
+                >
+                  <div className="w-100">
+                    <p className="mb-1 text-truncate" title={notification.message}>
+                      {notification.message}
+                    </p>
+                    <small className="text-muted">
+                      {new Date(notification.createdAt).toLocaleTimeString()}
+                    </small>
+                    {notification.type === "review" && notification.metadata?.rating && (
+                      <div className="mt-1">
+                        <small className="text-muted">
+                          Rating: {notification.metadata.rating} ★
+                        </small>
+                        {notification.metadata.productName && (
+                          <small className="text-muted d-block">
+                            Event: {notification.metadata.productName}
+                          </small>
                         )}
                       </div>
-                      {!notification.isRead && (
-                        <span className="inline-block w-2 h-2 bg-purple-600 rounded-full"></span>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                    )}
+                  </div>
+                  {!notification.isRead && <span className="badge bg-primary rounded-pill">New</span>}
+                </button>
+              ))
             )}
           </div>
         </div>
