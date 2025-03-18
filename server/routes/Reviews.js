@@ -148,6 +148,7 @@ router.post("/", validateToken, async (req, res) => {
             return res.status(400).json({ error: `You have already reviewed event ID ${eventId}.` });
         }
 
+
         // Perform Sentiment Analysis
         const result = sentimentAnalyzer.analyze(review_text);
         const sentimentCategory = result.score > 0 ? "positive" : result.score < 0 ? "negative" : "neutral";
@@ -160,6 +161,20 @@ router.post("/", validateToken, async (req, res) => {
             username,
             sentiment: sentimentCategory,
         });
+
+        // Add this inside the POST / route in Reviews.js, after creating the new review
+if (req.app.io) {
+    // Emit notification to all admins
+    req.app.io.to('admin-channel').emit('new-review', {
+      reviewId: newReview.id,
+      eventId: eventId,
+      userName: username,
+      rating: rating,
+      productName: await Events.findByPk(eventId).then(event => event.title)
+    });
+    
+    console.log('Admin notification sent for new review');
+  }
 
         console.log(`New review created by user ${username} for event ID ${eventId}`);
 

@@ -20,7 +20,7 @@ const userRoutes = require("./routes/userRoutes");
 const reviewRouter = require("./routes/Reviews");
 const usersRouter = require("./routes/Users");
 const responseRouter = require("./routes/Response");
-const notificationRouter = require("./routes/Notifications"); // Add this line
+const notificationRouter = require("./routes/Notifications");
 
 // Create HTTP server and initialize socket.io
 const server = http.createServer(app);
@@ -47,11 +47,15 @@ io.on("connection", (socket) => {
 
             if (decoded.isAdmin) {
                 socket.join('admin-channel');
+                console.log(`Admin user ${decoded.id} joined admin-channel`);
             }
         } catch (error) {
             console.error('Socket authentication error:', error);
         }
     });
+
+    // Remove the separate 'join-admin-channel' event handler as it's redundant
+    // Admin status is already checked during authentication
 
     socket.on("disconnect", () => {
         console.log("Client disconnected");
@@ -87,7 +91,7 @@ app.use("/auth", usersRouter);
 app.use("/api/chat", chatRouter);
 app.use("/respond", responseRouter);
 app.use("/api/user", userRoutes);
-app.use("/notifications", notificationRouter); // Add this line
+app.use("/notifications", notificationRouter);
 
 // Sync database and start the server
 db.sequelize.sync().then(() => {

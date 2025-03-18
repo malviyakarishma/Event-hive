@@ -37,7 +37,8 @@ const AdminNotificationIcon = () => {
     socket.on("connect", () => {
       const token = localStorage.getItem("accessToken");
       if (token) {
-        socket.emit("join-admin-channel", token);
+        // Use the authenticate event instead of join-admin-channel
+        socket.emit("authenticate", token);
       }
     });
 

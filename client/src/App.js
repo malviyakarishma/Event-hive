@@ -26,7 +26,8 @@ import { AuthContext } from "./helpers/AuthContext";
 import { NotificationProvider, useNotifications } from "./helpers/NotificationContext";
 import NotificationIcon from "./pages/NotificationIcon";
 import UserNotificationIcon from "./pages/UserNotificationIcon"; // Adjust path as needed
-
+// Add this import at the top of App.js with other imports
+import AdminNotificationIcon from "./pages/AdminNotificationIcon";
 
 function App() {
   const location = useLocation();
@@ -212,18 +213,22 @@ function App() {
                         </span>
                       </Link>
 
-                      {/* Notification Icon */}
-                      <div className="me-3">
-                        {useSocketNotifications ? (
-                          <UserNotificationIcon />
-                        ) : (
-                          <NotificationIcon
-                            notifications={notifications}
-                            markAsRead={markAsRead}
-                            markAllAsRead={markAllAsRead}
-                          />
-                        )}
-                      </div>
+                     {/* Notification Icon */}
+<div className="me-3">
+  {useSocketNotifications ? (
+    authState.isAdmin ? (
+      <AdminNotificationIcon />
+    ) : (
+      <UserNotificationIcon />
+    )
+  ) : (
+    <NotificationIcon
+      notifications={notifications}
+      markAsRead={markAsRead}
+      markAllAsRead={markAllAsRead}
+    />
+  )}
+</div>
 
                       {/* Logout Button */}
                       <button
