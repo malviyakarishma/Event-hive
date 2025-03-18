@@ -163,8 +163,8 @@ router.post("/", validateToken, async (req, res) => {
         });
 
         // Add this inside the POST / route in Reviews.js, after creating the new review
+// Add this inside the POST / route in Reviews.js, after creating the new review
 if (req.app.io) {
-    // Emit notification to all admins
     req.app.io.to('admin-channel').emit('new-review', {
       reviewId: newReview.id,
       eventId: eventId,
@@ -172,7 +172,6 @@ if (req.app.io) {
       rating: rating,
       productName: await Events.findByPk(eventId).then(event => event.title)
     });
-    
     console.log('Admin notification sent for new review');
   }
 

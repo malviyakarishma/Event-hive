@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState, useCallback } from "react"
+import { useContext, useEffect, useState, useCallback, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import axios from "axios"
 import "bootstrap/dist/css/bootstrap.min.css"
@@ -19,6 +19,16 @@ export default function Event() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const { authState } = useContext(AuthContext)
+  
+  // Social sharing states
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [sharingProvider, setSharingProvider] = useState(null)
+  const [isAuthenticating, setIsAuthenticating] = useState(false)
+  const [shareMessage, setShareMessage] = useState("")
+  const [oauthPopup, setOauthPopup] = useState(null)
+  const [shareSuccess, setShareSuccess] = useState(null)
+  const oauthCallbackRef = useRef()
+  const socialShareTimeoutRef = useRef()
 
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -43,6 +53,102 @@ export default function Event() {
     fetchEventDetails()
   }, [id])
 
+// Wrap shareToSocialMedia in useCallback to prevent re-creation on each render
+const shareToSocialMedia = useCallback(async (provider, token) => {
+  try {
+    setIsAuthenticating(true);
+    
+    // Create an image card for the event (if available)
+    const eventImage = eventData?.image_url || null;
+    
+    // Create the share content
+    const shareContent = {
+      provider,
+      message: shareMessage,
+      url: window.location.href,
+      eventId: id,
+      eventTitle: eventData?.title,
+      eventDescription: eventData?.description,
+      eventDate: eventData?.date,
+      eventImage: eventImage,
+      rating: rating
+    };
+    
+    // Send share request to backend
+    const response = await axios.post(
+      `http://localhost:3001/social/share`,
+      shareContent,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    
+    setIsAuthenticating(false);
+    
+    // Show success message
+    if (response.data.success) {
+      setShareSuccess({ 
+        success: true, 
+        provider, 
+        message: `Successfully shared to ${provider}!`,
+        shareId: response.data.shareId || null 
+      });
+      
+      // Clear success message after some time
+      socialShareTimeoutRef.current = setTimeout(() => {
+        setShareSuccess(null);
+      }, 5000);
+    } else {
+      setShareSuccess({ 
+        success: false, 
+        provider, 
+        message: `Failed to share to ${provider}: ${response.data.error || 'Unknown error'}` 
+      });
+    }
+  } catch (error) {
+    console.error(`Error sharing to ${provider}:`, error);
+    setIsAuthenticating(false);
+    setShareSuccess({ 
+      success: false, 
+      provider, 
+      message: `Error sharing to ${provider}: ${error.response?.data?.message || error.message}` 
+    });
+  }
+}, [eventData, shareMessage, id, rating]); // Dependencies inside useCallback
+
+// Now, the useEffect hook
+useEffect(() => {
+  const handleOAuthCallback = (event) => {
+    if (event.origin !== window.location.origin) return;
+
+    if (event.data?.type === 'oauth-callback') {
+      const { provider, success, token } = event.data;
+
+      if (success && token) {
+        sessionStorage.setItem(`${provider}Token`, token);
+
+        if (oauthPopup && !oauthPopup.closed) {
+          oauthPopup.close();
+        }
+
+        shareToSocialMedia(provider, token);
+      } else {
+        setIsAuthenticating(false);
+        setShareSuccess({ success: false, provider, message: `Authentication with ${provider} failed.` });
+      }
+    }
+  };
+
+  window.addEventListener('message', handleOAuthCallback);
+  oauthCallbackRef.current = handleOAuthCallback;
+
+  return () => {
+    window.removeEventListener('message', oauthCallbackRef.current);
+
+    if (socialShareTimeoutRef.current) {
+      clearTimeout(socialShareTimeoutRef.current);
+    }
+  };
+}, [oauthPopup, shareToSocialMedia]); // Now shareToSocialMedia is defined before it is used
+  
   const addReview = useCallback(async () => {
     if (!newReview.trim() || rating === 0) {
       alert("Please provide both a review and a rating.")
@@ -93,13 +199,80 @@ export default function Event() {
           console.error("Error creating notification:", notifError)
         }
 
-        alert("Your review was added successfully!")
+        // Reset share success state
+        setShareSuccess(null)
+        
+        // Open sharing modal
+        setShowShareModal(true)
+        
+        // Set default share message
+        const defaultShareMessage = `I just reviewed "${eventData?.title}" with ${rating} stars! Check out this event at: ${window.location.href}`;
+        setShareMessage(defaultShareMessage);
       }
     } catch (err) {
       console.error("Error adding review:", err)
       alert("There was an error adding your review. Please try again.")
     }
   }, [newReview, rating, id, eventData?.title]);
+
+  const initiateOAuth = (provider) => {
+    setSharingProvider(provider);
+    setIsAuthenticating(true);
+    setShareSuccess(null);
+    
+    // Set OAuth endpoints
+    const oauthEndpoints = {
+      facebook: 'http://localhost:3001/auth/facebook',
+      linkedin: 'http://localhost:3001/auth/linkedin',
+      twitter: 'http://localhost:3001/auth/twitter'
+    };
+    
+    // Calculate popup position to be centered
+    const width = 600;
+    const height = 600;
+    const left = window.innerWidth / 2 - width / 2;
+    const top = window.innerHeight / 2 - height / 2;
+    
+    // Open the popup
+    const popup = window.open(
+      oauthEndpoints[provider],
+      `${provider}OAuth`, 
+      `width=${width},height=${height},top=${top},left=${left}`
+    );
+    
+    setOauthPopup(popup);
+    
+    // Check if popup was blocked
+    if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+      setIsAuthenticating(false);
+      setShareSuccess({ 
+        success: false, 
+        provider, 
+        message: "Popup blocked! Please allow popups for this site to use social sharing." 
+      });
+    }
+  };
+
+
+  const handleShareSubmit = (provider) => {
+    // Check if we already have a token for this provider
+    const existingToken = sessionStorage.getItem(`${provider}Token`);
+    
+    if (existingToken) {
+      // If we have a token, use it directly
+      shareToSocialMedia(provider, existingToken);
+    } else {
+      // Otherwise, initiate OAuth flow
+      initiateOAuth(provider);
+    }
+  };
+  
+  const closeShareModal = () => {
+    setShowShareModal(false);
+    setSharingProvider(null);
+    setIsAuthenticating(false);
+    setShareSuccess(null);
+  };
 
   const deleteReview = useCallback(async (reviewId) => {
     const accessToken = localStorage.getItem("accessToken");
@@ -141,17 +314,13 @@ export default function Event() {
       window.location.href = "/";
     } catch (error) {
       if (error.response) {
-        console.error("Error details:", error.response.data); // Log exact error for debugging
+        console.error("Error details:", error.response.data);
 
         if (error.response.status === 401) {
           alert("Session expired. Please log in again.");
-
-          // Clear ALL authentication-related data
           localStorage.removeItem("accessToken");
-          sessionStorage.clear(); // Clear session storage just in case
-          document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"; // Clear cookies if used
-
-          // Force a hard reload to clear cached auth state
+          sessionStorage.clear();
+          document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
           window.location.replace("/login");
         } else if (error.response.status === 403) {
           alert("You are not authorized to delete this event.");
@@ -164,10 +333,7 @@ export default function Event() {
     }
   };
 
-  // const toggleExpandReview = (reviewId) => {
-  //   setExpandedReview(expandedReview === reviewId ? null : reviewId);
-  // };
-
+  // Render loading state
   if (loading) return (
     <div className="container d-flex justify-content-center align-items-center" style={{ minHeight: "60vh", paddingTop: "70px" }}>
       <div className="spinner-border" role="status" style={{ color: accentColor }}>
@@ -176,6 +342,7 @@ export default function Event() {
     </div>
   );
 
+  // Render error state
   if (error) return (
     <div className="container text-center mt-5" style={{ paddingTop: "70px" }}>
       <div className="alert" style={{ backgroundColor: accentColor, color: "white" }}>
@@ -380,6 +547,123 @@ export default function Event() {
           </div>
         </div>
       </div>
+
+      {/* Social Share Modal */}
+      {showShareModal && (
+        <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header" style={{ backgroundColor: primaryColor, color: 'white' }}>
+                <h5 className="modal-title">
+                  <i className="fas fa-share-alt me-2"></i>
+                  Share Your Review
+                </h5>
+                <button 
+                  type="button" 
+                  className="btn-close btn-close-white" 
+                  onClick={closeShareModal}
+                  disabled={isAuthenticating}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>Your review has been submitted successfully! Would you like to share this event on social media?</p>
+                
+                <div className="form-group mb-3">
+                  <label htmlFor="shareMessage" className="form-label">
+                    Share Message:
+                    <small className="text-muted ms-2">
+                      Customize your message for social media
+                    </small>
+                  </label>
+                  <textarea 
+                    id="shareMessage"
+                    className="form-control"
+                    value={shareMessage}
+                    onChange={(e) => setShareMessage(e.target.value)}
+                    rows="3"
+                    style={{ borderColor: primaryColor }}
+                  />
+                </div>
+
+                {/* Share Success/Error Message */}
+                {shareSuccess && (
+                  <div className={`alert ${shareSuccess.success ? 'alert-success' : 'alert-danger'} mb-3`}>
+                    {shareSuccess.success ? (
+                      <i className="fas fa-check-circle me-2"></i>
+                    ) : (
+                      <i className="fas fa-exclamation-circle me-2"></i>
+                    )}
+                    {shareSuccess.message}
+                  </div>
+                )}
+                
+                <div className="d-flex justify-content-center flex-wrap gap-2 mb-3">
+                  <button 
+                    className="btn"
+                    onClick={() => handleShareSubmit('facebook')}
+                    disabled={isAuthenticating}
+                    style={{ 
+                      backgroundColor: '#4267B2',
+                      color: 'white',
+                      width: '140px'
+                    }}
+                  >
+                    <i className="fab fa-facebook me-2"></i>
+                    Facebook
+                  </button>
+                  
+                  <button 
+                    className="btn"
+                    onClick={() => handleShareSubmit('linkedin')}
+                    disabled={isAuthenticating}
+                    style={{ 
+                      backgroundColor: '#0077B5',
+                      color: 'white',
+                      width: '140px'
+                    }}
+                  >
+                    <i className="fab fa-linkedin me-2"></i>
+                    LinkedIn
+                  </button>
+                  
+                  <button 
+                    className="btn"
+                    onClick={() => handleShareSubmit('twitter')}
+                    disabled={isAuthenticating}
+                    style={{ 
+                      backgroundColor: '#1DA1F2',
+                      color: 'white',
+                      width: '140px'
+                    }}
+                  >
+                    <i className="fab fa-twitter me-2"></i>
+                    Twitter
+                  </button>
+                </div>
+                
+                {isAuthenticating && (
+                  <div className="text-center py-2">
+                    <div className="spinner-border" role="status" style={{ color: primaryColor }}>
+                      <span className="visually-hidden">Authenticating...</span>
+                    </div>
+                    <p className="mt-2">Connecting to {sharingProvider}...</p>
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={closeShareModal}
+                  disabled={isAuthenticating}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

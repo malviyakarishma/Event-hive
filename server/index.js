@@ -37,9 +37,10 @@ app.io = io;
 
 // Setup socket.io with authentication
 io.on("connection", (socket) => {
-    console.log("New client connected");
+    console.log("New client connected:", socket.id);
 
     socket.on('authenticate', (token) => {
+        console.log("Authenticating socket with token:", token);
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             socket.userId = decoded.id;
@@ -54,11 +55,8 @@ io.on("connection", (socket) => {
         }
     });
 
-    // Remove the separate 'join-admin-channel' event handler as it's redundant
-    // Admin status is already checked during authentication
-
     socket.on("disconnect", () => {
-        console.log("Client disconnected");
+        console.log("Client disconnected:", socket.id);
     });
 });
 

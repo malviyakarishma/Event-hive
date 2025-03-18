@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 
@@ -7,23 +7,28 @@ const AdminNotificationIcon = () => {
   const [unreadAdminCount, setUnreadAdminCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
+  const dropdownRef = useRef(null);
 
+  // Fetch initial notifications
   useEffect(() => {
     const fetchAdminNotifications = async () => {
       try {
         const token = localStorage.getItem("accessToken");
         if (!token) return;
-
+    
         const response = await fetch("http://localhost:3001/notifications/admin", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-
+    
         if (response.ok) {
           const data = await response.json();
+          console.log("Fetched admin notifications:", data);
           setAdminNotifications(data);
           setUnreadAdminCount(data.filter((n) => !n.isRead).length);
+        } else {
+          console.error("Failed to fetch admin notifications:", response.statusText);
         }
       } catch (error) {
         console.error("Failed to fetch admin notifications", error);
@@ -31,79 +36,100 @@ const AdminNotificationIcon = () => {
     };
 
     fetchAdminNotifications();
+  }, []);
 
-    // Socket connection setup
-    const socket = io("http://localhost:3001");
-    socket.on("connect", () => {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        // Use the authenticate event instead of join-admin-channel
-        socket.emit("authenticate", token);
-      }
+  // Socket.IO setup
+// In AdminNotificationIcon.js (inside the socket connection logic)
+useEffect(() => {
+  const socket = io("http://localhost:3001", {
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+  });
+
+  socket.on("connect", () => {
+    console.log("Socket connected");
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      socket.emit("authenticate", token);
+      console.log("Admin authenticated and joined admin-channel");
+    }
+  });
+
+  socket.on("connect_error", (err) => {
+    console.error("Socket connection error:", err);
+  });
+
+  // Listen for new review notifications
+  socket.on("new-review", (reviewData) => {
+    console.log("Received new-review event:", reviewData);
+
+    const notification = {
+      id: reviewData.reviewId || `review-${Date.now()}`,
+      type: "review",
+      message: `New review submitted by ${reviewData.userName || "a user"}`,
+      relatedId: reviewData.reviewId,
+      createdAt: new Date().toISOString(),
+      isRead: false,
+      metadata: {
+        reviewId: reviewData.reviewId,
+        eventId: reviewData.eventId,
+        rating: reviewData.rating,
+        productName: reviewData.productName,
+      },
+    };
+
+    // Prevent duplicate notifications
+    setAdminNotifications((prev) => {
+      if (prev.some((n) => n.id === notification.id)) return prev;
+      return [notification, ...prev];
     });
 
-    // Listen for admin notifications
-    socket.on("admin-notification", (notification) => {
-      setAdminNotifications((prev) => {
-        // Prevent duplicate notifications
-        if (prev.some((n) => n.id === notification.id)) return prev;
-        return [notification, ...prev];
-      });
-      setUnreadAdminCount((prev) => prev + 1);
-
-      // Play notification sound
-      try {
-        const adminSound = new Audio("/admin-notification.mp3");
-        adminSound.play();
-      } catch (e) {
-        console.log("Audio play error:", e);
-      }
+    setUnreadAdminCount((prev) => {
+      console.log("Updating unreadAdminCount from", prev, "to", prev + 1);
+      return prev + 1;
     });
 
-    // Listen specifically for new review notifications
-    socket.on("new-review", (reviewData) => {
-      const notification = {
-        id: reviewData._id || `review-${Date.now()}`,
-        type: "review",
-        message: `New review submitted by ${reviewData.userName || "a user"}`,
-        relatedId: reviewData.reviewId,
-        createdAt: new Date().toISOString(),
-        isRead: false,
-        // Additional metadata about the review
-        metadata: {
-          reviewId: reviewData.reviewId,
-          eventId: reviewData.eventId,
-          rating: reviewData.rating,
-          productName: reviewData.productName
-        }
-      };
-      
-      setAdminNotifications((prev) => [notification, ...prev]);
-      setUnreadAdminCount((prev) => prev + 1);
-      
-      // Play review notification sound
-      try {
-        const reviewSound = new Audio("/review-notification.mp3");
-        reviewSound.play();
-      } catch (e) {
-        console.log("Audio play error:", e);
-      }
-    });
+    // Play notification sound
+    try {
+      const reviewSound = new Audio("/review-notification.mp3");
+      reviewSound.play();
+    } catch (e) {
+      console.log("Audio play error:", e);
+    }
+  });
 
+  return () => {
+    socket.disconnect();
+  };
+}, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      socket.disconnect();
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
   const markAdminNotificationAsRead = async (notificationId) => {
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await fetch(`http://localhost:3001/notifications/admin/${notificationId}/read`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `http://localhost:3001/notifications/admin/${notificationId}/read`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.ok) {
         setAdminNotifications((prev) =>
@@ -119,12 +145,15 @@ const AdminNotificationIcon = () => {
   const markAllAdminNotificationsAsRead = async () => {
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await fetch("http://localhost:3001/notifications/admin/read-all", {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        "http://localhost:3001/notifications/admin/read-all",
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.ok) {
         setAdminNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
@@ -138,7 +167,7 @@ const AdminNotificationIcon = () => {
   const handleNotificationClick = (notification) => {
     markAdminNotificationAsRead(notification.id);
     setShowDropdown(false);
-    
+
     // Navigate based on notification type
     if (notification.type === "event") {
       navigate(`/admin/events/${notification.relatedId}`);
@@ -148,7 +177,7 @@ const AdminNotificationIcon = () => {
   };
 
   return (
-    <div className="position-relative">
+    <div className="position-relative" ref={dropdownRef}>
       <button
         className="btn btn-light position-relative"
         onClick={() => setShowDropdown(!showDropdown)}
@@ -161,6 +190,7 @@ const AdminNotificationIcon = () => {
           </span>
         )}
       </button>
+      {console.log("Rendering unreadAdminCount:", unreadAdminCount)}
 
       {showDropdown && (
         <div
@@ -176,13 +206,19 @@ const AdminNotificationIcon = () => {
           <div className="d-flex justify-content-between align-items-center p-2 border-bottom">
             <span className="fw-bold">Admin Notifications</span>
             {unreadAdminCount > 0 && (
-              <button className="btn btn-sm btn-link text-decoration-none" onClick={markAllAdminNotificationsAsRead}>
+              <button
+                className="btn btn-sm btn-link text-decoration-none"
+                onClick={markAllAdminNotificationsAsRead}
+              >
                 Mark all as read
               </button>
             )}
           </div>
 
-          <div className="list-group list-group-flush" style={{ maxHeight: "300px", overflowY: "auto" }}>
+          <div
+            className="list-group list-group-flush"
+            style={{ maxHeight: "300px", overflowY: "auto" }}
+          >
             {adminNotifications.length === 0 ? (
               <div className="text-center text-muted py-3">No admin notifications</div>
             ) : (
@@ -214,7 +250,9 @@ const AdminNotificationIcon = () => {
                       </div>
                     )}
                   </div>
-                  {!notification.isRead && <span className="badge bg-primary rounded-pill">New</span>}
+                  {!notification.isRead && (
+                    <span className="badge bg-primary rounded-pill">New</span>
+                  )}
                 </button>
               ))
             )}
