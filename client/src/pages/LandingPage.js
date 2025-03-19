@@ -5,18 +5,20 @@ import eventImage from "../images/flex.jpg";
 
 const LandingPage = () => {
   const navigate = useNavigate();
- const [setScrolled] = useState(false);
+  const [setScrolled] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   
   // Handle scroll effects
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
+      // Set scrolled state to true once scrolled down
+      setScrolled(window.scrollY > 100);
     };
-    
+  
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [setScrolled]);
+  
 
   // Animation for reveal on scroll
   const [visible, setVisible] = useState({
@@ -230,293 +232,85 @@ const LandingPage = () => {
                 borderRadius: '2px'
               }}></span>
             </h2>
-            <p style={{
-              color: colors.textLight,
-              fontSize: '1.1rem',
-              maxWidth: '600px',
-              margin: '0 auto'
-            }}>Discover how our AI enhances your event experience</p>
+            <p className="lead mb-4" style={{ color: colors.textLight }}>
+              Discover the power of AI in simplifying your event experiences.
+            </p>
           </div>
-          
-          {/* Features as horizontal cards */}
-          {[
-            {
-              icon: "📊",
-              title: "Smart Event Analysis",
-              description: "Our AI analyzes event content in real-time, highlighting key moments and providing insights you might otherwise miss."
-            },
-            {
-              icon: "🎯",
-              title: "Personalized Recommendations",
-              description: "Receive tailored event suggestions based on your preferences, past attendance, and emerging trends."
-            },
-            {
-              icon: "🔍",
-              title: "Intelligent Search",
-              description: "Find exactly what you're looking for with our context-aware search that understands natural language queries."
-            }
-          ].map((feature, index) => (
-            <div 
-              className="mb-4" 
-              key={index}
-              style={{
-                transform: `translateY(${visible.features ? '0' : '40px'})`,
-                opacity: visible.features ? 1 : 0,
-                transition: 'all 0.3s ease',
-                transitionDelay: `${0.1 + index * 0.1}s`,
-              }}
-            >
-              <div className="card border-0 h-100" style={{
-                borderRadius: '16px',
-                overflow: 'hidden',
-                boxShadow: '0 10px 30px rgba(13, 27, 64, 0.05)',
-                background: index % 2 === 0 ? '#FFF5F8' : '#F8F9FD',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-5px)';
-                e.currentTarget.style.boxShadow = '0 15px 35px rgba(13, 27, 64, 0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 10px 30px rgba(13, 27, 64, 0.05)';
-              }}>
-                <div className="card-body p-4">
-                  <div className="row align-items-center">
-                    <div className="col-md-2 col-sm-3 text-center mb-3 mb-md-0">
-                      <div style={{
-                        fontSize: '3rem',
-                        background: index === 0 ? colors.primary : index === 1 ? colors.secondary : colors.accent,
-                        color: 'white',
-                        width: '80px',
-                        height: '80px',
-                        borderRadius: '16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto'
-                      }}>{feature.icon}</div>
-                    </div>
-                    <div className="col-md-10 col-sm-9">
-                      <h3 className="h4 fw-bold mb-2" style={{
-                        color: colors.secondary,
-                        fontSize: '1.25rem',
-                      }}>{feature.title}</h3>
-                      <p style={{
-                        color: colors.textLight,
-                        fontSize: '1rem',
-                        lineHeight: '1.6',
-                        marginBottom: 0
-                      }}>{feature.description}</p>
-                    </div>
-                  </div>
+          <div className="row">
+            {/* Card 1 */}
+            <div className="col-lg-4 col-md-6 mb-4">
+              <div className="card shadow-sm border-0 rounded-lg" style={{ overflow: 'hidden' }}>
+                <img src="https://via.placeholder.com/400x300" alt="Feature 1" className="card-img-top" />
+                <div className="card-body" style={{ background: colors.light }}>
+                  <h5 className="card-title" style={{ color: colors.primary }}>Event Personalization</h5>
+                  <p className="card-text" style={{ color: colors.textLight }}>
+                    Let AI recommend events that match your interests and preferences.
+                  </p>
                 </div>
               </div>
             </div>
-          ))}
+            {/* Card 2 */}
+            <div className="col-lg-4 col-md-6 mb-4">
+              <div className="card shadow-sm border-0 rounded-lg" style={{ overflow: 'hidden' }}>
+                <img src="https://via.placeholder.com/400x300" alt="Feature 2" className="card-img-top" />
+                <div className="card-body" style={{ background: colors.light }}>
+                  <h5 className="card-title" style={{ color: colors.primary }}>Seamless Booking</h5>
+                  <p className="card-text" style={{ color: colors.textLight }}>
+                    Effortlessly book your next event with just a few clicks.
+                  </p>
+                </div>
+              </div>
+            </div>
+            {/* Card 3 */}
+            <div className="col-lg-4 col-md-6 mb-4">
+              <div className="card shadow-sm border-0 rounded-lg" style={{ overflow: 'hidden' }}>
+                <img src="https://via.placeholder.com/400x300" alt="Feature 3" className="card-img-top" />
+                <div className="card-body" style={{ background: colors.light }}>
+                  <h5 className="card-title" style={{ color: colors.primary }}>AI Reviews</h5>
+                  <p className="card-text" style={{ color: colors.textLight }}>
+                    Get intelligent insights and ratings on events.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
-      
-      {/* CTA Section with updated design */}
+
+      {/* Call to Action Section */}
       <section 
         id="cta-section"
-        className="text-white py-5"
+        className={`py-5 text-center ${visible.cta ? 'animate-fade-in' : ''}`}
         style={{
-          background: `linear-gradient(135deg, ${colors.secondary} 0%, ${colors.primary} 100%)`,
-          padding: '5rem 0',
-          position: 'relative',
-          overflow: 'hidden',
+          background: colors.primary,
+          color: 'white',
           opacity: visible.cta ? 1 : 0,
           transform: visible.cta ? 'translateY(0)' : 'translateY(30px)',
           transition: 'opacity 0.8s ease, transform 0.8s ease',
         }}
       >
-        {/* Abstract shapes in background */}
-        <div style={{
-          position: 'absolute',
-          top: '-50px',
-          right: '-50px',
-          width: '300px',
-          height: '300px',
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: 0
-        }}></div>
-        <div style={{
-          position: 'absolute',
-          bottom: '-80px',
-          left: '-80px',
-          width: '400px',
-          height: '400px',
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.05)',
-          zIndex: 0
-        }}></div>
-        
-        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-          <div className="row align-items-center">
-            <div className="col-lg-6 text-center text-lg-start mb-4 mb-lg-0">
-              <h2 className="fw-bold mb-3" style={{
-                fontSize: '2.5rem',
-                marginBottom: '1rem'
-              }}>Ready to Transform Your Event Experience?</h2>
-              <p className="mb-4" style={{
-                fontSize: '1.1rem',
-                opacity: '0.9',
-              }}>Join thousands of users who have discovered the power of AI-enhanced event viewing.</p>
-            </div>
-            <div className="col-lg-6 text-center text-lg-end">
-              <button 
-                className="btn btn-light btn-lg"
-                onClick={() => navigate('/login')}
-                style={{
-                  borderRadius: '8px',
-                  padding: '0.75rem 2.5rem',
-                  fontSize: '1.1rem',
-                  fontWeight: '600',
-                  color: colors.secondary,
-                  boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
-                  border: 'none',
-                  transition: 'all 0.3s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.transform = 'translateY(-3px)';
-                  e.target.style.boxShadow = '0 15px 30px rgba(0, 0, 0, 0.25)';
-                  e.target.style.color = colors.primary;
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.15)';
-                  e.target.style.color = colors.secondary;
-                }}
-              >
-                Get Started Now
-              </button>
-            </div>
-          </div>
+        <div className="container">
+          <h3 className="display-4 mb-4">Join the Future of Event Discovery</h3>
+          <p className="lead mb-5">
+            Sign up now to start exploring and experiencing events powered by AI!
+          </p>
+          <button 
+            className="btn btn-lg" 
+            onClick={() => navigate('/signup')}
+            style={{
+              background: '#E04578', 
+              color: 'white',
+              padding: '1rem 3rem',
+              borderRadius: '8px',
+              fontSize: '1.25rem',
+              fontWeight: '700',
+              boxShadow: '0 10px 20px rgba(224, 69, 120, 0.2)',
+            }}
+          >
+            Get Started
+          </button>
         </div>
       </section>
-      
-      {/* Refined Footer with updated layout */}
-      <footer style={{
-        background: colors.secondary,
-        color: 'rgba(255, 255, 255, 0.7)',
-        padding: '3rem 0'
-      }}>
-        <div className="container">
-          <div className="row">
-            <div className="col-lg-4 mb-4 mb-lg-0">
-              <h3 style={{ color: 'white', fontSize: '1.5rem', marginBottom: '1rem' }}>EventAI</h3>
-              <p style={{ fontSize: '0.9rem', maxWidth: '300px' }}>
-                Transforming how you discover, experience, and remember events with cutting-edge AI.
-              </p>
-            </div>
-            <div className="col-lg-2 col-md-4 mb-4 mb-md-0">
-              <h4 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '1rem' }}>Company</h4>
-              <ul className="list-unstyled">
-                {['About', 'Careers', 'Blog', 'Press'].map(item => (
-                  <li key={item} className="mb-2">
-                    <a href="#" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
-                      onMouseEnter={(e) => e.target.style.color = colors.primary}
-                      onMouseLeave={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.7)'}
-                    >{item}</a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="col-lg-2 col-md-4 mb-4 mb-md-0">
-              <h4 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '1rem' }}>Product</h4>
-              <ul className="list-unstyled">
-                {['Features', 'Pricing', 'Support', 'Docs'].map(item => (
-                  <li key={item} className="mb-2">
-                    <a href="#" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
-                      onMouseEnter={(e) => e.target.style.color = colors.primary}
-                      onMouseLeave={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.7)'}
-                    >{item}</a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="col-lg-4 col-md-4">
-              <h4 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '1rem' }}>Connect</h4>
-              <div style={{
-                display: 'flex',
-                gap: '1rem',
-                marginBottom: '1rem'
-              }}>
-                {['Twitter', 'Facebook', 'Instagram', 'LinkedIn'].map((social, index) => (
-                  <a key={index} href="#" style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: 'white',
-                    transition: 'all 0.3s ease',
-                    textDecoration: 'none'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background = colors.primary;
-                    e.target.style.transform = 'translateY(-3px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.1)';
-                    e.target.style.transform = 'translateY(0)';
-                  }}
-                  >
-                    {social.charAt(0)}
-                  </a>
-                ))}
-              </div>
-              <p style={{ fontSize: '0.9rem' }}>
-                Subscribe to our newsletter for updates
-              </p>
-              <div className="d-flex">
-                <input type="email" placeholder="Your email" style={{
-                  padding: '0.5rem 1rem',
-                  borderRadius: '8px 0 0 8px',
-                  border: 'none',
-                  outline: 'none',
-                  fontSize: '0.9rem',
-                  width: '70%',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  color: 'white'
-                }} />
-                <button style={{
-                  background: colors.primary,
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0 8px 8px 0',
-                  padding: '0.5rem 1rem',
-                  fontSize: '0.9rem'
-                }}>
-                  Subscribe
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="pt-4 mt-4" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', textAlign: 'center' }}>
-            <p style={{
-              margin: 0,
-              fontSize: '0.9rem'
-            }}>&copy; 2025 EventAI. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
-      
-      {/* Add custom CSS for scroll animations */}
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-fade-in {
-          animation: fadeIn 0.8s ease forwards;
-        }
-      `}</style>
     </div>
   );
 };

@@ -8,6 +8,8 @@ const AdminNotificationIcon = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
+  const buttonRef = useRef(null);
+  const socketRef = useRef(null);
 
   // Fetch initial notifications
   useEffect(() => {
@@ -39,75 +41,78 @@ const AdminNotificationIcon = () => {
   }, []);
 
   // Socket.IO setup
-// In AdminNotificationIcon.js (inside the socket connection logic)
-useEffect(() => {
-  const socket = io("http://localhost:3001", {
-    reconnection: true,
-    reconnectionAttempts: 5,
-    reconnectionDelay: 1000,
-  });
+  useEffect(() => {
+    socketRef.current = io("http://localhost:3001", {
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
 
-  socket.on("connect", () => {
-    console.log("Socket connected");
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      socket.emit("authenticate", token);
-      console.log("Admin authenticated and joined admin-channel");
-    }
-  });
+    socketRef.current.on("connect", () => {
+      console.log("Socket connected");
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        socketRef.current.emit("authenticate", token);
+        socketRef.current.emit("join-admin-channel");
+        console.log("Admin authenticated and joined admin-channel");
+      }
+    });
 
-  socket.on("connect_error", (err) => {
-    console.error("Socket connection error:", err);
-  });
+    socketRef.current.on("connect_error", (err) => {
+      console.error("Socket connection error:", err);
+    });
 
-  // Listen for new review notifications
-  socket.on("new-review", (reviewData) => {
-    console.log("Received new-review event:", reviewData);
+    // Listen for new review notifications
+    socketRef.current.on("new-review", (reviewData) => {
+      console.log("Received new-review event:", reviewData);
 
-    const notification = {
-      id: reviewData.reviewId || `review-${Date.now()}`,
-      type: "review",
-      message: `New review submitted by ${reviewData.userName || "a user"}`,
-      relatedId: reviewData.reviewId,
-      createdAt: new Date().toISOString(),
-      isRead: false,
-      metadata: {
-        reviewId: reviewData.reviewId,
-        eventId: reviewData.eventId,
-        rating: reviewData.rating,
-        productName: reviewData.productName,
-      },
+      const notification = {
+        id: reviewData.reviewId || `review-${Date.now()}`,
+        type: "review",
+        message: `New review submitted by ${reviewData.userName || "a user"}`,
+        relatedId: reviewData.reviewId,
+        createdAt: new Date().toISOString(),
+        isRead: false,
+        metadata: {
+          reviewId: reviewData.reviewId,
+          eventId: reviewData.eventId,
+          rating: reviewData.rating,
+          productName: reviewData.productName,
+        },
+      };
+
+      // Prevent duplicate notifications
+      setAdminNotifications((prev) => {
+        if (prev.some((n) => n.id === notification.id)) return prev;
+        return [notification, ...prev];
+      });
+
+      setUnreadAdminCount((prev) => prev + 1);
+
+      // Play notification sound
+      try {
+        const reviewSound = new Audio("/review-notification.mp3");
+        reviewSound.play();
+      } catch (e) {
+        console.log("Audio play error:", e);
+      }
+    });
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
     };
-
-    // Prevent duplicate notifications
-    setAdminNotifications((prev) => {
-      if (prev.some((n) => n.id === notification.id)) return prev;
-      return [notification, ...prev];
-    });
-
-    setUnreadAdminCount((prev) => {
-      console.log("Updating unreadAdminCount from", prev, "to", prev + 1);
-      return prev + 1;
-    });
-
-    // Play notification sound
-    try {
-      const reviewSound = new Audio("/review-notification.mp3");
-      reviewSound.play();
-    } catch (e) {
-      console.log("Audio play error:", e);
-    }
-  });
-
-  return () => {
-    socket.disconnect();
-  };
-}, []);
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (
+        dropdownRef.current && 
+        !dropdownRef.current.contains(event.target) && 
+        buttonRef.current !== event.target
+      ) {
         setShowDropdown(false);
       }
     };
@@ -177,8 +182,9 @@ useEffect(() => {
   };
 
   return (
-    <div className="position-relative" ref={dropdownRef}>
+    <div className="position-relative">
       <button
+        ref={buttonRef}
         className="btn btn-light position-relative"
         onClick={() => setShowDropdown(!showDropdown)}
         aria-label="Admin Notifications"
@@ -190,10 +196,10 @@ useEffect(() => {
           </span>
         )}
       </button>
-      {console.log("Rendering unreadAdminCount:", unreadAdminCount)}
 
       {showDropdown && (
         <div
+          ref={dropdownRef}
           className="dropdown-menu dropdown-menu-end shadow-sm show"
           style={{
             width: "320px",
