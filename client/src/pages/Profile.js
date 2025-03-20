@@ -2,10 +2,12 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { format } from "date-fns";
 
 const Profile = () => {
   const [user, setUser] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [adminEvents, setAdminEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("me");
@@ -29,6 +31,49 @@ const Profile = () => {
     fontSize: "medium",
   });
   const navigate = useNavigate();
+
+  // Helper function to generate avatar initials
+  const getInitials = (username) => {
+    return username ? username.charAt(0).toUpperCase() : "U";
+  };
+  
+  // Helper function to render star rating
+  const renderStars = (rating) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(<span key={`star-${i}`} style={styles.ratingStars}>★</span>);
+    }
+    
+    if (hasHalfStar) {
+      stars.push(<span key="half-star" style={styles.ratingStars}>✮</span>);
+    }
+    
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(<span key={`empty-${i}`} style={{...styles.ratingStars, color: "#e0e0e0"}}>☆</span>);
+    }
+    
+    return stars;
+  };
+
+  // Function to correct the image path - reusing from other components
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    
+    // If the path already starts with http, return as is
+    if (imagePath.startsWith('http')) return imagePath;
+    
+    // If the path begins with "/uploads/events/", remove the leading slash
+    if (imagePath.startsWith('/uploads/events/')) {
+      return `http://localhost:3001${imagePath}`;
+    }
+    
+    // For any other case, just append the path to the base URL
+    return `http://localhost:3001/${imagePath}`;
+  };
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -67,6 +112,12 @@ const Profile = () => {
         
         setAboutMeText(response.data.aboutMe || "");
         setNewUsername(response.data.username || "");
+
+        // If user is an admin, fetch their created events
+        if (response.data.isAdmin) {
+          fetchAdminEvents(token);
+        }
+        
         setLoading(false);
       } catch (err) {
         console.error("Error fetching profile:", err);
@@ -91,8 +142,33 @@ const Profile = () => {
       }
     };
 
+    // Fetch events created by the admin
+    const fetchAdminEvents = async (token) => {
+      try {
+        // This endpoint should return events created by the current user
+        // You may need to adjust based on your actual API
+        const response = await axios.get("http://localhost:3001/events", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        // Assuming the API returns all events, filter for those created by the current user
+        // Adjust based on your actual data structure
+        const userEvents = response.data.filter(event => 
+          event.username === user?.username || // Match by username
+          event.userId === user?.id // Or match by user ID if available
+        );
+        
+        setAdminEvents(userEvents);
+      } catch (err) {
+        console.error("Error fetching admin events:", err);
+        // Continue silently - we'll just show empty events
+      }
+    };
+
     fetchUserProfile();
-  }, [navigate]);
+  }, [navigate, user?.id, user?.username]);
 
   const handleAboutMeChange = (e) => {
     setAboutMeText(e.target.value);
@@ -143,6 +219,19 @@ const Profile = () => {
     }
   };
 
+  // Fetch event details for a specific review
+  // const fetchEventForReview = async (review) => {
+  //   if (!review.eventId) return null;
+    
+  //   try {
+  //     const response = await axios.get(`http://localhost:3001/events/${review.eventId}`);
+  //     return response.data;
+  //   } catch (err) {
+  //     console.error(`Error fetching event for review ${review.id}:`, err);
+  //     return null;
+  //   }
+  // };
+
   const toggleNotificationSetting = (setting) => {
     setNotificationSettings({
       ...notificationSettings,
@@ -172,8 +261,46 @@ const Profile = () => {
 
   const navigateToEvent = (eventId) => {
     // Navigate to event details page
-    navigate(`/events/${eventId}`);
+    navigate(`/event/${eventId}`);
   };
+
+  const navigateToResponse = (eventId) => {
+    // Navigate to admin response page for an event
+    navigate(`/response/${eventId}`);
+  };
+
+  const formatDateString = (dateString) => {
+    try {
+      return format(new Date(dateString), "MMM dd, yyyy");
+    } catch (error) {
+      return dateString || "Unknown date";
+    }
+  };
+
+  // Custom toggle switch component
+  const ToggleSwitch = ({ isOn, onToggle }) => (
+    <div style={styles.switchContainer}>
+      <input
+        type="checkbox"
+        checked={isOn}
+        onChange={onToggle}
+        style={styles.switchInput}
+      />
+      <span
+        style={{
+          ...styles.switchSlider,
+          backgroundColor: isOn ? "#ff6b6b" : "#ccc", // Pink when on
+        }}
+      >
+        <span
+          style={{
+            ...styles.switchSliderBefore,
+            transform: isOn ? "translateX(24px)" : "translateX(0)",
+          }}
+        />
+      </span>
+    </div>
+  );
 
   // Improved color scheme and consistent styling
   const styles = {
@@ -258,10 +385,6 @@ const Profile = () => {
       boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
       transition: "transform 0.2s, box-shadow 0.2s",
       border: "1px solid #eaeaea",
-      "&:hover": {
-        transform: "translateY(-3px)",
-        boxShadow: "0 6px 12px rgba(0, 0, 0, 0.1)",
-      },
     },
     reviewTitle: {
       fontSize: "18px",
@@ -314,10 +437,6 @@ const Profile = () => {
       fontSize: "16px",
       marginBottom: "15px",
       transition: "border 0.3s",
-      "&:focus": {
-        border: "1px solid #0a2463",
-        outline: "none",
-      },
     },
     inputField: {
       width: "100%",
@@ -339,9 +458,6 @@ const Profile = () => {
       cursor: "pointer",
       transition: "background-color 0.3s ease",
       fontWeight: "500",
-      "&:hover": {
-        backgroundColor: "#ff5252",
-      },
     },
     secondaryButton: {
       marginTop: "10px",
@@ -353,9 +469,6 @@ const Profile = () => {
       cursor: "pointer",
       transition: "background-color 0.3s ease",
       fontWeight: "500",
-      "&:hover": {
-        backgroundColor: "#081b4b",
-      },
     },
     settingItem: {
       padding: "15px 0",
@@ -467,58 +580,60 @@ const Profile = () => {
       justifyContent: "center",
       marginBottom: "15px",
     },
-  };
-
-  // Custom toggle switch component
-  const ToggleSwitch = ({ isOn, onToggle }) => (
-    <div style={styles.switchContainer}>
-      <input
-        type="checkbox"
-        checked={isOn}
-        onChange={onToggle}
-        style={styles.switchInput}
-      />
-      <span
-        style={{
-          ...styles.switchSlider,
-          backgroundColor: isOn ? "#ff6b6b" : "#ccc", // Pink when on
-        }}
-      >
-        <span
-          style={{
-            ...styles.switchSliderBefore,
-            transform: isOn ? "translateX(24px)" : "translateX(0)",
-          }}
-        />
-      </span>
-    </div>
-  );
-
-  // Helper function to generate avatar initials
-  const getInitials = (username) => {
-    return username ? username.charAt(0).toUpperCase() : "U";
-  };
-  
-  // Helper function to render star rating
-  const renderStars = (rating) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-    
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(<span key={`star-${i}`} style={styles.ratingStars}>★</span>);
-    }
-    
-    if (hasHalfStar) {
-      stars.push(<span key="half-star" style={styles.ratingStars}>✮</span>);
-    }
-    
-    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-    for (let i = 0; i < emptyStars; i++) {
-      stars.push(<span key={`empty-${i}`} style={{...styles.ratingStars, color: "#e0e0e0"}}>☆</span>);
-    }
-    
-    return stars;
+    eventCard: {
+      borderRadius: "10px",
+      overflow: "hidden",
+      marginBottom: "20px",
+      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+      transition: "transform 0.3s ease, box-shadow 0.3s ease",
+    },
+    eventCardImage: {
+      height: "180px",
+      objectFit: "cover",
+      width: "100%",
+    },
+    eventCardImagePlaceholder: {
+      height: "180px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#f0f0f0",
+      color: "#aaa",
+      fontSize: "3rem",
+    },
+    eventCardContent: {
+      padding: "15px",
+    },
+    eventCardTitle: {
+      fontSize: "18px",
+      fontWeight: "600",
+      color: "#0a2463",
+      marginBottom: "10px",
+    },
+    eventCardDetail: {
+      display: "flex",
+      alignItems: "center",
+      marginBottom: "8px",
+      color: "#6c757d",
+      fontSize: "14px",
+    },
+    eventCardActions: {
+      display: "flex",
+      justifyContent: "space-between",
+      padding: "10px 15px",
+      borderTop: "1px solid #f0f0f0",
+    },
+    eventCardCategory: {
+      position: "absolute",
+      top: "10px",
+      right: "10px",
+      backgroundColor: "rgba(255, 255, 255, 0.9)",
+      padding: "5px 10px",
+      borderRadius: "20px",
+      fontSize: "12px",
+      fontWeight: "500",
+      color: "#0a2463",
+    },
   };
 
   if (loading) {
@@ -704,7 +819,99 @@ const Profile = () => {
                     <h4 className="mb-0">My Events</h4>
                   </div>
                   <div className="card-body" style={styles.cardBody}>
-                    <div style={styles.noReviews}>No events available.</div>
+                    {adminEvents.length === 0 ? (
+                      <div style={styles.noReviews}>
+                        {user.isAdmin 
+                          ? "You haven't created any events yet."
+                          : "You don't have access to create events. Only administrators can create events."}
+                      </div>
+                    ) : (
+                      <div className="row">
+                        {adminEvents.map((event) => (
+                          <div className="col-md-6 col-lg-4 mb-3" key={event.id}>
+                            <div className="card" style={styles.eventCard}>
+                              {/* Position the category badge */}
+                              {event.category && (
+                                <div style={styles.eventCardCategory}>
+                                  {event.category}
+                                </div>
+                              )}
+                              
+                              {/* Event image */}
+                              {event.image ? (
+                                <img 
+                                  src={getImageUrl(event.image)}
+                                  alt={event.title}
+                                  className="card-img-top"
+                                  style={styles.eventCardImage}
+                                />
+                              ) : (
+                                <div style={styles.eventCardImagePlaceholder}>
+                                  <i className="bi bi-image"></i>
+                                </div>
+                              )}
+                              
+                              {/* Event details */}
+                              <div style={styles.eventCardContent}>
+                                <h5 style={styles.eventCardTitle}>{event.title}</h5>
+                                
+                                <div style={styles.eventCardDetail}>
+                                  <i className="bi bi-calendar me-2"></i>
+                                  {formatDateString(event.date)}
+                                </div>
+                                
+                                <div style={styles.eventCardDetail}>
+                                  <i className="bi bi-clock me-2"></i>
+                                  {event.time || "Time not specified"}
+                                </div>
+                                
+                                <div style={styles.eventCardDetail}>
+                                  <i className="bi bi-geo-alt me-2"></i>
+                                  {event.location}
+                                </div>
+                                
+                                <p className="mt-2 mb-1" style={{
+                                  fontSize: "14px",
+                                  color: "#6c757d",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  display: "-webkit-box",
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: "vertical"
+                                }}>
+                                  {event.description}
+                                </p>
+                              </div>
+                              
+                              {/* Action buttons */}
+                              <div style={styles.eventCardActions}>
+                                <button 
+                                  className="btn btn-sm" 
+                                  onClick={() => navigateToEvent(event.id)}
+                                  style={{
+                                    backgroundColor: "#0a2463",
+                                    color: "white"
+                                  }}
+                                >
+                                  <i className="bi bi-eye me-1"></i> View
+                                </button>
+                                
+                                <button 
+                                  className="btn btn-sm" 
+                                  onClick={() => navigateToResponse(event.id)}
+                                  style={{
+                                    backgroundColor: "#ff6b6b",
+                                    color: "white"
+                                  }}
+                                >
+                                  <i className="bi bi-chat-text me-1"></i> Reviews
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -722,34 +929,46 @@ const Profile = () => {
                         {reviews.map((review, index) => (
                           <div key={index} style={styles.reviewItem}>
                             <div className="d-flex justify-content-between align-items-start">
-                              <h5 style={styles.reviewTitle}>{review.title || "Review #" + (index + 1)}</h5>
+                              <h5 style={styles.reviewTitle}>{review.title || `Review #${index + 1}`}</h5>
                               <div style={{display: "flex", alignItems: "center"}}>
                                 {renderStars(review.rating || 4)}
                               </div>
                             </div>
-                            <p style={styles.reviewText}>{review.text || "This event exceeded my expectations! The organization was great and I enjoyed every minute of it."}</p>
+                            <p style={styles.reviewText}>{review.review_text || review.text || "No review text available."}</p>
                             
-                            {/* Event information section - NEW */}
+                            {/* Event information section */}
                             <div style={styles.eventInfo}>
                               <div 
                                 onClick={() => review.event?.id && navigateToEvent(review.event.id)} 
                                 style={styles.eventName}
                               >
-                                Event: {review.event?.title || "Unknown Event"}
+                                Event: {review.event?.title || review.event?.name || "Unknown Event"}
                               </div>
                               <div style={styles.eventDetail}>
-                                <strong>Date:</strong> {review.event?.date || "N/A"}
+                                <strong>Date:</strong> {formatDateString(review.event?.date)}
                               </div>
                               <div style={styles.eventDetail}>
                                 <strong>Location:</strong> {review.event?.location || "N/A"}
                               </div>
                               <div style={styles.eventDetail}>
-                                <strong>Description:</strong> {review.event?.description || "N/A"}
+                                <strong>Category:</strong> {review.event?.category || "N/A"}
                               </div>
+                              {review.admin_response && (
+                                <div style={{
+                                  marginTop: "10px",
+                                  padding: "10px",
+                                  backgroundColor: "#f0f7ff",
+                                  borderRadius: "6px",
+                                  border: "1px solid #cce5ff"
+                                }}>
+                                  <strong style={{color: "#0a2463"}}>Admin Response:</strong>
+                                  <p style={{margin: "5px 0 0 0", fontSize: "14px"}}>{review.admin_response}</p>
+                                </div>
+                              )}
                             </div>
                             
                             <div style={styles.reviewDate}>
-                              Reviewed on: {review.date || new Date().toLocaleDateString()}
+                              Reviewed on: {formatDateString(review.date || review.createdAt)}
                             </div>
                           </div>
                         ))}

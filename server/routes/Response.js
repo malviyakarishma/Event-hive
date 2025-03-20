@@ -1,20 +1,31 @@
 const express = require("express");
 const router = express.Router();
-const { Reviews } = require("../models"); // Adjust model import based on your setup
+const { Reviews } = require("../models"); // Import models
+const { validateToken } = require("../middlewares/AuthMiddleware");
 
-router.put("/:reviewId", async (req, res) => {
+// Add admin response to a review
+router.put("/respond/:reviewId", validateToken, async (req, res) => {
   try {
+    // Check if user is an admin
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: "Admin privileges required" });
+    }
+
     const { reviewId } = req.params;
     const { adminResponse } = req.body;
 
-    console.log("Checking if Review model is loaded:", Review); // Corrected Debugging line
+    // Validate input
+    if (!adminResponse || !adminResponse.trim()) {
+      return res.status(400).json({ error: "Response text is required" });
+    }
 
     const review = await Reviews.findByPk(reviewId);
     if (!review) {
       return res.status(404).json({ error: "Review not found" });
     }
 
-    review.admin_response = adminResponse; // Update the response field
+    // Update the response field
+    review.admin_response = adminResponse;
     await review.save();
 
     return res.json({

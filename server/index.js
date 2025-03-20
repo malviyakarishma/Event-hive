@@ -90,6 +90,7 @@ app.use("/api/chat", chatRouter);
 app.use("/respond", responseRouter);
 app.use("/api/user", userRoutes);
 app.use("/notifications", notificationRouter);
+app.use('/uploads', express.static('uploads'));
 
 // Sync database and start the server
 db.sequelize.sync().then(() => {

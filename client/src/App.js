@@ -20,6 +20,7 @@ import Login from "./pages/Login";
 import PageNotFound from "./pages/PageNotFound";
 import Registration from "./pages/Registration";
 import Chatbot from "./pages/Chatbot";
+import EditEvent from "./pages/EditEvent";
 import AdminDashboard from "./pages/AdminDashboard";
 
 import { AuthContext } from "./helpers/AuthContext";
@@ -262,6 +263,7 @@ function App() {
             <Route path="/event/:id" element={<Event />} />
             <Route path="/response/:id" element={<Response />} />
             <Route path="/chatbot" element={<Chatbot />} />
+            <Route path="/admin/edit-event/:id" element={authState.isAdmin ? <EditEvent /> : <Navigate to="/" />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
           {authState.status && !hideNavbarRoutes.includes(location.pathname) && <FloatingChatbot />}

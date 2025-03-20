@@ -6,7 +6,7 @@ import * as Yup from "yup"
 import axios from "axios"
 import { useNavigate } from "react-router-dom"
 import "bootstrap/dist/css/bootstrap.min.css"
-import { FaCalendarAlt, FaMapMarkerAlt, FaFileAlt, FaPlus, FaHeart } from "react-icons/fa"
+import { FaCalendarAlt, FaMapMarkerAlt, FaFileAlt, FaPlus, FaHeart, FaClock, FaTag, FaImage } from "react-icons/fa"
 import { AuthContext } from "../helpers/AuthContext"
 
 
@@ -17,12 +17,16 @@ function CreateEvent() {
   const [successMessage, setSuccessMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
   const [isHovered, setIsHovered] = useState(false)
+  const [previewImage, setPreviewImage] = useState(null)
 
   const initialValues = {
     title: "",
     location: "",
     description: "",
     date: currentDate,
+    time: "12:00", // Default time - noon
+    category: "", // New field for category
+    image: null, // New field for image
   }
 
   useEffect(() => {
@@ -38,6 +42,11 @@ function CreateEvent() {
     date: Yup.string()
       .matches(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
       .required("Date is required"),
+    time: Yup.string()
+      .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Time must be in HH:MM format")
+      .required("Time is required"),
+    category: Yup.string().trim().required("Category is required"),
+    image: Yup.mixed(), // Optional field
   })
 
   const onSubmit = async (data, { setSubmitting, resetForm }) => {
@@ -52,9 +61,26 @@ function CreateEvent() {
     }
 
     try {
-      // Create the event
-      const response = await axios.post("http://localhost:3001/events", data, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+      // Create FormData for file upload
+      const formData = new FormData()
+      formData.append("title", data.title)
+      formData.append("location", data.location)
+      formData.append("description", data.description)
+      formData.append("date", data.date)
+      formData.append("time", data.time)
+      formData.append("category", data.category)
+      
+      // Append image if it exists
+      if (data.image) {
+        formData.append("image", data.image)
+      }
+
+      // Create the event with FormData
+      const response = await axios.post("http://localhost:3001/events", formData, {
+        headers: { 
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'multipart/form-data'
+        },
       })
 
       const eventId = response.data.id
@@ -75,6 +101,7 @@ function CreateEvent() {
 
       setSuccessMessage("Event created successfully! Notifications sent to all users.")
       resetForm()
+      setPreviewImage(null)
 
       setTimeout(() => {
         navigate("/admin")
@@ -86,6 +113,37 @@ function CreateEvent() {
       setSubmitting(false)
     }
   }
+
+  // Function to handle image file selection and preview
+  const handleImageChange = (event, setFieldValue) => {
+    const file = event.currentTarget.files[0]
+    if (file) {
+      setFieldValue("image", file)
+      
+      // Create a preview URL
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPreviewImage(reader.result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  // List of common event categories
+  const categoryOptions = [
+    "Conference",
+    "Workshop",
+    "Seminar",
+    "Social",
+    "Concert",
+    "Exhibition",
+    "Fitness",
+    "Community",
+    "Education",
+    "Entertainment",
+    "Fundraising",
+    "Other"
+  ]
 
   // Color palette
   const colors = {
@@ -335,6 +393,45 @@ function CreateEvent() {
     verticalAlign: "middle",
   }
 
+  const fileInputBaseStyle = {
+    position: "relative",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    height: "120px",
+    padding: "1rem",
+    backgroundColor: colors.lightGray,
+    border: "2px dashed",
+    borderColor: colors.gray,
+    borderRadius: "12px",
+    cursor: "pointer",
+    transition: "all 0.3s ease",
+  }
+
+  const fileInputFocusStyle = {
+    ...fileInputBaseStyle,
+    borderColor: colors.pinkLight,
+    backgroundColor: "rgba(255, 93, 143, 0.05)",
+  }
+
+  const fileInputTextStyle = {
+    color: colors.darkGray,
+    fontSize: "0.9rem",
+    marginTop: "0.5rem",
+    textAlign: "center",
+  }
+
+  const imagePreviewStyle = {
+    width: "100%",
+    height: "200px",
+    borderRadius: "12px",
+    marginTop: "1rem",
+    objectFit: "cover",
+    boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+  }
+
   // Handle hover state for the button
   const handleMouseEnter = () => setIsHovered(true)
   const handleMouseLeave = () => setIsHovered(false)
@@ -380,7 +477,7 @@ function CreateEvent() {
 
           <div style={formContainerStyle}>
             <Formik initialValues={initialValues} onSubmit={onSubmit} validationSchema={validationSchema}>
-              {({ isSubmitting, touched, setFieldTouched }) => (
+              {({ isSubmitting, touched, setFieldTouched, setFieldValue }) => (
                 <Form>
                   {/* Success Message */}
                   {successMessage && <div style={alertSuccessStyle}>{successMessage}</div>}
@@ -428,7 +525,35 @@ function CreateEvent() {
                       <ErrorMessage name="location" component="div" style={errorStyle} />
                     </div>
 
-                    {/* Date - Right column */}
+                    {/* Category - Right column */}
+                    <div style={{ ...formGroupStyle, flex: 1 }}>
+                      <label htmlFor="category" style={inputLabelStyle}>Event Category</label>
+                      <div style={inputGroupStyle}>
+                        <div style={inputIconStyle}>
+                          <FaTag size={16} color={colors.darkGray} />
+                        </div>
+                        <Field
+                          as="select"
+                          id="category"
+                          name="category"
+                          style={touched.category ? inputFocusStyle : inputBaseStyle}
+                          onFocus={() => setFieldTouched('category', true)}
+                        >
+                          <option value="">Select a category</option>
+                          {categoryOptions.map((category) => (
+                            <option key={category} value={category}>
+                              {category}
+                            </option>
+                          ))}
+                        </Field>
+                      </div>
+                      <ErrorMessage name="category" component="div" style={errorStyle} />
+                    </div>
+                  </div>
+
+                  {/* Two column layout for date and time */}
+                  <div style={{ display: "flex", gap: "1.5rem" }}>
+                    {/* Date - Left column */}
                     <div style={{ ...formGroupStyle, flex: 1 }}>
                       <label htmlFor="date" style={inputLabelStyle}>Event Date</label>
                       <div style={inputGroupStyle}>
@@ -444,6 +569,24 @@ function CreateEvent() {
                         />
                       </div>
                       <ErrorMessage name="date" component="div" style={errorStyle} />
+                    </div>
+
+                    {/* Time - Right column */}
+                    <div style={{ ...formGroupStyle, flex: 1 }}>
+                      <label htmlFor="time" style={inputLabelStyle}>Event Time</label>
+                      <div style={inputGroupStyle}>
+                        <div style={inputIconStyle}>
+                          <FaClock size={16} color={colors.darkGray} />
+                        </div>
+                        <Field
+                          type="time"
+                          id="time"
+                          name="time"
+                          style={touched.time ? inputFocusStyle : inputBaseStyle}
+                          onFocus={() => setFieldTouched('time', true)}
+                        />
+                      </div>
+                      <ErrorMessage name="time" component="div" style={errorStyle} />
                     </div>
                   </div>
 
@@ -461,6 +604,39 @@ function CreateEvent() {
                       />
                     </div>
                     <ErrorMessage name="description" component="div" style={errorStyle} />
+                  </div>
+
+                  {/* Image Upload */}
+                  <div style={formGroupStyle}>
+                    <label htmlFor="image" style={inputLabelStyle}>Event Image</label>
+                    <div style={touched.image ? fileInputFocusStyle : fileInputBaseStyle}>
+                      <input
+                        type="file"
+                        id="image"
+                        name="image"
+                        accept="image/*"
+                        onChange={(event) => handleImageChange(event, setFieldValue)}
+                        style={{ display: "none" }}
+                      />
+                      <label htmlFor="image" style={{ cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
+                        <FaImage size={24} color={colors.darkGray} />
+                        <p style={fileInputTextStyle}>
+                          {previewImage ? "Change image" : "Upload an event image (optional)"}
+                        </p>
+                      </label>
+                    </div>
+                    <ErrorMessage name="image" component="div" style={errorStyle} />
+                    
+                    {/* Image Preview */}
+                    {previewImage && (
+                      <div style={{ marginTop: "1rem" }}>
+                        <img 
+                          src={previewImage} 
+                          alt="Preview" 
+                          style={imagePreviewStyle} 
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* Submit */}
