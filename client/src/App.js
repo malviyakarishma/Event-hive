@@ -264,7 +264,10 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/landingPage" element={<LandingPage />} />
             <Route path="/EventPersonalization" element={<EventPersonalization />} />
-            <Route path="/AdminAIReviewsDashboard" element={<AdminAIReviewsDashboard />} />
+            <Route 
+  path="/AdminAIReviewsDashboard" 
+  element={authState.status && authState.isAdmin ? <AdminAIReviewsDashboard /> : <Navigate to="/login" />} 
+/>
             <Route path="/AIReviewsPage" element={<AIReviewsPage />} />
             <Route path="/home" element={<Home />} />
             <Route path="/admin" element={authState.isAdmin ? <AdminDashboard /> : <Navigate to="/home" />} />

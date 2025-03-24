@@ -1,8 +1,8 @@
 // src/pages/AdminAIReviewsDashboard.js
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Line, Bar, Pie } from 'react-chartjs-2';
+import axios from 'axios';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -32,31 +32,31 @@ ChartJS.register(
 
 // Define the colors
 const colors = {
-  primary: "#FF5A8E", // Vibrant pink
-  secondary: "#0D1B40", // Deep navy
-  accent: "#41C9E2", // Bright turquoise accent
-  dark: "#081029", // Very dark navy, almost black
-  light: "#FFF5F8", // Very light pink (off-white with pink tint)
-  text: "#0D1B40", // Navy for main text
-  textLight: "#6C7A9C", // Muted navy for secondary text
+  primary: "#FF5A8E",
+  secondary: "#0D1B40",
+  accent: "#41C9E2",
+  dark: "#081029",
+  light: "#FFF5F8",
+  text: "#0D1B40",
+  textLight: "#6C7A9C",
   chart: ["#FF5A8E", "#0D1B40", "#41C9E2", "#FF9E6D", "#8676FF", "#44D7B6"]
 };
-
-// Simple error display component
-const ErrorAlert = ({ message }) => (
-  <div className="container py-3">
-    <div className="alert alert-danger" role="alert">
-      <h4 className="alert-heading">Error Loading Data</h4>
-      <p>{message || 'An unexpected error occurred. Please try again later.'}</p>
-    </div>
-  </div>
-);
 
 // Loading spinner component
 const LoadingSpinner = () => (
   <div className="d-flex justify-content-center my-4">
     <div className="spinner-border" role="status" style={{ color: colors.primary }}>
       <span className="visually-hidden">Loading...</span>
+    </div>
+  </div>
+);
+
+// Error alert component
+const ErrorAlert = ({ message }) => (
+  <div className="container py-3">
+    <div className="alert alert-danger" role="alert">
+      <h4 className="alert-heading">Error Loading Data</h4>
+      <p>{message || 'An unexpected error occurred. Please try again later.'}</p>
     </div>
   </div>
 );
@@ -71,229 +71,292 @@ const AdminAIReviewsDashboard = () => {
   const [timeRange, setTimeRange] = useState('week');
   const [sentimentTrend, setSentimentTrend] = useState([]);
   const [reviewVolume, setReviewVolume] = useState([]);
-  const [keywordCloud, setKeywordCloud] = useState([]);
-  const [aiRecommendations, setAiRecommendations] = useState([]);
-  const [notificationCount, setNotificationCount] = useState(0);
-  const [isAdmin, setIsAdmin] = useState(true); // Assume admin for now, in real app check auth
-  
-  // Create a ref to store fetchEventInsights
-  const fetchEventInsightsRef = useRef(null);
+  const [eventReviews, setEventReviews] = useState([]);
+  const [reportDate, setReportDate] = useState({
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0]
+  });
 
-  // Fetch detailed insights for a specific event
-  const fetchEventInsights = useCallback(async (eventId) => {
+  // Function to fetch events from the API
+  const fetchEvents = async () => {
     try {
-      setLoading(true);
-      
-      // Generate sentiment trend data for the selected time range
-      const daysInRange = timeRange === 'week' ? 7 : timeRange === 'month' ? 30 : 90;
-      const sentimentData = [];
-      const volumeData = [];
-      
-      for (let i = 0; i < daysInRange; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - (daysInRange - i - 1));
-        
-        // In a real implementation, fetch actual data from API
-        sentimentData.push({
-          date: date.toISOString().split('T')[0],
-          score: Math.floor(Math.random() * 30) + 70 // Random score between 70-100
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) {
+        navigate('/login');
+        return;
+      }
+
+      const response = await axios.get('http://localhost:3001/events', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+
+      // Process event data to include additional metrics
+      const processedEvents = await Promise.all(response.data.map(async (event) => {
+        // Fetch reviews for this event
+        const reviewsResponse = await axios.get(`http://localhost:3001/events/${event.id}`, {
+          headers: { Authorization: `Bearer ${accessToken}` }
         });
         
-        volumeData.push({
-          date: date.toISOString().split('T')[0],
-          count: Math.floor(Math.random() * 10) + 1 // Random count between 1-10
-        });
+        const reviews = reviewsResponse.data.reviews || [];
+        
+        // Calculate metrics
+        const reviewCount = reviews.length;
+        const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+        const avgRating = reviewCount > 0 ? (totalRating / reviewCount).toFixed(1) : 0;
+        
+        // Calculate sentiment score
+        const positiveReviews = reviews.filter(review => review.sentiment === 'positive').length;
+        const sentimentScore = reviewCount > 0 ? Math.round((positiveReviews / reviewCount) * 100) : 0;
+        
+        return {
+          ...event,
+          reviewCount,
+          avgRating: parseFloat(avgRating),
+          sentimentScore,
+          attendanceTotal: Math.floor(Math.random() * 1000) + 200 // Placeholder for attendance data
+        };
+      }));
+
+      setEvents(processedEvents);
+      
+      // Select the first event by default if available
+      if (processedEvents.length > 0 && !selectedEvent) {
+        setSelectedEvent(processedEvents[0]);
+        fetchEventAnalytics(processedEvents[0].id);
       }
       
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching events:', err);
+      setError(err.response?.data?.error || 'Failed to load events');
+      setLoading(false);
+    }
+  };
+
+  // Function to fetch reviews for a specific event
+  const fetchEventReviews = async (eventId) => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      const response = await axios.get(`http://localhost:3001/events/${eventId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      
+      setEventReviews(response.data.reviews || []);
+    } catch (err) {
+      console.error('Error fetching reviews:', err);
+      // Set error state if needed, but don't disrupt the whole dashboard
+    }
+  };
+
+  // Fetch event analytics based on time range
+  const fetchEventAnalytics = async (eventId) => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) {
+        navigate('/login');
+        return;
+      }
+
+      // Calculate date range based on selected timeRange
+      const endDate = new Date();
+      let startDate = new Date();
+      
+      if (timeRange === 'week') {
+        startDate.setDate(endDate.getDate() - 7);
+      } else if (timeRange === 'month') {
+        startDate.setMonth(endDate.getMonth() - 1);
+      } else if (timeRange === 'quarter') {
+        startDate.setMonth(endDate.getMonth() - 3);
+      }
+      
+      // Fetch reviews for this time period
+      const response = await axios.get(`http://localhost:3001/events/${eventId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      
+      const reviews = response.data.reviews || [];
+      
+      // Filter reviews by date range
+      const filteredReviews = reviews.filter(review => {
+        const reviewDate = new Date(review.createdAt);
+        return reviewDate >= startDate && reviewDate <= endDate;
+      });
+      
+      // Generate sentiment trend data
+      const dateMap = new Map();
+      let currentDate = new Date(startDate);
+      
+      while (currentDate <= endDate) {
+        const dateStr = currentDate.toISOString().split('T')[0];
+        dateMap.set(dateStr, { date: dateStr, score: 0, count: 0 });
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      
+      // Calculate sentiments by date
+      filteredReviews.forEach(review => {
+        const dateStr = new Date(review.createdAt).toISOString().split('T')[0];
+        if (dateMap.has(dateStr)) {
+          const dateData = dateMap.get(dateStr);
+          
+          // Update sentiment score (positive = 100, neutral = 50, negative = 0)
+          const sentimentValue = 
+            review.sentiment === 'positive' ? 100 :
+            review.sentiment === 'neutral' ? 50 : 0;
+          
+          dateData.score = dateData.count > 0 
+            ? (dateData.score * dateData.count + sentimentValue) / (dateData.count + 1)
+            : sentimentValue;
+            
+          dateData.count += 1;
+        }
+      });
+      
+      // Convert to arrays for chart data
+      const sentimentData = Array.from(dateMap.values())
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .map(item => ({ 
+          date: item.date, 
+          score: item.count > 0 ? Math.round(item.score) : null 
+        }));
+        
+      const volumeData = Array.from(dateMap.values())
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .map(item => ({ 
+          date: item.date, 
+          count: item.count 
+        }));
+      
+      // Fill in missing values with interpolation
+      let lastValidScore = null;
+      for (let i = 0; i < sentimentData.length; i++) {
+        if (sentimentData[i].score !== null) {
+          lastValidScore = sentimentData[i].score;
+        } else if (lastValidScore !== null) {
+          sentimentData[i].score = lastValidScore;
+        } else {
+          sentimentData[i].score = 70; // Default starting value
+        }
+      }
+
       setSentimentTrend(sentimentData);
       setReviewVolume(volumeData);
       
-      // Generate keyword cloud data
-      const keywords = [
-        { text: 'Great', value: Math.floor(Math.random() * 30) + 20 },
-        { text: 'Excellent', value: Math.floor(Math.random() * 25) + 15 },
-        { text: 'Organized', value: Math.floor(Math.random() * 20) + 10 },
-        { text: 'Speakers', value: Math.floor(Math.random() * 25) + 15 },
-        { text: 'Content', value: Math.floor(Math.random() * 30) + 20 },
-        { text: 'Venue', value: Math.floor(Math.random() * 15) + 5 },
-        { text: 'Network', value: Math.floor(Math.random() * 20) + 10 },
-        { text: 'Value', value: Math.floor(Math.random() * 15) + 5 },
-        { text: 'Interactive', value: Math.floor(Math.random() * 20) + 10 },
-        { text: 'Informative', value: Math.floor(Math.random() * 25) + 15 }
-      ];
+      // Also update the reviews for this event
+      setEventReviews(reviews);
       
-      setKeywordCloud(keywords);
-      
-      // Generate AI recommendations
-      const event = events.find(e => e.id === eventId) || {};
-      const recommendations = [
-        `Based on sentiment analysis, attendees particularly enjoyed the ${event.category} content. Consider expanding this area in future events.`,
-        `Reviews mentioning "speaker quality" showed 95% positive sentiment. Continue to prioritize high-quality speakers.`,
-        `Negative feedback was primarily focused on venue amenities (15% of complaints). Consider a venue with better facilities next time.`,
-        `Engagement was highest during interactive sessions. Adding more workshops could further improve satisfaction.`,
-        `Reviews suggest attendees want more networking opportunities. Consider adding structured networking sessions.`
-      ];
-      
-      setAiRecommendations(recommendations);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching event insights:', error);
-      setError('Failed to load event insights');
-      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching event analytics:', err);
+      // Generate some default data if the API fails
+      generateDemoData();
     }
-  }, [timeRange, events]);
+  };
 
-  // Store fetchEventInsights in the ref
-  useEffect(() => {
-    fetchEventInsightsRef.current = fetchEventInsights;
-  }, [fetchEventInsights]);
+  // Generate mock data for demos or when API calls fail
+  const generateDemoData = () => {
+    // Create mock sentiment data
+    const daysInRange = timeRange === 'week' ? 7 : timeRange === 'month' ? 30 : 90;
+    const sentimentData = [];
+    const volumeData = [];
+    
+    for (let i = 0; i < daysInRange; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - (daysInRange - i - 1));
+      
+      sentimentData.push({
+        date: date.toISOString().split('T')[0],
+        score: Math.floor(Math.random() * 30) + 70 // Random score between 70-100
+      });
+      
+      volumeData.push({
+        date: date.toISOString().split('T')[0],
+        count: Math.floor(Math.random() * 10) + 1 // Random count between 1-10
+      });
+    }
+    
+    setSentimentTrend(sentimentData);
+    setReviewVolume(volumeData);
+  };
 
-  // Fetch events and analytics
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        // Check authentication status first
-        try {
-          const authResponse = await axios.get('/auth/check', {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('accessToken')}`
-            }
-          });
-          setIsAdmin(authResponse.data.isAdmin);
-          
-          if (!authResponse.data.isAdmin) {
-            navigate('/login');
-            return;
-          }
-        } catch (authError) {
-          console.error('Authentication error:', authError);
-          navigate('/login');
-          return;
-        }
-        
-        // Fetch events
-        const eventsResponse = await axios.get('/events');
-        
-        if (eventsResponse.data && Array.isArray(eventsResponse.data) && eventsResponse.data.length > 0) {
-          // Add calculated metrics to events
-          const enhancedEvents = await Promise.all(eventsResponse.data.map(async (event) => {
-            try {
-              // Get event analytics
-              const analyticsResponse = await axios.get(`/analytics/${event.id}`);
-              const analytics = analyticsResponse.data.analytics || {};
-              
-              // Format date
-              let formattedDate = event.date;
-              try {
-                formattedDate = new Date(event.date).toLocaleDateString();
-              } catch (dateError) {
-                console.warn("Error formatting date:", dateError);
-              }
-              
-              return {
-                ...event,
-                date: formattedDate,
-                reviewCount: analytics.total_reviews || 0,
-                avgRating: analytics.average_rating || 0,
-                sentimentScore: analytics.sentiment_score || 0,
-                attendanceTotal: analytics.total_attendance || 0
-              };
-            } catch (err) {
-              console.error(`Error fetching analytics for event ${event.id}:`, err);
-              return {
-                ...event,
-                date: new Date(event.date).toLocaleDateString(),
-                reviewCount: 0,
-                avgRating: 0,
-                sentimentScore: 0,
-                attendanceTotal: 0
-              };
-            }
-          }));
-          
-          setEvents(enhancedEvents);
-          
-          if (enhancedEvents.length > 0) {
-            setSelectedEvent(enhancedEvents[0]); // Set first event as default
-            // Use the ref to call fetchEventInsights
-            if (fetchEventInsightsRef.current) {
-              await fetchEventInsightsRef.current(enhancedEvents[0].id);
-            }
-          }
-        } else {
-          setEvents([]);
-        }
-        
-        // Get notification count
-        try {
-          const notificationResponse = await axios.get('/notifications/unread/count');
-          setNotificationCount(notificationResponse.data.count || 0);
-        } catch (notificationError) {
-          console.error('Error fetching notification count:', notificationError);
-        }
-        
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Failed to load dashboard data. Please try again later.');
-        setLoading(false);
+  // Handle admin response to review
+  const handleAdminResponse = async (reviewId) => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) {
+        navigate('/login');
+        return;
       }
-    };
+      
+      // Generate AI response (in a real application, this would use an AI service)
+      const aiResponse = "Thank you for your feedback! We appreciate your input and will use it to improve our future events.";
+      
+      // Send response to the API
+      await axios.put(`http://localhost:3001/reviews/respond/${reviewId}`, 
+        { adminResponse: aiResponse },
+        { headers: { Authorization: `Bearer ${accessToken}` }}
+      );
+      
+      // Update reviews with the response
+      setEventReviews(prevReviews => 
+        prevReviews.map(review => 
+          review.id === reviewId 
+            ? { ...review, admin_response: aiResponse } 
+            : review
+        )
+      );
+      
+      alert("AI response has been added successfully!");
+    } catch (err) {
+      console.error('Error sending AI response:', err);
+      alert("Failed to add AI response. Please try again.");
+    }
+  };
 
-    fetchData();
+  // Initialize with real data
+  useEffect(() => {
+    fetchEvents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate]);
+  }, []);
+
+  // Update data when time range changes
+  useEffect(() => {
+    if (selectedEvent) {
+      fetchEventAnalytics(selectedEvent.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeRange, selectedEvent]);
 
   // Handle event selection
-  const selectEvent = useCallback((event) => {
+  const selectEvent = (event) => {
     setSelectedEvent(event);
-    if (fetchEventInsightsRef.current) {
-      fetchEventInsightsRef.current(event.id);
-    }
-  }, []);
+    fetchEventAnalytics(event.id);
+    fetchEventReviews(event.id);
+  };
 
   // Handle tab changes
-  const handleTabChange = useCallback((tabId) => {
+  const handleTabChange = (tabId) => {
     setActiveTab(tabId);
-  }, []);
+    
+    // Fetch reviews when switching to the reviews tab
+    if (tabId === 'reviews' && selectedEvent) {
+      fetchEventReviews(selectedEvent.id);
+    }
+  };
 
   // Handle time range change
-  const handleTimeRangeChange = useCallback((range) => {
+  const handleTimeRangeChange = (range) => {
     setTimeRange(range);
-    if (selectedEvent && fetchEventInsightsRef.current) {
-      fetchEventInsightsRef.current(selectedEvent.id);
-    }
-  }, [selectedEvent, fetchEventInsightsRef]);
+  };
 
-  // Generate response to a review
-  const generateAIResponse = async (reviewId, reviewText) => {
-    try {
-      // In a real implementation, this would call an API endpoint
-      // that uses a language model to generate a response
-      console.log(`Generating AI response for review ${reviewId}`);
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Sample response
-      const aiResponse = `Thank you for your feedback! We're glad you enjoyed the event and appreciate your suggestions. We'll consider your input for future improvements.`;
-      
-      // In a real app, you would save this response to the database
-      console.log('AI generated response:', aiResponse);
-      
-      return aiResponse;
-    } catch (error) {
-      console.error('Error generating AI response:', error);
-      throw error;
-    }
+  // Export report function
+  const exportReport = (format) => {
+    alert(`Demo: Exporting ${selectedEvent.title} report in ${format} format`);
+    // In a real application, this would generate and download a report
   };
 
   // Render overview tab
   const renderOverviewTab = () => {
     if (!selectedEvent) return null;
-    
+
     // Prepare chart data for sentiment trend
     const sentimentChartData = {
       labels: sentimentTrend.map(item => item.date),
@@ -308,7 +371,7 @@ const AdminAIReviewsDashboard = () => {
         }
       ]
     };
-    
+
     // Prepare chart data for review volume
     const volumeChartData = {
       labels: reviewVolume.map(item => item.date),
@@ -321,48 +384,34 @@ const AdminAIReviewsDashboard = () => {
         }
       ]
     };
-    
+
     // Chart options
     const lineOptions = {
       responsive: true,
       plugins: {
-        legend: {
-          display: false
-        },
-        tooltip: {
-          mode: 'index',
-          intersect: false
-        }
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false }
       },
       scales: {
         y: {
           min: 0,
           max: 100,
-          ticks: {
-            stepSize: 20
-          }
+          ticks: { stepSize: 20 }
         }
       }
     };
-    
+
     const barOptions = {
       responsive: true,
       plugins: {
-        legend: {
-          display: false
-        },
-        tooltip: {
-          mode: 'index',
-          intersect: false
-        }
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false }
       },
       scales: {
-        y: {
-          beginAtZero: true
-        }
+        y: { beginAtZero: true }
       }
     };
-    
+
     return (
       <div className="tab-pane fade show active">
         <h4 className="mb-4" style={{ color: colors.secondary }}>
@@ -372,12 +421,10 @@ const AdminAIReviewsDashboard = () => {
         {/* Key Metrics Cards */}
         <div className="row g-3 mb-4">
           <div className="col-md-3 col-sm-6">
-            <div 
-              className="p-3 rounded text-center h-100 shadow-sm" 
-              style={{ backgroundColor: `rgba(255, 90, 142, 0.1)` }}
-            >
+            <div className="p-3 rounded text-center h-100 shadow-sm" 
+                 style={{ backgroundColor: `rgba(255, 90, 142, 0.1)` }}>
               <div style={{ color: colors.primary, fontSize: '2rem', fontWeight: '700' }}>
-                {selectedEvent.avgRating ? selectedEvent.avgRating.toFixed(1) : 'N/A'}
+                {selectedEvent.avgRating}
               </div>
               <div style={{ color: colors.secondary, fontSize: '0.9rem', fontWeight: '500' }}>
                 Overall Rating
@@ -389,12 +436,10 @@ const AdminAIReviewsDashboard = () => {
           </div>
           
           <div className="col-md-3 col-sm-6">
-            <div 
-              className="p-3 rounded text-center h-100 shadow-sm" 
-              style={{ backgroundColor: `rgba(13, 27, 64, 0.1)` }}
-            >
+            <div className="p-3 rounded text-center h-100 shadow-sm" 
+                 style={{ backgroundColor: `rgba(13, 27, 64, 0.1)` }}>
               <div style={{ color: colors.secondary, fontSize: '2rem', fontWeight: '700' }}>
-                {selectedEvent.reviewCount || 0}
+                {selectedEvent.reviewCount}
               </div>
               <div style={{ color: colors.secondary, fontSize: '0.9rem', fontWeight: '500' }}>
                 Total Reviews
@@ -403,12 +448,10 @@ const AdminAIReviewsDashboard = () => {
           </div>
           
           <div className="col-md-3 col-sm-6">
-            <div 
-              className="p-3 rounded text-center h-100 shadow-sm" 
-              style={{ backgroundColor: `rgba(65, 201, 226, 0.1)` }}
-            >
+            <div className="p-3 rounded text-center h-100 shadow-sm" 
+                 style={{ backgroundColor: `rgba(65, 201, 226, 0.1)` }}>
               <div style={{ color: colors.accent, fontSize: '2rem', fontWeight: '700' }}>
-                {selectedEvent.sentimentScore || 0}%
+                {selectedEvent.sentimentScore}%
               </div>
               <div style={{ color: colors.secondary, fontSize: '0.9rem', fontWeight: '500' }}>
                 Positive Sentiment
@@ -417,12 +460,10 @@ const AdminAIReviewsDashboard = () => {
           </div>
           
           <div className="col-md-3 col-sm-6">
-            <div 
-              className="p-3 rounded text-center h-100 shadow-sm" 
-              style={{ backgroundColor: 'rgba(255, 158, 109, 0.1)' }}
-            >
+            <div className="p-3 rounded text-center h-100 shadow-sm" 
+                 style={{ backgroundColor: 'rgba(255, 158, 109, 0.1)' }}>
               <div style={{ color: '#FF9E6D', fontSize: '2rem', fontWeight: '700' }}>
-                {(selectedEvent.attendanceTotal || 0).toLocaleString()}
+                {selectedEvent.attendanceTotal?.toLocaleString() || 0}
               </div>
               <div style={{ color: colors.secondary, fontSize: '0.9rem', fontWeight: '500' }}>
                 Total Attendance
@@ -493,58 +534,6 @@ const AdminAIReviewsDashboard = () => {
             </div>
           </div>
         </div>
-        
-        {/* Keyword Cloud and Recommendations */}
-        <div className="row">
-          <div className="col-md-6">
-            <div className="card shadow-sm h-100">
-              <div className="card-header" style={{ backgroundColor: colors.light }}>
-                <h5 className="card-title mb-0" style={{ color: colors.secondary }}>Keyword Analysis</h5>
-              </div>
-              <div className="card-body">
-                <div className="p-4" style={{ minHeight: '250px' }}>
-                  <div className="d-flex flex-wrap justify-content-center align-items-center">
-                    {keywordCloud.map((keyword, index) => (
-                      <div 
-                        key={index}
-                        className="m-2 p-2 rounded"
-                        style={{ 
-                          fontSize: `${Math.max(0.8, keyword.value / 10)}rem`,
-                          fontWeight: Math.min(700, 300 + keyword.value * 10),
-                          color: colors.chart[index % colors.chart.length],
-                          backgroundColor: `rgba(${index * 20}, ${255 - index * 20}, ${150 + index * 10}, 0.1)`,
-                        }}
-                      >
-                        {keyword.text}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-6">
-            <div className="card shadow-sm h-100">
-              <div className="card-header" style={{ backgroundColor: colors.light }}>
-                <h5 className="card-title mb-0" style={{ color: colors.secondary }}>AI Recommendations</h5>
-              </div>
-              <div className="card-body">
-                <ul className="list-group list-group-flush">
-                  {aiRecommendations.map((recommendation, index) => (
-                    <li key={index} className="list-group-item border-0 ps-0">
-                      <div className="d-flex">
-                        <div className="me-2 text-primary">
-                          <i className="bi bi-lightbulb-fill"></i>
-                        </div>
-                        <div style={{ fontSize: '0.9rem' }}>{recommendation}</div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     );
   };
@@ -552,25 +541,7 @@ const AdminAIReviewsDashboard = () => {
   // Render reviews tab
   const renderReviewsTab = () => {
     if (!selectedEvent) return null;
-    
-    // For demonstration, generate some mock reviews
-    const reviews = Array.from({ length: 8 }, (_, i) => ({
-      id: i + 1,
-      username: `User${i + 1}`,
-      avatar: `https://i.pravatar.cc/40?img=${i + 10}`,
-      rating: Math.floor(Math.random() * 3) + 3, // 3-5 stars
-      date: new Date(Date.now() - Math.random() * 10000000000).toLocaleDateString(),
-      text: [
-        "Great event! I particularly enjoyed the keynote speakers and networking opportunities.",
-        "Really well organized. The content was informative and the speakers were engaging.",
-        "The venue was excellent and the staff were very helpful. Would attend again!",
-        "Good event overall, but would have liked more interactive sessions.",
-        "Amazing experience! The workshops were incredibly valuable and I learned a lot."
-      ][Math.floor(Math.random() * 5)],
-      sentiment: ["positive", "positive", "positive", "neutral", "positive"][Math.floor(Math.random() * 5)],
-      responded: Math.random() > 0.5
-    }));
-    
+
     return (
       <div className="tab-pane fade show active">
         <div className="d-flex justify-content-between align-items-center mb-4">
@@ -582,7 +553,11 @@ const AdminAIReviewsDashboard = () => {
             style={{ backgroundColor: colors.primary, color: 'white' }}
             onClick={() => {
               // Auto-respond to all unresponded reviews
-              console.log('Auto-responding to all unresponded reviews');
+              eventReviews.forEach(review => {
+                if (!review.admin_response) {
+                  handleAdminResponse(review.id);
+                }
+              });
             }}
           >
             Auto-respond to All
@@ -604,66 +579,84 @@ const AdminAIReviewsDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {reviews.map((review) => (
-                    <tr key={review.id}>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <img 
-                            src={review.avatar} 
-                            alt={review.username} 
-                            className="rounded-circle me-2"
-                            width="30"
-                            height="30"
-                          />
-                          <span>{review.username}</span>
-                        </div>
-                      </td>
-                      <td style={{ maxWidth: '300px' }}>
-                        <div style={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {review.text}
-                        </div>
-                        {review.responded && (
-                          <span className="badge bg-success ms-2" style={{ fontSize: '0.7rem' }}>
-                            Responded
+                  {eventReviews.length > 0 ? (
+                    eventReviews.map((review) => (
+                      <tr key={review.id}>
+                        <td>
+                          <div className="d-flex align-items-center">
+                            <div 
+                              className="rounded-circle me-2 d-flex align-items-center justify-content-center"
+                              style={{ 
+                                width: '30px', 
+                                height: '30px', 
+                                backgroundColor: colors.primary, 
+                                color: 'white' 
+                              }}
+                            >
+                              {review.username?.charAt(0).toUpperCase() || 'A'}
+                            </div>
+                            <span>{review.username || 'Anonymous'}</span>
+                          </div>
+                        </td>
+                        <td style={{ maxWidth: '300px' }}>
+                          <div style={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {review.review_text}
+                          </div>
+                          {review.admin_response && (
+                            <span className="badge bg-success ms-2" style={{ fontSize: '0.7rem' }}>
+                              Responded
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          <span style={{ color: colors.primary }}>
+                            {review.rating} {"★".repeat(review.rating)}
                           </span>
-                        )}
-                      </td>
-                      <td>
-                        <span style={{ color: colors.primary }}>
-                          {review.rating} {"★".repeat(review.rating)}
-                        </span>
-                      </td>
-                      <td>
-                        <span 
-                          className={`badge ${review.sentiment === 'positive' ? 'bg-success' : review.sentiment === 'negative' ? 'bg-danger' : 'bg-secondary'}`}
-                        >
-                          {review.sentiment}
-                        </span>
-                      </td>
-                      <td>{review.date}</td>
-                      <td>
-                        <div className="btn-group">
-                          <button 
-                            className="btn btn-sm"
-                            style={{ backgroundColor: colors.accent, color: 'white' }}
-                            onClick={() => generateAIResponse(review.id, review.text)}
-                            disabled={review.responded}
+                        </td>
+                        <td>
+                          <span 
+                            className={`badge ${
+                              review.sentiment === 'positive' 
+                                ? 'bg-success' 
+                                : review.sentiment === 'negative' 
+                                  ? 'bg-danger' 
+                                  : 'bg-secondary'
+                            }`}
                           >
-                            {review.responded ? 'Responded' : 'AI Response'}
-                          </button>
-                          <button 
-                            className="btn btn-sm btn-outline-secondary"
-                            onClick={() => {
-                              // View review details
-                              console.log('View review details', review);
-                            }}
-                          >
-                            View
-                          </button>
-                        </div>
+                            {review.sentiment || 'neutral'}
+                          </span>
+                        </td>
+                        <td>{new Date(review.createdAt).toLocaleDateString()}</td>
+                        <td>
+                          <div className="btn-group">
+                            <button 
+                              className="btn btn-sm"
+                              style={{ 
+                                backgroundColor: review.admin_response ? '#6c757d' : colors.accent, 
+                                color: 'white'
+                              }}
+                              onClick={() => handleAdminResponse(review.id)}
+                              disabled={!!review.admin_response}
+                            >
+                              {review.admin_response ? 'Responded' : 'AI Response'}
+                            </button>
+                            <button 
+                              className="btn btn-sm btn-outline-secondary"
+                              onClick={() => alert(`View details for review #${review.id}`)}
+                            >
+                              View
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6" className="text-center py-4">
+                        <p style={{ color: colors.secondary }}>No reviews found for this event.</p>
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -673,211 +666,74 @@ const AdminAIReviewsDashboard = () => {
     );
   };
 
-  // Render settings tab
-  const renderSettingsTab = () => {
-    if (!selectedEvent) return null;
-    
-    return (
-      <div className="tab-pane fade show active">
-        <h4 className="mb-4" style={{ color: colors.secondary }}>
-          AI Analysis Settings for {selectedEvent.title}
-        </h4>
-        
-        <div className="card shadow-sm mb-4">
-          <div className="card-header" style={{ backgroundColor: colors.light }}>
-            <h5 className="card-title mb-0" style={{ color: colors.secondary }}>Sentiment Analysis</h5>
-          </div>
-          <div className="card-body">
-            <form>
-              <div className="mb-3">
-                <label className="form-label">Response Threshold</label>
-                <div className="input-group">
-                  <select className="form-select">
-                    <option value="any">Respond to any review</option>
-                    <option value="negative">Respond to negative reviews only</option>
-                    <option value="neutral">Respond to neutral and negative reviews</option>
-                    <option value="none">Don't auto-respond</option>
-                  </select>
-                </div>
-                <div className="form-text">
-                  Set when AI should automatically generate responses to reviews
-                </div>
-              </div>
-              
-              <div className="mb-3">
-                <label className="form-label">AI Response Tone</label>
-                <div className="input-group">
-                  <select className="form-select">
-                    <option value="professional">Professional</option>
-                    <option value="friendly">Friendly</option>
-                    <option value="enthusiastic">Enthusiastic</option>
-                    <option value="formal">Formal</option>
-                  </select>
-                </div>
-                <div className="form-text">
-                  Set the tone of AI-generated responses
-                </div>
-              </div>
-              
-              <div className="mb-3">
-                <label className="form-label">Review Alert Threshold</label>
-                <div className="input-group">
-                  <select className="form-select">
-                    <option value="1">★ (1 star)</option>
-                    <option value="2">★★ (2 stars)</option>
-                    <option value="3">★★★ (3 stars)</option>
-                    <option value="none">No alerts</option>
-                  </select>
-                </div>
-                <div className="form-text">
-                  Get notified about reviews below this rating
-                </div>
-              </div>
-              
-              <div className="mb-3">
-                <div className="form-check form-switch">
-                  <input className="form-check-input" type="checkbox" id="autoApproveResponses" defaultChecked />
-                  <label className="form-check-label" htmlFor="autoApproveResponses">
-                    Auto-approve AI responses
-                  </label>
-                </div>
-                <div className="form-text">
-                  When enabled, AI responses will be posted without manual review
-                </div>
-              </div>
-              
-              <div className="mb-3">
-                <div className="form-check form-switch">
-                  <input className="form-check-input" type="checkbox" id="enableInsights" defaultChecked />
-                  <label className="form-check-label" htmlFor="enableInsights">
-                    Enable AI Insights
-                  </label>
-                </div>
-                <div className="form-text">
-                  Generate AI-powered insights and recommendations from review data
-                </div>
-              </div>
-              
-              <button 
-                type="submit" 
-                className="btn"
-                style={{ backgroundColor: colors.primary, color: 'white' }}
-              >
-                Save Settings
-              </button>
-            </form>
-          </div>
-        </div>
-        
-        <div className="card shadow-sm">
-          <div className="card-header" style={{ backgroundColor: colors.light }}>
-            <h5 className="card-title mb-0" style={{ color: colors.secondary }}>Custom Response Templates</h5>
-          </div>
-          <div className="card-body">
-            <div className="alert alert-info">
-              Create custom response templates that the AI can use when responding to reviews.
-              Use variables like {'{username}'}, {'{rating}'}, or {'{event_name}'} that will be replaced with actual values.
-            </div>
-            
-            <div className="mb-3">
-              <label className="form-label">Positive Review Template</label>
-              <textarea 
-                className="form-control" 
-                rows="3"
-                defaultValue="Thank you for your positive review, {username}! We're delighted that you enjoyed {event_name} and appreciate your feedback. We hope to see you at our future events!"
-              ></textarea>
-            </div>
-            
-            <div className="mb-3">
-              <label className="form-label">Neutral Review Template</label>
-              <textarea 
-                className="form-control" 
-                rows="3"
-                defaultValue="Thank you for attending {event_name} and sharing your thoughts, {username}. We appreciate your honest feedback and will take your comments into consideration for our future events. If you have any specific suggestions, please let us know!"
-              ></textarea>
-            </div>
-            
-            <div className="mb-3">
-              <label className="form-label">Negative Review Template</label>
-              <textarea 
-                className="form-control" 
-                rows="3"
-                defaultValue="We're sorry to hear about your experience at {event_name}, {username}. We take all feedback seriously and will use your comments to improve. Please contact our support team if you'd like to discuss your concerns further."
-              ></textarea>
-            </div>
-            
-            <button 
-              type="submit" 
-              className="btn"
-              style={{ backgroundColor: colors.primary, color: 'white' }}
-            >
-              Save Templates
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   // Render reports tab
   const renderReportsTab = () => {
     if (!selectedEvent) return null;
+
+    // Calculate sentiment distribution from reviews
+    const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
+    const ratingCounts = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
     
-    // Prepare sentiment distribution data for pie chart
+    eventReviews.forEach(review => {
+      // Count sentiments
+      if (review.sentiment) {
+        sentimentCounts[review.sentiment] += 1;
+      } else {
+        sentimentCounts.neutral += 1;
+      }
+      
+      // Count ratings
+      if (review.rating >= 1 && review.rating <= 5) {
+        ratingCounts[review.rating.toString()] += 1;
+      }
+    });
+    
+    // Calculate percentages
+    const totalReviews = eventReviews.length || 1; // Avoid division by zero
     const sentimentData = {
       labels: ['Positive', 'Neutral', 'Negative'],
-      datasets: [
-        {
-          data: [70, 20, 10],
-          backgroundColor: [colors.chart[2], colors.chart[3], colors.chart[1]],
-          borderWidth: 0
-        }
-      ]
+      datasets: [{
+        data: [
+          Math.round((sentimentCounts.positive / totalReviews) * 100),
+          Math.round((sentimentCounts.neutral / totalReviews) * 100),
+          Math.round((sentimentCounts.negative / totalReviews) * 100)
+        ],
+        backgroundColor: [colors.chart[0], colors.chart[2], colors.chart[4]]
+      }]
     };
-    
-    // Prepare rating distribution data for bar chart
+
     const ratingData = {
-      labels: ['5★', '4★', '3★', '2★', '1★'],
-      datasets: [
-        {
-          label: 'Number of Reviews',
-          data: [35, 25, 15, 5, 2],
-          backgroundColor: [
-            `rgba(65, 201, 226, 0.8)`,
-            `rgba(65, 201, 226, 0.6)`,
-            `rgba(65, 201, 226, 0.4)`,
-            `rgba(13, 27, 64, 0.6)`,
-            `rgba(13, 27, 64, 0.8)`
-          ],
-          borderRadius: 4
-        }
-      ]
+      labels: ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'],
+      datasets: [{
+        data: [
+          ratingCounts['1'],
+          ratingCounts['2'],
+          ratingCounts['3'],
+          ratingCounts['4'],
+          ratingCounts['5']
+        ],
+        backgroundColor: colors.chart
+      }]
     };
-    
+
     // Chart options
     const pieOptions = {
       responsive: true,
       plugins: {
-        legend: {
-          position: 'right'
-        }
+        legend: { position: 'right' }
       }
     };
-    
+
     const barOptions = {
       responsive: true,
       plugins: {
-        legend: {
-          display: false
-        }
+        legend: { display: false }
       },
       scales: {
-        y: {
-          beginAtZero: true
-        }
+        y: { beginAtZero: true }
       }
     };
-    
+
     return (
       <div className="tab-pane fade show active">
         <h4 className="mb-4" style={{ color: colors.secondary }}>
@@ -908,111 +764,6 @@ const AdminAIReviewsDashboard = () => {
           </div>
         </div>
         
-        {/* Key Insight Cards */}
-        <div className="row g-3 mb-4">
-          <div className="col-md-4">
-            <div className="card shadow-sm h-100">
-              <div className="card-body">
-                <h5 className="card-title" style={{ color: colors.primary }}>Top Positive Topics</h5>
-                <ol className="list-group list-group-flush list-group-numbered">
-                  <li className="list-group-item border-0 ps-0">Speaker Quality (85%)</li>
-                  <li className="list-group-item border-0 ps-0">Content Relevance (80%)</li>
-                  <li className="list-group-item border-0 ps-0">Networking (75%)</li>
-                  <li className="list-group-item border-0 ps-0">Organization (70%)</li>
-                  <li className="list-group-item border-0 ps-0">Value (65%)</li>
-                </ol>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-4">
-            <div className="card shadow-sm h-100">
-              <div className="card-body">
-                <h5 className="card-title" style={{ color: colors.accent }}>Areas for Improvement</h5>
-                <ol className="list-group list-group-flush list-group-numbered">
-                  <li className="list-group-item border-0 ps-0">Venue Amenities (15%)</li>
-                  <li className="list-group-item border-0 ps-0">Food Quality (12%)</li>
-                  <li className="list-group-item border-0 ps-0">Session Length (10%)</li>
-                  <li className="list-group-item border-0 ps-0">Registration Process (8%)</li>
-                  <li className="list-group-item border-0 ps-0">Mobile App Experience (5%)</li>
-                </ol>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-4">
-            <div className="card shadow-sm h-100">
-              <div className="card-body">
-                <h5 className="card-title" style={{ color: colors.secondary }}>Demographic Insights</h5>
-                <ul className="list-group list-group-flush">
-                  <li className="list-group-item border-0 ps-0">
-                    <div className="d-flex justify-content-between">
-                      <span>First-time Attendees</span>
-                      <span>35%</span>
-                    </div>
-                    <div className="progress mt-1" style={{ height: '4px' }}>
-                      <div 
-                        className="progress-bar" 
-                        role="progressbar" 
-                        style={{ width: '35%', backgroundColor: colors.primary }} 
-                        aria-valuenow="35" 
-                        aria-valuemin="0" 
-                        aria-valuemax="100"
-                      ></div>
-                    </div>
-                  </li>
-                  <li className="list-group-item border-0 ps-0">
-                    <div className="d-flex justify-content-between">
-                      <span>Returning Attendees</span>
-                      <span>65%</span>
-                    </div>
-                    <div className="progress mt-1" style={{ height: '4px' }}>
-                      <div 
-                        className="progress-bar" 
-                        role="progressbar" 
-                        style={{ width: '65%', backgroundColor: colors.accent }} 
-                        aria-valuenow="65" 
-                        aria-valuemin="0" 
-                        aria-valuemax="100"
-                      ></div>
-                    </div>
-                  </li>
-                  <li className="list-group-item border-0 ps-0">
-                    <div className="d-flex justify-content-between">
-                      <span>Avg. Session Attendance</span>
-                      <span>78%</span>
-                    </div>
-                    <div className="progress mt-1" style={{ height: '4px' }}>
-                      <div 
-                        className="progress-bar" 
-                        role="progressbar" 
-                        style={{ width: '78%', backgroundColor: colors.chart[3] }} 
-                        aria-valuenow="78" 
-                        aria-valuemin="0" 
-                        aria-valuemax="100"
-                      ></div>
-                    </div>
-                  </li>
-                  <li className="list-group-item border-0 ps-0">
-                    <div className="d-flex justify-content-between">
-                      <span>Likely to Recommend</span>
-                      <span>82%</span>
-                    </div>
-                    <div className="progress mt-1" style={{ height: '4px' }}>
-                      <div 
-                        className="progress-bar" 
-                        role="progressbar" 
-                        style={{ width: '82%', backgroundColor: colors.chart[4] }} 
-                        aria-valuenow="82" 
-                        aria-valuemin="0" 
-                        aria-valuemax="100"
-                      ></div>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-        
         {/* Export Options */}
         <div className="card shadow-sm">
           <div className="card-header" style={{ backgroundColor: colors.light }}>
@@ -1023,23 +774,22 @@ const AdminAIReviewsDashboard = () => {
               <div className="col-md-6">
                 <div className="mb-3">
                   <label className="form-label">Report Type</label>
-                  <select className="form-select">
+                  <select className="form-select" defaultValue="full">
                     <option value="full">Complete Analytics Report</option>
                     <option value="sentiment">Sentiment Analysis</option>
                     <option value="ratings">Ratings Distribution</option>
                     <option value="comments">Review Comments</option>
-                    <option value="recommendations">AI Recommendations</option>
                   </select>
                 </div>
               </div>
               <div className="col-md-6">
                 <div className="mb-3">
                   <label className="form-label">Format</label>
-                  <select className="form-select">
-                    <option value="pdf">PDF Document</option>
-                    <option value="excel">Excel Spreadsheet</option>
+                  <select className="form-select" id="exportFormat" defaultValue="csv">
                     <option value="csv">CSV File</option>
                     <option value="json">JSON Data</option>
+                    <option value="pdf" disabled>PDF Document (Coming Soon)</option>
+                    <option value="excel" disabled>Excel Spreadsheet (Coming Soon)</option>
                   </select>
                 </div>
               </div>
@@ -1048,10 +798,22 @@ const AdminAIReviewsDashboard = () => {
               <label className="form-label">Date Range</label>
               <div className="row">
                 <div className="col-md-6">
-                  <input type="date" className="form-control" placeholder="Start Date" />
+                  <input 
+                    type="date" 
+                    className="form-control" 
+                    placeholder="Start Date" 
+                    value={reportDate.startDate}
+                    onChange={(e) => setReportDate({...reportDate, startDate: e.target.value})}
+                  />
                 </div>
                 <div className="col-md-6">
-                  <input type="date" className="form-control" placeholder="End Date" />
+                  <input 
+                    type="date" 
+                    className="form-control" 
+                    placeholder="End Date" 
+                    value={reportDate.endDate}
+                    onChange={(e) => setReportDate({...reportDate, endDate: e.target.value})}
+                  />
                 </div>
               </div>
             </div>
@@ -1059,11 +821,13 @@ const AdminAIReviewsDashboard = () => {
               <button 
                 className="btn me-2"
                 style={{ backgroundColor: colors.primary, color: 'white' }}
+                onClick={() => exportReport(document.getElementById('exportFormat').value)}
               >
                 Generate Report
               </button>
               <button 
                 className="btn btn-outline-secondary"
+                onClick={() => alert("Weekly report scheduling feature coming soon!")}
               >
                 Schedule Weekly Reports
               </button>
@@ -1074,245 +838,174 @@ const AdminAIReviewsDashboard = () => {
     );
   };
 
+  // Main render function
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="container-fluid py-4">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   if (error) {
     return <ErrorAlert message={error} />;
   }
 
-  if (!isAdmin) {
-    return (
-      <div className="container py-5">
-        <div className="alert alert-danger" role="alert">
-          <h4 className="alert-heading">Access Denied</h4>
-          <p>You must be an administrator to access this page.</p>
-          <button 
-            className="btn btn-primary"
-            onClick={() => navigate('/login')}
-          >
-            Go to Login
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Updated background and header styles
+const backgroundStyle = {
+  background: `linear-gradient(135deg, 
+    ${colors.light} 0%, 
+    ${colors.accent}10 50%, 
+    ${colors.primary}10 100%)`,
+  minHeight: '100vh',
+  paddingTop: '2rem',
+  paddingBottom: '2rem'
+};
 
   return (
-    <div className="container-fluid py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 style={{ color: colors.secondary }}>AI Reviews Dashboard</h2>
-        <div className="position-relative">
-          <button 
-            className="btn btn-outline-secondary position-relative"
-            onClick={() => navigate('/notifications')}
+    <div style={backgroundStyle} className="container-fluid">
+    <div className="container">
+      <div className="row mb-5">
+        <div className="col-12 text-center">
+          <h1 
+            style={{ 
+              color: colors.secondary, 
+              fontWeight: '700',
+              fontSize: '2.5rem',
+              marginBottom: '0.5rem',
+              letterSpacing: '-0.5px',
+              textShadow: '1px 1px 2px rgba(13, 27, 64, 0.05)'
+            }}
           >
-            <i className="bi bi-bell"></i> Notifications
-            {notificationCount > 0 && (
-              <span 
-                className="position-absolute top-0 start-100 translate-middle badge rounded-pill"
-                style={{ backgroundColor: colors.primary }}
-              >
-                {notificationCount}
-                <span className="visually-hidden">unread notifications</span>
-              </span>
-            )}
-          </button>
+            Analytics Dashboard
+          </h1>
+          <p 
+            className="lead text-muted"
+            style={{
+              fontWeight: '300',
+              color: `${colors.textLight}`,
+              letterSpacing: '0.5px',
+              maxWidth: '600px',
+              margin: '0 auto'
+            }}
+          >
+            Transforming event feedback into actionable insights
+          </p>
         </div>
       </div>
-      
+      </div>
+
       <div className="row">
-        <div className="col-lg-3">
-          <div className="card shadow-sm mb-4">
-            <div className="card-header py-3" style={{ backgroundColor: colors.secondary, color: 'white' }}>
-              <h2 className="m-0 fs-5">Select Event</h2>
+        <div className="col-md-3">
+          <div className="card shadow-sm">
+            <div className="card-header" style={{ backgroundColor: colors.light }}>
+              <h5 className="card-title mb-0" style={{ color: colors.secondary }}>Events</h5>
             </div>
             <div className="card-body p-0">
-              <div className="list-group list-group-flush" role="listbox">
+              <div className="list-group list-group-flush">
                 {events.length > 0 ? (
-                  events.map(event => (
-                    <div 
+                  events.map((event) => (
+                    <button
                       key={event.id}
-                      className="p-3 border-bottom"
-                      onClick={() => selectEvent(event)}
-                      role="option"
-                      tabIndex={0}
-                      aria-selected={selectedEvent?.id === event.id}
-                      onKeyDown={(e) => e.key === 'Enter' && selectEvent(event)}
-                      style={{ 
-                        cursor: 'pointer',
-                        backgroundColor: selectedEvent?.id === event.id ? `rgba(255, 90, 142, 0.1)` : 'white',
-                        borderLeft: selectedEvent?.id === event.id ? `4px solid ${colors.primary}` : '4px solid transparent',
-                        transition: 'all 0.2s ease'
+                      className={`list-group-item list-group-item-action d-flex justify-content-between align-items-center ${
+                        selectedEvent && selectedEvent.id === event.id ? 'active' : ''
+                      }`}
+                      style={{
+                        backgroundColor: selectedEvent && selectedEvent.id === event.id ? colors.primary : 'white',
+                        color: selectedEvent && selectedEvent.id === event.id ? 'white' : colors.text
                       }}
+                      onClick={() => selectEvent(event)}
                     >
-                      <div className="d-flex justify-content-between align-items-start">
-                        <div>
-                          <h4 className="fs-6 mb-1" style={{ color: colors.secondary, fontWeight: '600' }}>
-                            {event.title}
-                          </h4>
-                          <div style={{ fontSize: '0.85rem', color: colors.textLight }}>
-                            {event.date} • {event.category}
-                          </div>
-                        </div>
-                        <div 
-                          className="px-2 py-1 rounded-pill" 
-                          style={{ 
-                            backgroundColor: colors.light, 
-                            color: colors.primary,
-                            fontSize: '0.9rem',
-                            fontWeight: '600' 
-                          }}
-                        >
-                          {event.avgRating ? event.avgRating.toFixed(1) : 'N/A'} ★
-                        </div>
+                      <div>
+                        <div style={{ fontWeight: '500' }}>{event.title}</div>
+                        <small style={{ opacity: 0.8 }}>{new Date(event.date).toLocaleDateString()}</small>
                       </div>
-                      
-                      <div className="d-flex align-items-center mt-2">
-                        <div 
-                          className="me-2 flex-grow-1" 
-                          style={{ 
-                            height: '6px', 
-                            backgroundColor: '#e9ecef',
-                            borderRadius: '3px',
-                            overflow: 'hidden'
-                          }}
-                        >
-                          <div 
-                            style={{ 
-                              width: `${event.sentimentScore || 0}%`, 
-                              height: '100%', 
-                              backgroundColor: colors.primary,
-                              borderRadius: '3px'
-                            }}
-                            aria-label={`${event.sentimentScore || 0}% positive sentiment`}
-                            role="progressbar"
-                            aria-valuenow={event.sentimentScore || 0}
-                            aria-valuemin="0"
-                            aria-valuemax="100"
-                          ></div>
-                        </div>
-                        <span style={{ fontSize: '0.8rem', color: colors.textLight }}>
-                          {event.reviewCount || 0} reviews
-                        </span>
-                      </div>
-                    </div>
+                      <span 
+                        className={`badge rounded-pill ${selectedEvent && selectedEvent.id === event.id ? 'bg-white text-primary' : 'bg-primary text-white'}`}
+                      >
+                        {event.reviewCount}
+                      </span>
+                    </button>
                   ))
                 ) : (
-                  <div className="p-4 text-center">
-                    <p className="text-muted">No events available</p>
-                    <button 
-                      className="btn btn-sm"
-                      style={{ backgroundColor: colors.primary, color: 'white' }}
-                      onClick={() => navigate('/events/create')}
-                    >
-                      Create Event
-                    </button>
+                  <div className="text-center py-4">
+                    <p className="text-muted mb-0">No events available</p>
                   </div>
                 )}
               </div>
             </div>
-          </div>
-          
-          <div className="card shadow-sm">
-            <div className="card-header" style={{ backgroundColor: colors.secondary, color: 'white' }}>
-              <h3 className="m-0 fs-5">AI Insights Engine</h3>
-            </div>
-            <div className="card-body">
-              <p style={{ fontSize: '0.9rem', color: colors.textLight }}>
-                Our AI analyzes event reviews and attendee feedback to provide actionable insights for event organizers.
-              </p>
-              <ul style={{ fontSize: '0.9rem', color: colors.textLight }}>
-                <li className="mb-2">Auto-respond to reviews with AI-generated responses</li>
-                <li className="mb-2">Understand sentiment trends and key topics</li>
-                <li className="mb-2">Receive recommendations for event improvements</li>
-                <li className="mb-2">Generate comprehensive analytics reports</li>
-              </ul>
-              {selectedEvent && (
-                <button 
-                  className="btn btn-sm w-100"
-                  style={{ backgroundColor: colors.primary, color: 'white' }}
-                  onClick={() => {
-                    // Refresh AI analysis for this event
-                    fetchEventInsights(selectedEvent.id);
-                  }}
-                >
-                  Refresh AI Analysis
-                </button>
-              )}
+            <div className="card-footer" style={{ backgroundColor: colors.light }}>
+              <button 
+                className="btn btn-sm"
+                style={{ backgroundColor: colors.primary, color: 'white' }}
+                onClick={() => navigate('/create-event')}
+              >
+                <i className="bi bi-plus-circle me-1"></i> Add Event
+              </button>
             </div>
           </div>
         </div>
-        
-        <div className="col-lg-9">
+
+        <div className="col-md-9">
           {selectedEvent ? (
-            <>
-              <div className="card shadow-sm">
-                <div className="card-header" style={{ backgroundColor: colors.light }}>
-                  <ul className="nav nav-tabs card-header-tabs">
-                    <li className="nav-item">
-                      <button 
-                        className={`nav-link ${activeTab === 'overview' ? 'active' : ''}`}
-                        onClick={() => handleTabChange('overview')}
-                        style={{ 
-                          color: activeTab === 'overview' ? colors.primary : colors.textLight,
-                          fontWeight: activeTab === 'overview' ? '600' : '400'
-                        }}
-                      >
-                        Overview
-                      </button>
-                    </li>
-                    <li className="nav-item">
-                      <button 
-                        className={`nav-link ${activeTab === 'reviews' ? 'active' : ''}`}
-                        onClick={() => handleTabChange('reviews')}
-                        style={{ 
-                          color: activeTab === 'reviews' ? colors.primary : colors.textLight,
-                          fontWeight: activeTab === 'reviews' ? '600' : '400'
-                        }}
-                      >
-                        Review Management
-                      </button>
-                    </li>
-                    <li className="nav-item">
-                      <button 
-                        className={`nav-link ${activeTab === 'reports' ? 'active' : ''}`}
-                        onClick={() => handleTabChange('reports')}
-                        style={{ 
-                          color: activeTab === 'reports' ? colors.primary : colors.textLight,
-                          fontWeight: activeTab === 'reports' ? '600' : '400'
-                        }}
-                      >
-                        Analytics Reports
-                      </button>
-                    </li>
-                    <li className="nav-item">
-                      <button 
-                        className={`nav-link ${activeTab === 'settings' ? 'active' : ''}`}
-                        onClick={() => handleTabChange('settings')}
-                        style={{ 
-                          color: activeTab === 'settings' ? colors.primary : colors.textLight,
-                          fontWeight: activeTab === 'settings' ? '600' : '400'
-                        }}
-                      >
-                        Settings
-                      </button>
-                    </li>
-                  </ul>
-                </div>
-                <div className="card-body p-4">
-                  {activeTab === 'overview' && renderOverviewTab()}
-                  {activeTab === 'reviews' && renderReviewsTab()}
-                  {activeTab === 'reports' && renderReportsTab()}
-                  {activeTab === 'settings' && renderSettingsTab()}
-                </div>
+            <div className="card shadow-sm">
+              <div className="card-header" style={{ backgroundColor: colors.light }}>
+                <ul className="nav nav-tabs card-header-tabs">
+                  <li className="nav-item">
+                    <button
+                      className={`nav-link ${activeTab === 'overview' ? 'active' : ''}`}
+                      style={{
+                        color: activeTab === 'overview' ? colors.primary : colors.textLight,
+                        fontWeight: activeTab === 'overview' ? '500' : '400'
+                      }}
+                      onClick={() => handleTabChange('overview')}
+                    >
+                      Overview
+                    </button>
+                  </li>
+                  <li className="nav-item">
+                    <button
+                      className={`nav-link ${activeTab === 'reviews' ? 'active' : ''}`}
+                      style={{
+                        color: activeTab === 'reviews' ? colors.primary : colors.textLight,
+                        fontWeight: activeTab === 'reviews' ? '500' : '400'
+                      }}
+                      onClick={() => handleTabChange('reviews')}
+                    >
+                      Reviews
+                    </button>
+                  </li>
+                  <li className="nav-item">
+                    <button
+                      className={`nav-link ${activeTab === 'reports' ? 'active' : ''}`}
+                      style={{
+                        color: activeTab === 'reports' ? colors.primary : colors.textLight,
+                        fontWeight: activeTab === 'reports' ? '500' : '400'
+                      }}
+                      onClick={() => handleTabChange('reports')}
+                    >
+                      Reports
+                    </button>
+                  </li>
+                </ul>
               </div>
-            </>
+              <div className="card-body">
+                {activeTab === 'overview' && renderOverviewTab()}
+                {activeTab === 'reviews' && renderReviewsTab()}
+                {activeTab === 'reports' && renderReportsTab()}
+              </div>
+            </div>
           ) : (
             <div className="card shadow-sm">
-              <div className="card-body text-center p-5">
-                <p className="text-muted">Please select an event to view AI insights</p>
+              <div className="card-body text-center py-5">
+                <p className="text-muted mb-4">Select an event to view analytics</p>
+                <button 
+                  className="btn"
+                  style={{ backgroundColor: colors.primary, color: 'white' }}
+                  onClick={() => navigate('/create-event')}
+                >
+                  <i className="bi bi-plus-circle me-1"></i> Add Your First Event
+                </button>
               </div>
             </div>
           )}
