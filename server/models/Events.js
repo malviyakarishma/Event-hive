@@ -40,7 +40,13 @@ module.exports = (sequelize, DataTypes) => {
             foreignKey: "eventId",  // Match Reviews model's eventId field
             onDelete: "CASCADE",
         });
+
+        Events.hasOne(models.EventAnalytics, {
+            foreignKey: 'event_id',
+            onDelete: 'CASCADE'
+          });
     };
+
 
     return Events;
 };

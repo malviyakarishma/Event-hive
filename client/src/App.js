@@ -12,6 +12,9 @@ import Home from "./pages/Home";
 import CreateEvent from "./pages/CreateEvent";
 import Event from "./pages/Event";
 import LandingPage from "./pages/LandingPage";
+import AIReviewsPage from "./pages/AIReviewsPage";
+import AdminAIReviewsDashboard from "./pages/AdminAIReviewsDashboard";
+import EventPersonalization from "./pages/EventPersonalization";
 import Profile from "./pages/Profile";
 import Calendar from "./pages/Calendar";
 import AdminCalendar from "./pages/AdminCalendar";
@@ -115,143 +118,154 @@ function App() {
     <AuthContext.Provider value={{ authState, setAuthState, deleteEvent }}>
       <NotificationProvider>
         <div className="App">
-          {!hideNavbarRoutes.includes(location.pathname) && (
-            <nav className="navbar navbar-expand-lg navbar-dark fixed-top py-4" style={{ backgroundColor: '#001F3F' }}>
-              <div className="container-fluid">
-                {/* Brand/Logo - Moved to the left edge */}
-                <Link className="navbar-brand fw-bold fs-4" to="/">
-                  <i className="bi bi-calendar-event me-2"></i>
-                  EventApp
+        {!hideNavbarRoutes.includes(location.pathname) && (
+  <nav className="navbar navbar-expand-lg navbar-dark fixed-top shadow-sm" style={{ backgroundColor: '#001F3F' }}>
+    <div className="container">
+      {/* Brand/Logo */}
+      <Link className="navbar-brand d-flex align-items-center" to="/">
+        <i className="bi bi-calendar-event fs-4 me-2"></i>
+        <span className="fw-bold">EventApp</span>
+      </Link>
+
+      {/* Navbar Toggler */}
+      <button
+        className="navbar-toggler border-0"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span className="navbar-toggler-icon"></span>
+      </button>
+
+      {/* Navbar Links */}
+      <div className="collapse navbar-collapse" id="navbarNav">
+        <ul className="navbar-nav mx-auto">
+          {!authState.status ? (
+            <>
+              <li className="nav-item px-2">
+                <Link className="nav-link" to="/login">
+                  Login
                 </Link>
-
-                {/* Navbar Toggler */}
-                <button
-                  className="navbar-toggler"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#navbarNav"
-                  aria-controls="navbarNav"
-                  aria-expanded="false"
-                  aria-label="Toggle navigation"
-                >
-                  <span className="navbar-toggler-icon"></span>
-                </button>
-
-                {/* Navbar Links - Centered */}
-                <div className="collapse navbar-collapse" id="navbarNav">
-                  {/* This empty div helps push the nav items to center */}
-                  <div className="me-auto d-none d-lg-block"></div>
-
-                  <ul className="navbar-nav mx-auto">
-                    {!authState.status ? (
-                      <>
-                        <li className="nav-item mx-2">
-                          <Link className="nav-link fw-bold fs-5 text-white" to="/login">
-                            Login
-                          </Link>
-                        </li>
-                        <li className="nav-item mx-2">
-                          <Link className="nav-link fw-bold fs-5 text-white" to="/registration">
-                            Register
-                          </Link>
-                        </li>
-                      </>
-                    ) : (
-                      <>
-                        {!authState.isAdmin && (
-                          <>
-                            <li className="nav-item mx-2">
-                              <Link className="nav-link fw-bold fs-5 text-white" to="/home">
-                                <i className="bi bi-house-door me-1"></i> Home
-                              </Link>
-                            </li>
-                            <li className="nav-item mx-2">
-                              <Link className="nav-link fw-bold fs-5 text-white" to="/chatbot">
-                                <i className="bi bi-chat-dots me-1"></i> Chatbot
-                              </Link>
-                            </li>
-                            <li className="nav-item mx-2">
-                              <Link className="nav-link fw-bold fs-5 text-white" to="/calendar">
-                                <i className="bi bi-calendar3 me-1"></i> Calendar
-                              </Link>
-                            </li>
-                          </>
-                        )}
-                        {authState.isAdmin && (
-                          <>
-                            <li className="nav-item mx-2">
-                              <Link className="nav-link fw-bold fs-5 text-white" to="/admin">
-                                <i className="bi bi-speedometer2 me-1"></i> Dashboard
-                              </Link>
-                            </li>
-                            <li className="nav-item mx-2">
-                              <Link className="nav-link fw-bold fs-5 text-white" to="/create_event">
-                                <i className="bi bi-plus-circle me-1"></i> Create Event
-                              </Link>
-                            </li>
-                            <li className="nav-item mx-2">
-                              <Link className="nav-link fw-bold fs-5 text-white" to="/admincalendar">
-                                <i className="bi bi-calendar3 me-1"></i> Calendar
-                              </Link>
-                            </li>
-                          </>
-                        )}
-                      </>
-                    )}
-                  </ul>
-
-                  {/* This empty div helps push the right items to the edge */}
-                  <div className="ms-auto d-none d-lg-block"></div>
-
-                  {/* Right side items: Username, Notification, and Logout */}
-                  {authState.status && (
-                    <div className="d-flex align-items-center ms-auto">
-                      {/* Username */}
-                      <Link className="text-decoration-none me-3" to="/profile">
-                        <span className="text-white fw-bold">
-                          <i className="bi bi-person-circle me-1"></i>
-                          {authState.username}
-                        </span>
-                      </Link>
-
-                     {/* Notification Icon */}
-<div className="me-3">
-  {useSocketNotifications ? (
-    authState.isAdmin ? (
-      <AdminNotificationIcon />
-    ) : (
-      <UserNotificationIcon />
-    )
-  ) : (
-    <NotificationIcon
-      notifications={notifications}
-      markAsRead={markAsRead}
-      markAllAsRead={markAllAsRead}
-    />
-  )}
-</div>
-
-                      {/* Logout Button */}
-                      <button
-                        className="btn btn-sm text-white fw-bold"
-                        style={{ backgroundColor: '#FF6B6B', borderColor: '#FF6B6B' }}
-                        onClick={logout}
-                      >
-                        <i className="bi bi-box-arrow-right me-1"></i>
-                        Logout
-                      </button>
-
-                    </div>
-                  )}
-                </div>
-              </div>
-            </nav>
+              </li>
+              <li className="nav-item px-2">
+                <Link className="nav-link" to="/registration">
+                  Register
+                </Link>
+              </li>
+            </>
+          ) : (
+            <>
+              {!authState.isAdmin && (
+                <>
+                  <li className="nav-item px-2">
+                    <Link className="nav-link" to="/home">
+                      <i className="bi bi-house-door me-1"></i> Home
+                    </Link>
+                  </li>
+                  <li className="nav-item px-2">
+                    <Link className="nav-link" to="/chatbot">
+                      <i className="bi bi-chat-dots me-1"></i> Chatbot
+                    </Link>
+                  </li>
+                  <li className="nav-item px-2">
+                    <Link className="nav-link" to="/calendar">
+                      <i className="bi bi-calendar3 me-1"></i> Calendar
+                    </Link>
+                  </li>
+                  <li className="nav-item px-2">
+                    <Link className="nav-link" to="/AIReviewsPage">
+                    <i className="bi bi-bar-chart-line me-1"></i> AI Reviews
+                    </Link>
+                  </li>
+                  <li className="nav-item px-2">
+  <Link className="nav-link" to="/EventPersonalization">
+    <i className="bi bi-sliders me-1"></i> Event Personalization
+  </Link>
+</li>
+                </>
+              )}
+              {authState.isAdmin && (
+                <>
+                  <li className="nav-item px-2">
+                    <Link className="nav-link" to="/admin">
+                      <i className="bi bi-speedometer2 me-1"></i> Dashboard
+                    </Link>
+                  </li>
+                  <li className="nav-item px-2">
+                    <Link className="nav-link" to="/create_event">
+                      <i className="bi bi-plus-circle me-1"></i> Create Event
+                    </Link>
+                  </li>
+                  <li className="nav-item px-2">
+                    <Link className="nav-link" to="/admincalendar">
+                      <i className="bi bi-calendar3 me-1"></i> Calendar
+                    </Link>
+                  </li>
+                  <li className="nav-item px-2">
+                    <Link className="nav-link" to="/AdminAIReviewsDashboard">
+                    <i className="bi bi-bar-chart-line me-1"></i> AI Reviews
+                    </Link>
+                  </li>
+                </>
+              )}
+            </>
           )}
+        </ul>
+
+        {/* Right side items: Username, Notification, and Logout */}
+        {authState.status && (
+          <div className="d-flex align-items-center ms-lg-auto mt-3 mt-lg-0">
+            {/* Username with Profile tooltip */}
+            <Link className="text-decoration-none me-3" to="/profile" title="Profile">
+              <span className="text-white d-flex align-items-center">
+                <i className="bi bi-person-circle me-1"></i>
+                <span className="d-none d-sm-inline">{authState.username}</span>
+              </span>
+            </Link>
+
+            {/* Notification Icon */}
+            <div className="me-3">
+              {useSocketNotifications ? (
+                authState.isAdmin ? (
+                  <AdminNotificationIcon />
+                ) : (
+                  <UserNotificationIcon />
+                )
+              ) : (
+                <NotificationIcon
+                  notifications={notifications}
+                  markAsRead={markAsRead}
+                  markAllAsRead={markAllAsRead}
+                />
+              )}
+            </div>
+
+            {/* Logout Button */}
+            <button
+              className="btn btn-sm rounded-pill px-3"
+              style={{ backgroundColor: '#FF6B6B', borderColor: '#FF6B6B' }}
+              onClick={logout}
+            >
+              <i className="bi bi-box-arrow-right me-1"></i>
+              <span className="d-none d-sm-inline">Logout</span>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  </nav>
+)}
 
             <div style={{ paddingTop: "80px" }} ></div>
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/landingPage" element={<LandingPage />} />
+            <Route path="/EventPersonalization" element={<EventPersonalization />} />
+            <Route path="/AdminAIReviewsDashboard" element={<AdminAIReviewsDashboard />} />
+            <Route path="/AIReviewsPage" element={<AIReviewsPage />} />
             <Route path="/home" element={<Home />} />
             <Route path="/admin" element={authState.isAdmin ? <AdminDashboard /> : <Navigate to="/home" />} />
             <Route path="/create_event" element={authState.isAdmin ? <CreateEvent /> : <Navigate to="/home" />} />

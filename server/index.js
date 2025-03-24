@@ -21,6 +21,8 @@ const reviewRouter = require("./routes/Reviews");
 const usersRouter = require("./routes/Users");
 const responseRouter = require("./routes/Response");
 const notificationRouter = require("./routes/Notifications");
+// Add the new admin analytics router
+const adminAnalyticsRouter = require("./routes/AdminAnalytics");
 
 // Create HTTP server and initialize socket.io
 const server = http.createServer(app);
@@ -91,9 +93,16 @@ app.use("/respond", responseRouter);
 app.use("/api/user", userRoutes);
 app.use("/notifications", notificationRouter);
 app.use('/uploads', express.static('uploads'));
+// Add the new admin analytics routes
+app.use("/analytics", adminAnalyticsRouter);
 
 // Sync database and start the server
 db.sequelize.sync().then(() => {
+    // Add EventAnalytics model to database if not already exist
+    if (!db.EventAnalytics) {
+        console.warn("EventAnalytics model not found. Make sure to add it to your models.");
+    }
+    
     const PORT = process.env.PORT || 3001;
     server.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);

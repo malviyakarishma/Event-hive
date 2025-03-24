@@ -392,7 +392,7 @@ export default function ImprovedCalendarView() {
             Event added to calendar successfully!
           </div>
         )}
-        <div className="container" style={{ paddingTop: "70px", paddingBottom: "200px", flex: 1 }}>
+        <div className="container" style={{ paddingTop: "40px", paddingBottom: "200px", flex: 1 }}>
           <div className="row mb-4">
             <div className="col-md-6">
               <h2 className="text-primary">

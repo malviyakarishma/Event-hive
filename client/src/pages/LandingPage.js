@@ -1,25 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import personImage from "../images/personalization.jpg";
+import reviewsImage from "../images/reviews.jpg";
 import eventImage from "../images/flex.jpg";
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const [setScrolled] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   
-  // Handle scroll effects
-  useEffect(() => {
-    const handleScroll = () => {
-      // Set scrolled state to true once scrolled down
-      setScrolled(window.scrollY > 100);
-    };
+  // Function to handle navigation to different pages
+  const handleNavigation = (path) => {
+    navigate(path);
+  };
+  // No longer tracking scroll events
   
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [setScrolled]);
-  
-
   // Animation for reveal on scroll
   const [visible, setVisible] = useState({
     hero: false,
@@ -34,15 +29,15 @@ const LandingPage = () => {
       const ctaSection = document.getElementById('cta-section');
       
       const isInViewport = (element) => {
-        if (!element) return false; // Add null check here
+        if (!element) return false;
         const rect = element.getBoundingClientRect();
         return rect.top <= window.innerHeight * 0.75;
       };
       
       setVisible({
-        hero: heroSection ? isInViewport(heroSection) : false, // Add null check here
-        features: featuresSection ? isInViewport(featuresSection) : false, // Add null check here
-        cta: ctaSection ? isInViewport(ctaSection) : false // Add null check here
+        hero: heroSection ? isInViewport(heroSection) : false,
+        features: featuresSection ? isInViewport(featuresSection) : false,
+        cta: ctaSection ? isInViewport(ctaSection) : false
       });
     };
     
@@ -59,6 +54,8 @@ const LandingPage = () => {
     };
   }, []);
 
+
+
   // Pink and Navy color scheme
   const colors = {
     primary: "#FF5A8E", // Vibrant pink
@@ -69,6 +66,8 @@ const LandingPage = () => {
     text: "#0D1B40", // Navy for main text
     textLight: "#6C7A9C" // Muted navy for secondary text
   };
+
+
 
   return (
     <div className="d-flex flex-column min-vh-100" style={{
@@ -111,13 +110,13 @@ const LandingPage = () => {
                 EventAI transforms how you discover, experience, and remember events with cutting-edge artificial intelligence that personalizes every moment.
               </p>
               
-              {/* Button row with two options */}
+              {/* Updated buttons for clearer navigation */}
               <div className="d-flex flex-column flex-sm-row justify-content-center justify-content-lg-start gap-3">
                 <button 
                   className="btn btn-lg"
                   onMouseEnter={() => setIsHovered(true)}
                   onMouseLeave={() => setIsHovered(false)}
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate('/register')}
                   style={{
                     background: isHovered ? '#E04578' : colors.primary,
                     color: 'white',
@@ -131,11 +130,11 @@ const LandingPage = () => {
                     transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
                   }}
                 >
-                  Get Started
+                  Register
                 </button>
                 <button 
                   className="btn btn-lg"
-                  onClick={() => navigate('/about')}
+                  onClick={() => navigate('/login')}
                   style={{
                     background: 'transparent',
                     color: colors.primary,
@@ -153,7 +152,7 @@ const LandingPage = () => {
                     e.target.style.background = 'transparent';
                   }}
                 >
-                  Learn More
+                  Login
                 </button>
               </div>
             </div>
@@ -200,7 +199,7 @@ const LandingPage = () => {
         </div>
       </section>
       
-      {/* Features Section - Now with horizontal cards */}
+      {/* Features Section */}
       <section 
         id="features-section"
         className="py-5"
@@ -237,45 +236,100 @@ const LandingPage = () => {
             </p>
           </div>
           <div className="row">
-            {/* Card 1 */}
-            <div className="col-lg-4 col-md-6 mb-4">
-              <div className="card shadow-sm border-0 rounded-lg" style={{ overflow: 'hidden' }}>
-                <img src="https://via.placeholder.com/400x300" alt="Feature 1" className="card-img-top" />
+            {/* Card 1 - Event Personalization */}
+            <div className="col-lg-6 col-md-6 mb-4">
+              <div 
+                className="card shadow-sm border-0 rounded-lg h-100" 
+                style={{ 
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+                }}
+                onClick={() => handleNavigation('/EventPersonalization')}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-5px)';
+                  e.currentTarget.style.boxShadow = '0 12px 20px rgba(13, 27, 64, 0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 5px 15px rgba(13, 27, 64, 0.1)';
+                }}
+              >
+                <img src={personImage}  alt="Event Personalization" className="card-img-top" />
                 <div className="card-body" style={{ background: colors.light }}>
                   <h5 className="card-title" style={{ color: colors.primary }}>Event Personalization</h5>
                   <p className="card-text" style={{ color: colors.textLight }}>
                     Let AI recommend events that match your interests and preferences.
                   </p>
+                  <div className="mt-3">
+                    <button 
+                      className="btn btn-sm" 
+                      style={{
+                        background: colors.primary,
+                        color: 'white',
+                        borderRadius: '6px',
+                        padding: '8px 16px',
+                        fontWeight: '600',
+                        transition: 'all 0.3s ease',
+                        border: 'none'
+                      }}
+                    >
+                      Explore Recommendations
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-            {/* Card 2 */}
-            <div className="col-lg-4 col-md-6 mb-4">
-              <div className="card shadow-sm border-0 rounded-lg" style={{ overflow: 'hidden' }}>
-                <img src="https://via.placeholder.com/400x300" alt="Feature 2" className="card-img-top" />
+            
+            {/* Card 2 - AI Reviews */}
+            <div className="col-lg-6 col-md-6 mb-4">
+              <div 
+                className="card shadow-sm border-0 rounded-lg h-100" 
+                style={{ 
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+                }}
+                onClick={() => handleNavigation('/AIReviewsPage')}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-5px)';
+                  e.currentTarget.style.boxShadow = '0 12px 20px rgba(13, 27, 64, 0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 5px 15px rgba(13, 27, 64, 0.1)';
+                }}
+              >
+                <img src={reviewsImage}  alt="AI Reviews" className="card-img-top" />
                 <div className="card-body" style={{ background: colors.light }}>
-                  <h5 className="card-title" style={{ color: colors.primary }}>Seamless Booking</h5>
+                  <h5 className="card-title" style={{ color: colors.primary }}>AI Reviews & Insights</h5>
                   <p className="card-text" style={{ color: colors.textLight }}>
-                    Effortlessly book your next event with just a few clicks.
+                    Get intelligent insights and detailed analytics on events.
                   </p>
-                </div>
-              </div>
-            </div>
-            {/* Card 3 */}
-            <div className="col-lg-4 col-md-6 mb-4">
-              <div className="card shadow-sm border-0 rounded-lg" style={{ overflow: 'hidden' }}>
-                <img src="https://via.placeholder.com/400x300" alt="Feature 3" className="card-img-top" />
-                <div className="card-body" style={{ background: colors.light }}>
-                  <h5 className="card-title" style={{ color: colors.primary }}>AI Reviews</h5>
-                  <p className="card-text" style={{ color: colors.textLight }}>
-                    Get intelligent insights and ratings on events.
-                  </p>
+                  <div className="mt-3">
+                    <button 
+                      className="btn btn-sm" 
+                      style={{
+                        background: colors.primary,
+                        color: 'white',
+                        borderRadius: '6px',
+                        padding: '8px 16px',
+                        fontWeight: '600',
+                        transition: 'all 0.3s ease',
+                        border: 'none'
+                      }}
+                    >
+                      View Insights
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+
 
       {/* Call to Action Section */}
       <section 
@@ -292,23 +346,40 @@ const LandingPage = () => {
         <div className="container">
           <h3 className="display-4 mb-4">Join the Future of Event Discovery</h3>
           <p className="lead mb-5">
-            Sign up now to start exploring and experiencing events powered by AI!
+            Register now to start exploring and experiencing events powered by AI!
           </p>
-          <button 
-            className="btn btn-lg" 
-            onClick={() => navigate('/signup')}
-            style={{
-              background: '#E04578', 
-              color: 'white',
-              padding: '1rem 3rem',
-              borderRadius: '8px',
-              fontSize: '1.25rem',
-              fontWeight: '700',
-              boxShadow: '0 10px 20px rgba(224, 69, 120, 0.2)',
-            }}
-          >
-            Get Started
-          </button>
+          <div className="d-flex justify-content-center gap-3">
+            <button 
+              className="btn btn-lg" 
+              onClick={() => navigate('/register')}
+              style={{
+                background: 'white', 
+                color: colors.primary,
+                padding: '1rem 3rem',
+                borderRadius: '8px',
+                fontSize: '1.25rem',
+                fontWeight: '700',
+                boxShadow: '0 10px 20px rgba(255, 255, 255, 0.2)',
+              }}
+            >
+              Register
+            </button>
+            <button 
+              className="btn btn-lg" 
+              onClick={() => navigate('/login')}
+              style={{
+                background: 'transparent', 
+                color: 'white',
+                padding: '1rem 3rem',
+                borderRadius: '8px',
+                fontSize: '1.25rem',
+                fontWeight: '700',
+                border: '2px solid white',
+              }}
+            >
+              Login
+            </button>
+          </div>
         </div>
       </section>
     </div>

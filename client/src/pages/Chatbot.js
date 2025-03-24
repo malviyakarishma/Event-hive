@@ -14,7 +14,7 @@ export default function Chatbot() {
   }, [authState, navigate]);
 
   return (
-    <div className="container" style={{ paddingTop: "70px" }}>
+    <div className="container" style={{ paddingTop: "40px" }}>
       <div className="row">
         <div className="col-md-8 mx-auto">
           <div className="card shadow-sm">
