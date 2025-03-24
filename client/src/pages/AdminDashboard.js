@@ -114,20 +114,82 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-dashboard">
-      {/* Professional Header Section */}
-      <header className="admin-header bg-primary text-white py-4 mb-4 shadow-sm">
-        <div className="container">
-          <div className="d-flex justify-content-between align-items-center">
-            <div>
-              <h1 className="h2 mb-1">Event Management Dashboard</h1>
-              <p className="mb-0 text-white-50">
-                Welcome, {authState.username || 'Administrator'}. 
-                Manage and track your events efficiently.
-              </p>
-            </div>
-          </div>
+     {/* Professional Header Section with Enhanced Design */}
+<header className="admin-header bg-primary text-white py-4 mb-4 shadow-sm">
+  <div className="container">
+    <div className="row align-items-center">
+      <div className="col-md-4">
+        <h1 className="h2 mb-1">Event Management</h1>
+        <p className="mb-0 text-white-50">
+          Welcome, {authState.username || 'Administrator'}
+        </p>
+      </div>
+      
+      <div className="col-md-4 text-center">
+        <div className="header-spotlight py-2 px-3 rounded-pill bg-white bg-opacity-10 mb-2">
+          <i className="bi bi-calendar-check text-warning me-2"></i>
+          <span className="fw-bold">{upcomingEvents.length} Upcoming Events</span>
         </div>
-      </header>
+        <div className="d-flex justify-content-center">
+          <button 
+            className="btn btn-sm btn-light me-2 shadow-sm" 
+            onClick={() => navigate('/create_event')}
+          >
+            <i className="bi bi-plus-circle me-1"></i> New Event
+          </button>
+          <button 
+            className="btn btn-sm btn-warning shadow-sm"
+            onClick={() => navigate('/AdminAIReviewsDashboard')}
+          >
+            <i className="bi bi-graph-up me-1"></i> Analytics
+          </button>
+        </div>
+      </div>
+      
+      <div className="col-md-4 text-end">
+        <div className="header-date-display bg-white bg-opacity-10 p-2 rounded text-end d-inline-block">
+          <div className="small text-white-50">Today's Date</div>
+          <div className="fw-bold">{format(new Date(), "MMMM dd, yyyy")}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  {/* Decorative wave element */}
+  <div className="header-wave position-absolute bottom-0 start-0 w-100 overflow-hidden" style={{ height: "15px" }}>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" preserveAspectRatio="none" style={{ height: "100%", width: "100%" }}>
+      <path 
+        fill="#f4f6f9" 
+        fillOpacity="1" 
+        d="M0,32L48,37.3C96,43,192,53,288,64C384,75,480,85,576,80C672,75,768,53,864,48C960,43,1056,53,1152,58.7C1248,64,1344,64,1392,64L1440,64L1440,100L1392,100C1344,100,1248,100,1152,100C1056,100,960,100,864,100C768,100,672,100,576,100C480,100,384,100,288,100C192,100,96,100,48,100L0,100Z"
+      ></path>
+    </svg>
+  </div>
+  
+  {/* Add custom styles */}
+  <style jsx>{`
+    .admin-header {
+      background: linear-gradient(135deg, #04305c 0%, #0a5dc2 100%) !important;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .header-spotlight {
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      animation: pulse 2s infinite;
+    }
+    
+    .header-date-display {
+      border-left: 3px solid #FFD700;
+    }
+    
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+    }
+  `}</style>
+</header>
 
       <div className="container" style={{ paddingTop: "20px" }}>
         {/* Statistics Section */}
