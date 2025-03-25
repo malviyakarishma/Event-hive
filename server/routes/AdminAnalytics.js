@@ -492,6 +492,186 @@ router.get("/:eventId", async (req, res) => {
   }
 });
 
+// In server/routes/AdminAnalytics.js - Add a new endpoint for detailed sentiment analysis
+
+router.get('/reviews/insights/:eventId', validateToken, async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    
+    // Get all reviews for this event
+    const reviews = await Reviews.findAll({
+      where: { EventId: eventId },
+      include: [{ model: Users, attributes: ['username'] }]
+    });
+    
+    if (reviews.length < 3) {
+      return res.json({
+        insights: ["Not enough reviews to generate meaningful insights."],
+        keywords: [],
+        topicClusters: []
+      });
+    }
+    
+    // Extract review texts
+    const reviewTexts = reviews.map(r => r.review_text);
+    
+    // Perform keyword extraction
+    const keywords = extractKeywords(reviewTexts);
+    
+    // Perform topic clustering
+    const topicClusters = identifyTopics(reviewTexts);
+    
+    // Generate insights based on patterns
+    const insights = generateInsightsFromReviews(reviews, keywords, topicClusters);
+    
+    res.json({
+      insights,
+      keywords,
+      topicClusters,
+      reviewCount: reviews.length,
+      averageRating: calculateAverageRating(reviews),
+      sentimentDistribution: calculateSentimentDistribution(reviews)
+    });
+  } catch (error) {
+    console.error('Error generating review insights:', error);
+    res.status(500).json({ error: 'Failed to generate insights' });
+  }
+});
+
+// Helper functions for review analysis
+function extractKeywords(reviewTexts) {
+  // Combine all review texts
+  const combinedText = reviewTexts.join(' ');
+  
+  // Remove common stopwords
+  const stopwords = ['the', 'and', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'was', 'were'];
+  
+  // Split into words and count frequencies
+  const words = combinedText.toLowerCase().match(/\b(\w+)\b/g) || [];
+  const wordCount = {};
+  
+  words.forEach(word => {
+    if (word.length > 3 && !stopwords.includes(word)) {
+      wordCount[word] = (wordCount[word] || 0) + 1;
+    }
+  });
+  
+  // Sort by frequency and return top keywords
+  return Object.entries(wordCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 15)
+    .map(([term, count]) => ({ term, count }));
+}
+
+function identifyTopics(reviewTexts) {
+  // This is a simplified topic clustering approach
+  // In production, you would use a more sophisticated algorithm like LDA
+  
+  // Define common topics to look for
+  const topicKeywords = {
+    'venue': ['venue', 'location', 'place', 'facility', 'facilities', 'space'],
+    'food': ['food', 'meal', 'catering', 'drinks', 'refreshments'],
+    'speakers': ['speaker', 'speakers', 'presentation', 'talk', 'speech', 'presenter'],
+    'organization': ['organized', 'organization', 'staff', 'planning', 'schedule', 'agenda'],
+    'content': ['content', 'materials', 'information', 'knowledge', 'learn', 'learned', 'educational'],
+    'networking': ['network', 'networking', 'people', 'contacts', 'connections', 'socializing']
+  };
+  
+  // Count occurrences of keywords for each topic
+  const topicCounts = {};
+  
+  Object.keys(topicKeywords).forEach(topic => {
+    topicCounts[topic] = 0;
+    
+    reviewTexts.forEach(text => {
+      const lowerText = text.toLowerCase();
+      topicKeywords[topic].forEach(keyword => {
+        if (lowerText.includes(keyword)) {
+          topicCounts[topic]++;
+        }
+      });
+    });
+  });
+  
+  // Convert to array and sort by frequency
+  return Object.entries(topicCounts)
+    .map(([topic, count]) => ({ topic, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+function generateInsightsFromReviews(reviews, keywords, topicClusters) {
+  const insights = [];
+  
+  // Calculate average rating
+  const avgRating = calculateAverageRating(reviews);
+  insights.push(`Average rating is ${avgRating.toFixed(1)} out of 5 stars.`);
+  
+  // Analyze sentiment distribution
+  const sentimentDist = calculateSentimentDistribution(reviews);
+  insights.push(`${sentimentDist.positive}% of reviews express positive sentiment, while ${sentimentDist.negative}% express negative sentiment.`);
+  
+  // Add insights about top topics
+  if (topicClusters.length > 0) {
+    const topTopics = topicClusters.slice(0, 3).map(t => t.topic);
+    insights.push(`Most frequently discussed aspects: ${topTopics.join(', ')}.`);
+    
+    // Analyze ratings by top topic
+    topicClusters.slice(0, 2).forEach(topicData => {
+      const topic = topicData.topic;
+      
+      // Find reviews mentioning this topic
+      const topicReviews = reviews.filter(review => {
+        const lowerText = review.review_text.toLowerCase();
+        return topicKeywords[topic].some(keyword => lowerText.includes(keyword));
+      });
+      
+      if (topicReviews.length > 0) {
+        const topicAvgRating = topicReviews.reduce((sum, r) => sum + r.rating, 0) / topicReviews.length;
+        
+        if (topicAvgRating > avgRating + 0.5) {
+          insights.push(`"${capitalizeFirstLetter(topic)}" is highly rated (${topicAvgRating.toFixed(1)}/5) and a significant strength.`);
+        } else if (topicAvgRating < avgRating - 0.5) {
+          insights.push(`"${capitalizeFirstLetter(topic)}" received lower ratings (${topicAvgRating.toFixed(1)}/5) and may need improvement.`);
+        }
+      }
+    });
+  }
+  
+  // Add recommendation based on overall sentiment
+  if (sentimentDist.positive > 70) {
+    insights.push('Overall sentiment is very positive. Consider highlighting these strengths in marketing materials.');
+  } else if (sentimentDist.negative > 30) {
+    insights.push('There is a significant amount of negative feedback. Consider addressing the most mentioned issues.');
+  }
+  
+  return insights;
+}
+
+function calculateAverageRating(reviews) {
+  if (reviews.length === 0) return 0;
+  return reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
+}
+
+function calculateSentimentDistribution(reviews) {
+  if (reviews.length === 0) {
+    return { positive: 0, neutral: 0, negative: 0 };
+  }
+  
+  const positive = reviews.filter(r => r.sentiment === 'positive').length;
+  const neutral = reviews.filter(r => r.sentiment === 'neutral').length;
+  const negative = reviews.filter(r => r.sentiment === 'negative').length;
+  
+  return {
+    positive: Math.round((positive / reviews.length) * 100),
+    neutral: Math.round((neutral / reviews.length) * 100),
+    negative: Math.round((negative / reviews.length) * 100)
+  };
+}
+
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 /**
  * Update attendance data for an event
  * Admin only endpoint

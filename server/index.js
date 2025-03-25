@@ -15,11 +15,13 @@ const db = require("./models");
 
 // Import routers
 const chatRouter = require("./routes/Chatbot");
+const insightRouter = require("./routes/AIInsightsRoutes");
 const eventRouter = require("./routes/Events");
 const userRoutes = require("./routes/userRoutes");
 const reviewRouter = require("./routes/Reviews");
 const usersRouter = require("./routes/Users");
 const responseRouter = require("./routes/Response");
+const recommendationsRouter = require('./routes/Recommendations');
 const notificationRouter = require("./routes/Notifications");
 // Add the new admin analytics router
 const adminAnalyticsRouter = require("./routes/AdminAnalytics");
@@ -95,6 +97,8 @@ app.use("/notifications", notificationRouter);
 app.use('/uploads', express.static('uploads'));
 // Add the new admin analytics routes
 app.use("/analytics", adminAnalyticsRouter);
+app.use("/AIInsightsRoutes", insightRouter);
+app.use('/api/recommendations', recommendationsRouter);
 
 // Sync database and start the server
 db.sequelize.sync().then(() => {

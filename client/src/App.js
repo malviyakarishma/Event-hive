@@ -13,8 +13,10 @@ import CreateEvent from "./pages/CreateEvent";
 import Event from "./pages/Event";
 import LandingPage from "./pages/LandingPage";
 import AIReviewsPage from "./pages/AIReviewsPage";
+import AIInsights from "./pages/AIInsights";
 import AdminAIReviewsDashboard from "./pages/AdminAIReviewsDashboard";
 import EventPersonalization from "./pages/EventPersonalization";
+import PersonalizedRecommendations from "./pages/PersonalizedRecommendations";
 import Profile from "./pages/Profile";
 import Calendar from "./pages/Calendar";
 import AdminCalendar from "./pages/AdminCalendar";
@@ -165,11 +167,11 @@ function App() {
                       <i className="bi bi-house-door me-1"></i> Home
                     </Link>
                   </li>
-                  <li className="nav-item px-2">
+                  {/* <li className="nav-item px-2">
                     <Link className="nav-link" to="/chatbot">
                       <i className="bi bi-chat-dots me-1"></i> Chatbot
                     </Link>
-                  </li>
+                  </li> */}
                   <li className="nav-item px-2">
                     <Link className="nav-link" to="/calendar">
                       <i className="bi bi-calendar3 me-1"></i> Calendar
@@ -181,9 +183,14 @@ function App() {
                     </Link>
                   </li>
                   <li className="nav-item px-2">
-  <Link className="nav-link" to="/EventPersonalization">
-    <i className="bi bi-sliders me-1"></i> Event Personalization
-  </Link>
+                  <Link className="nav-link" to="/AIInsights">
+  <i className="bi bi-lightbulb me-1"></i> AI Insights
+</Link>
+                  </li>
+                  <li className="nav-item px-2">
+                  <Link className="nav-link" to="/PersonalizedRecommendations">
+  <i className="bi bi-bullseye me-1"></i> Recommendations
+</Link>
 </li>
                 </>
               )}
@@ -206,8 +213,13 @@ function App() {
                   </li>
                   <li className="nav-item px-2">
                     <Link className="nav-link" to="/AdminAIReviewsDashboard">
-                    <i className="bi bi-bar-chart-line me-1"></i> AI Reviews
+                    <i className="bi bi-bar-chart-line me-1"></i> AI Analytics
                     </Link>
+                  </li>
+                  <li className="nav-item px-2">
+                  <Link className="nav-link" to="/AIInsights">
+  <i className="bi bi-lightbulb me-1"></i> AI Insights
+</Link>
                   </li>
                 </>
               )}
@@ -269,6 +281,8 @@ function App() {
   element={authState.status && authState.isAdmin ? <AdminAIReviewsDashboard /> : <Navigate to="/login" />} 
 />
             <Route path="/AIReviewsPage" element={<AIReviewsPage />} />
+            <Route path="/AIInsights" element={<AIInsights />} />
+            <Route path="/PersonalizedRecommendations" element={<PersonalizedRecommendations />} />
             <Route path="/home" element={<Home />} />
             <Route path="/admin" element={authState.isAdmin ? <AdminDashboard /> : <Navigate to="/home" />} />
             <Route path="/create_event" element={authState.isAdmin ? <CreateEvent /> : <Navigate to="/home" />} />
