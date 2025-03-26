@@ -27,6 +27,8 @@ import Registration from "./pages/Registration";
 import Chatbot from "./pages/Chatbot";
 import EditEvent from "./pages/EditEvent";
 import AdminDashboard from "./pages/AdminDashboard";
+import ResetPassword from "./pages/ResetPassword"; // Add this
+import ForgotPassword from "./pages/ForgotPassword"; // Add this
 
 import { AuthContext } from "./helpers/AuthContext";
 import { NotificationProvider, useNotifications } from "./helpers/NotificationContext";
@@ -113,8 +115,10 @@ function App() {
       }
     }
   };
-
-  const hideNavbarRoutes = ["/", "/landingPage"];
+  const hideNavbarRoutes = ["/", "/landingPage", "/login", "/registration"];
+{!hideNavbarRoutes.includes(location.pathname) && (
+  <div style={{ paddingTop: "80px" }}></div>
+)}
 
   return (
     <AuthContext.Provider value={{ authState, setAuthState, deleteEvent }}>
@@ -271,7 +275,9 @@ function App() {
   </nav>
 )}
 
-            <div style={{ paddingTop: "80px" }} ></div>
+{!hideNavbarRoutes.includes(location.pathname) && (
+  <div style={{ paddingTop: "80px" }}></div>
+)}
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/landingPage" element={<LandingPage />} />
@@ -294,6 +300,8 @@ function App() {
             <Route path="/event/:id" element={<Event />} />
             <Route path="/response/:id" element={<Response />} />
             <Route path="/chatbot" element={<Chatbot />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/admin/edit-event/:id" element={authState.isAdmin ? <EditEvent /> : <Navigate to="/" />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>

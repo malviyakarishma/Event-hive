@@ -12,21 +12,29 @@ module.exports = (sequelize, DataTypes) => {
         isAdmin: {
             type: DataTypes.BOOLEAN,
             allowNull: false,
-            defaultValue: false,  // Default to false for regular users
+            defaultValue: false,
         },
+        resetPasswordToken: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        resetPasswordExpires: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        }
     });
 
     Users.associate = (models) => {
         // Association with Events (if needed)
         Users.belongsTo(models.Events, {
-            foreignKey: "eventId",  // Ensure this matches your actual column name in Users
+            foreignKey: "eventId",
             onDelete: "CASCADE",
-            allowNull: true,  // ✅ Ensure users can be created without an event
+            allowNull: true,
         });
 
         // Association with Reviews
         Users.hasMany(models.Reviews, {
-            foreignKey: "userId",  // Correct foreign key in the Reviews model
+            foreignKey: "userId",
             onDelete: "CASCADE",
         });
     };
