@@ -973,7 +973,7 @@ export default function Response() {
                 </div>
             )}
 
-            <div className="container mt-5" style={{ paddingTop: "70px", flex: 1 }}>
+            <div className="container mt-5">
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <h2 style={{ color: colors.navy }}>
                         <FaReply className="me-2" style={{ color: colors.coral }} />

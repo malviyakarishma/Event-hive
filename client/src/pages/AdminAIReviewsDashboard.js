@@ -347,11 +347,164 @@ const AdminAIReviewsDashboard = () => {
     setTimeRange(range);
   };
 
-  // Export report function
-  const exportReport = (format) => {
-    alert(`Demo: Exporting ${selectedEvent.title} report in ${format} format`);
-    // In a real application, this would generate and download a report
-  };
+// Export report function
+const exportReport = (format) => {
+  if (!selectedEvent) return;
+  
+  // Get the report type from the dropdown
+  const reportTypeSelect = document.querySelector('select.form-select');
+  const reportType = reportTypeSelect ? reportTypeSelect.value : 'full';
+  
+  // Filter reviews by selected date range
+  const startDate = new Date(reportDate.startDate);
+  const endDate = new Date(reportDate.endDate);
+  endDate.setHours(23, 59, 59, 999); // Set to end of day
+  
+  const filteredReviews = eventReviews.filter(review => {
+    const reviewDate = new Date(review.createdAt);
+    return reviewDate >= startDate && reviewDate <= endDate;
+  });
+  
+  let csvContent = '';
+  let filename = `${selectedEvent.title.replace(/\s+/g, '_')}_${reportType}_report_${new Date().toISOString().split('T')[0]}`;
+  
+  // Generate CSV header and content based on report type
+  if (reportType === 'full' || reportType === 'comments') {
+    csvContent = 'User,Review,Rating,Sentiment,Date,Response\n';
+    
+    filteredReviews.forEach(review => {
+      // Escape quotes and commas in text fields
+      const username = (review.username || 'Anonymous').replace(/"/g, '""');
+      const reviewText = (review.review_text || '').replace(/"/g, '""');
+      const adminResponse = (review.admin_response || '').replace(/"/g, '""');
+      
+      csvContent += `"${username}","${reviewText}",${review.rating},"${review.sentiment || 'neutral'}","${new Date(review.createdAt).toISOString().split('T')[0]}","${adminResponse}"\n`;
+    });
+  } 
+  else if (reportType === 'sentiment') {
+    // Calculate sentiment statistics
+    const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
+    
+    filteredReviews.forEach(review => {
+      if (review.sentiment) {
+        sentimentCounts[review.sentiment] += 1;
+      } else {
+        sentimentCounts.neutral += 1;
+      }
+    });
+    
+    const totalReviews = filteredReviews.length || 1; // Avoid division by zero
+    
+    csvContent = 'Sentiment,Count,Percentage\n';
+    csvContent += `"Positive",${sentimentCounts.positive},${Math.round((sentimentCounts.positive / totalReviews) * 100)}%\n`;
+    csvContent += `"Neutral",${sentimentCounts.neutral},${Math.round((sentimentCounts.neutral / totalReviews) * 100)}%\n`;
+    csvContent += `"Negative",${sentimentCounts.negative},${Math.round((sentimentCounts.negative / totalReviews) * 100)}%\n`;
+  }
+  else if (reportType === 'ratings') {
+    // Calculate rating statistics
+    const ratingCounts = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
+    
+    filteredReviews.forEach(review => {
+      if (review.rating >= 1 && review.rating <= 5) {
+        ratingCounts[review.rating.toString()] += 1;
+      }
+    });
+    
+    csvContent = 'Rating,Count\n';
+    csvContent += `"1 Star",${ratingCounts['1']}\n`;
+    csvContent += `"2 Stars",${ratingCounts['2']}\n`;
+    csvContent += `"3 Stars",${ratingCounts['3']}\n`;
+    csvContent += `"4 Stars",${ratingCounts['4']}\n`;
+    csvContent += `"5 Stars",${ratingCounts['5']}\n`;
+  }
+  
+  // Handle different export formats
+  if (format === 'csv') {
+    // Create a blob with the CSV content
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    // Create download link and trigger click
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${filename}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } 
+  else if (format === 'json') {
+    // Create JSON data based on report type
+    let jsonData;
+    
+    if (reportType === 'full' || reportType === 'comments') {
+      jsonData = filteredReviews.map(review => ({
+        username: review.username || 'Anonymous',
+        review_text: review.review_text || '',
+        rating: review.rating,
+        sentiment: review.sentiment || 'neutral',
+        date: new Date(review.createdAt).toISOString().split('T')[0],
+        admin_response: review.admin_response || ''
+      }));
+    } 
+    else if (reportType === 'sentiment') {
+      const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
+      
+      filteredReviews.forEach(review => {
+        if (review.sentiment) {
+          sentimentCounts[review.sentiment] += 1;
+        } else {
+          sentimentCounts.neutral += 1;
+        }
+      });
+      
+      const totalReviews = filteredReviews.length || 1;
+      
+      jsonData = [
+        { sentiment: 'Positive', count: sentimentCounts.positive, percentage: Math.round((sentimentCounts.positive / totalReviews) * 100) },
+        { sentiment: 'Neutral', count: sentimentCounts.neutral, percentage: Math.round((sentimentCounts.neutral / totalReviews) * 100) },
+        { sentiment: 'Negative', count: sentimentCounts.negative, percentage: Math.round((sentimentCounts.negative / totalReviews) * 100) }
+      ];
+    }
+    else if (reportType === 'ratings') {
+      const ratingCounts = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
+      
+      filteredReviews.forEach(review => {
+        if (review.rating >= 1 && review.rating <= 5) {
+          ratingCounts[review.rating.toString()] += 1;
+        }
+      });
+      
+      jsonData = [
+        { rating: '1 Star', count: ratingCounts['1'] },
+        { rating: '2 Stars', count: ratingCounts['2'] },
+        { rating: '3 Stars', count: ratingCounts['3'] },
+        { rating: '4 Stars', count: ratingCounts['4'] },
+        { rating: '5 Stars', count: ratingCounts['5'] }
+      ];
+    }
+    
+    // Create a blob with the JSON content
+    const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+    
+    // Create download link and trigger click
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${filename}.json`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+  else {
+    alert(`Export to ${format} format is not currently supported.`);
+  }
+};
 
   // Render overview tab
   const renderOverviewTab = () => {

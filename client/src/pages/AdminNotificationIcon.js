@@ -69,8 +69,9 @@ const AdminNotificationIcon = () => {
       const notification = {
         id: reviewData.reviewId || `review-${Date.now()}`,
         type: "review",
-        message: `New review submitted by ${reviewData.userName || "a user"}`,
+        message: `New review submitted by ${reviewData.userName || "a user"} for "${reviewData.productName}"`,
         relatedId: reviewData.reviewId,
+        eventId: reviewData.eventId,
         createdAt: new Date().toISOString(),
         isRead: false,
         metadata: {
@@ -92,10 +93,45 @@ const AdminNotificationIcon = () => {
       // Play notification sound
       try {
         const reviewSound = new Audio("/review-notification.mp3");
-        reviewSound.play();
+        reviewSound.play().catch(err => console.log("Audio play error:", err));
       } catch (e) {
         console.log("Audio play error:", e);
       }
+    });
+
+    // Listen for admin-specific notifications
+    socketRef.current.on("admin-notification", (notification) => {
+      console.log("Received admin-notification:", notification);
+      
+      // Process notification metadata if it's a string
+      if (notification.metadata && typeof notification.metadata === 'string') {
+        try {
+          notification.metadata = JSON.parse(notification.metadata);
+        } catch (e) {
+          console.error("Error parsing notification metadata:", e);
+        }
+      }
+      
+      setAdminNotifications((prev) => {
+        if (prev.some((n) => n.id === notification.id)) return prev;
+        return [notification, ...prev];
+      });
+      
+      setUnreadAdminCount((prev) => prev + 1);
+    });
+
+    // Listen for notification read status updates
+    socketRef.current.on("admin-notification-read", ({ id }) => {
+      setAdminNotifications((prev) => 
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      );
+      setUnreadAdminCount((prev) => Math.max(0, prev - 1));
+    });
+
+    // Listen for all notifications marked as read
+    socketRef.current.on("admin-notifications-read-all", () => {
+      setAdminNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      setUnreadAdminCount(0);
     });
 
     return () => {
@@ -177,7 +213,14 @@ const AdminNotificationIcon = () => {
     if (notification.type === "event") {
       navigate(`/admin/events/${notification.relatedId}`);
     } else if (notification.type === "review") {
-      navigate(`/response/${notification.relatedId}`);
+      // For reviews, navigate to the response page
+      if (notification.metadata && notification.metadata.eventId) {
+        navigate(`/response/${notification.metadata.eventId}`);
+      } else if (notification.eventId) {
+        navigate(`/response/${notification.eventId}`);
+      } else if (notification.relatedId) {
+        navigate(`/response/${notification.relatedId}`);
+      }
     }
   };
 
@@ -189,7 +232,7 @@ const AdminNotificationIcon = () => {
         onClick={() => setShowDropdown(!showDropdown)}
         aria-label="Admin Notifications"
       >
-        <i className="bi bi-bell-fill fs-5 text-primary"></i>
+        <i className="bi bi-bell-fill fs-5" style={{ color: "#001F3F" }}></i>
         {unreadAdminCount > 0 && (
           <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
             {unreadAdminCount > 99 ? "99+" : unreadAdminCount}
@@ -215,6 +258,7 @@ const AdminNotificationIcon = () => {
               <button
                 className="btn btn-sm btn-link text-decoration-none"
                 onClick={markAllAdminNotificationsAsRead}
+                style={{ color: "#FF6B6B" }}
               >
                 Mark all as read
               </button>
@@ -235,6 +279,7 @@ const AdminNotificationIcon = () => {
                     notification.isRead ? "bg-white" : "bg-light"
                   }`}
                   onClick={() => handleNotificationClick(notification)}
+                  style={{ cursor: "pointer", transition: "background-color 0.2s" }}
                 >
                   <div className="w-100">
                     <p className="mb-1 text-truncate" title={notification.message}>
@@ -246,7 +291,10 @@ const AdminNotificationIcon = () => {
                     {notification.type === "review" && notification.metadata?.rating && (
                       <div className="mt-1">
                         <small className="text-muted">
-                          Rating: {notification.metadata.rating} ★
+                          Rating: {notification.metadata.rating} 
+                          <span className="ms-1" style={{ color: "#FFD700" }}>
+                            {"★".repeat(notification.metadata.rating)}
+                          </span>
                         </small>
                         {notification.metadata.productName && (
                           <small className="text-muted d-block">
@@ -257,7 +305,7 @@ const AdminNotificationIcon = () => {
                     )}
                   </div>
                   {!notification.isRead && (
-                    <span className="badge bg-primary rounded-pill">New</span>
+                    <span className="badge rounded-pill" style={{ backgroundColor: "#FF6B6B", color: "white" }}>New</span>
                   )}
                 </button>
               ))
