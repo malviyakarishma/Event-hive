@@ -177,7 +177,7 @@ function EditEvent() {
       
       // Navigate back to admin page after a short delay
       setTimeout(() => {
-        navigate(`/admin/response/${id}`);
+        navigate(`/response/${id}`);
       }, 2000);
       
     } catch (err) {

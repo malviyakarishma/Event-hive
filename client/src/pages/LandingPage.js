@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { format } from 'date-fns';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.min.css';
 import reviewsImage from "../images/reviews.jpg";
 import eventImage from "../images/flex.jpg";
 
@@ -16,15 +19,66 @@ const globalStyle = `
 const LandingPage = () => {
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
+  const [featuredEvents, setFeaturedEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [hoveredEventId, setHoveredEventId] = useState(null);
   
   // Animation for reveal on scroll using Intersection Observer instead of scroll events
   const [visibleSections, setVisibleSections] = useState({
     hero: false,
+    events: false,
     features: false,
     cta: false
   });
 
   useEffect(() => {
+    // Fetch events from API
+    axios.get("http://localhost:3001/events")
+      .then((response) => {
+        // Get only upcoming events and limit to 3
+        const today = new Date();
+        const upcoming = response.data
+          .filter((event) => new Date(event.date) >= today)
+          .sort((a, b) => new Date(a.date) - new Date(b.date))
+          .slice(0, 3);
+        setFeaturedEvents(upcoming);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching events:", error);
+        // Fallback sample events in case API fails
+        setFeaturedEvents([
+          {
+            id: 1,
+            title: "Summer Music Festival",
+            date: "2025-06-15",
+            time: "16:00:00",
+            location: "Central Park",
+            category: "Music",
+            image: "/api/placeholder/600/400"
+          },
+          {
+            id: 2,
+            title: "Tech Conference 2025",
+            date: "2025-04-22",
+            time: "09:00:00",
+            location: "Convention Center",
+            category: "Technology",
+            image: "/api/placeholder/600/400"
+          },
+          {
+            id: 3,
+            title: "Food & Wine Expo",
+            date: "2025-05-10",
+            time: "12:00:00",
+            location: "Downtown Gallery",
+            category: "Food",
+            image: "/api/placeholder/600/400"
+          }
+        ]);
+        setLoading(false);
+      });
+
     // Using Intersection Observer for better performance
     const observerOptions = {
       root: null,
@@ -48,7 +102,7 @@ const LandingPage = () => {
     }, observerOptions);
     
     // Observe each section
-    const sections = ['hero-section', 'features-section', 'cta-section'];
+    const sections = ['hero-section', 'events-section', 'features-section', 'cta-section'];
     sections.forEach(id => {
       const element = document.getElementById(id);
       if (element) sectionObserver.observe(element);
@@ -62,6 +116,22 @@ const LandingPage = () => {
       });
     };
   }, []);
+
+  // Function to correct image path (similar to AdminDashboard)
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return "/api/placeholder/600/400";
+    
+    // If the path already starts with http or is a placeholder, return as is
+    if (imagePath.startsWith('http') || imagePath.startsWith('/api/placeholder')) return imagePath;
+    
+    // If the path begins with "/uploads/events/", remove the leading slash
+    if (imagePath.startsWith('/uploads/events/')) {
+      return `http://localhost:3001${imagePath}`;
+    }
+    
+    // For any other case, just append the path to the base URL
+    return `http://localhost:3001/${imagePath}`;
+  };
 
   // Theming with design tokens
   const theme = {
@@ -138,51 +208,356 @@ const LandingPage = () => {
         padding: 0,
         marginTop: "-80px" // Compensate for the global padding
       }}>
-        {/* Hero Section - Centered layout without image */}
+        {/* Hero Section - With background image and modern design */}
         <section 
           id="hero-section"
-          className="text-center d-flex align-items-center justify-content-center"
+          className="d-flex align-items-center"
           style={{
-            background: `linear-gradient(135deg, ${theme.colors.light} 0%, rgba(255, 90, 142, 0.1) 100%)`,
+            background: `url('/api/placeholder/1920/1080') no-repeat center center`,
+            backgroundSize: 'cover',
+            position: 'relative',
             padding: '6rem 0',
             marginTop: 0,
-            minHeight: '100vh', /* Make it full height of the viewport */
+            minHeight: '100vh',
             ...getSectionStyle(visibleSections.hero)
           }}
         >
-          <div className="container">
-            <div className="row justify-content-center">
-              <div className="col-lg-8 mb-5">
-                <h1 className="display-3 fw-bold mb-4" style={{
-                  background: `linear-gradient(90deg, ${theme.colors.secondary} 0%, ${theme.colors.primary} 100%)`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  fontWeight: '800',
-                  letterSpacing: '-0.5px'
+          {/* Dark overlay */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: `linear-gradient(135deg, rgba(13, 27, 64, 0.85) 0%, rgba(255, 90, 142, 0.75) 100%)`,
+            zIndex: 1
+          }}></div>
+          
+          <div className="container position-relative" style={{ zIndex: 2 }}>
+            <div className="row align-items-center">
+              <div className="col-lg-6 text-white">
+                <div style={{ 
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  padding: '2.5rem',
+                  borderRadius: theme.borderRadius.lg,
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2)'
                 }}>
-                  Experience Events Through <span style={{ color: theme.colors.primary }}>AI-Powered</span> Intelligence
-                </h1>
-                
-                <p className="lead mb-5" style={{
-                  color: theme.colors.textLight,
-                  fontSize: '1.25rem',
-                  lineHeight: '1.6'
-                }}>
-                  EventAI transforms how you discover, experience, and remember events with cutting-edge artificial intelligence that personalizes every moment.
-                </p>
-                
-                {/* Updated buttons for clearer navigation */}
-                <div className="d-flex flex-column flex-sm-row justify-content-center gap-3">
-                  <Button primary onClick={() => navigate('/registration')}>
-                    Register
-                  </Button>
-                  <Button onClick={() => navigate('/login')}>
-                    Login
-                  </Button>
+                  <h1 className="display-4 fw-bold mb-4" style={{
+                    color: 'white',
+                    fontWeight: '800',
+                    letterSpacing: '-0.5px',
+                    textShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+                  }}>
+                    Experience Events Through <span style={{ color: theme.colors.primary }}>Vibe</span>Catcher
+                  </h1>
+                  
+                  <p className="lead mb-5" style={{
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontSize: '1.25rem',
+                    lineHeight: '1.6'
+                  }}>
+                    VibeCatcher transforms how you discover, experience, and remember events with cutting-edge artificial intelligence that personalizes every moment.
+                  </p>
+                  
+                  {/* Updated buttons for clearer navigation */}
+                  <div className="d-flex flex-column flex-sm-row gap-3">
+                    <Button primary onClick={() => navigate('/registration')}>
+                      Register
+                    </Button>
+                    <button 
+                      className="btn btn-lg" 
+                      onClick={() => navigate('/login')}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.2)',
+                        color: 'white',
+                        borderRadius: theme.borderRadius.md,
+                        padding: '0.75rem 2rem',
+                        fontSize: '1.1rem',
+                        fontWeight: '600',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                        backdropFilter: 'blur(5px)',
+                        transition: theme.transitions.default
+                      }}
+                    >
+                      Login
+                    </button>
+                  </div>
                 </div>
+              </div>
+              
+              <div className="col-lg-6 d-none d-lg-block">
+                <img 
+                  src="/api/placeholder/600/600" 
+                  alt="Event experience" 
+                  className="img-fluid rounded-circle p-3" 
+                  style={{ 
+                    border: '5px solid rgba(255, 255, 255, 0.2)',
+                    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(5px)'
+                  }}
+                />
               </div>
             </div>
           </div>
+          
+          {/* Animated scroll indicator */}
+          <div className="position-absolute bottom-0 start-50 translate-middle-x mb-4" style={{ zIndex: 2 }}>
+            <a href="#events-section" className="text-white text-decoration-none">
+              <div className="d-flex flex-column align-items-center">
+                <span className="mb-2">Scroll to explore</span>
+                <i className="bi bi-chevron-down" style={{ 
+                  fontSize: '1.5rem', 
+                  animation: 'bounce 2s infinite' 
+                }}></i>
+              </div>
+            </a>
+          </div>
+          
+          {/* Add animation for the scroll indicator */}
+          <style jsx>{`
+            @keyframes bounce {
+              0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+              40% { transform: translateY(-20px); }
+              60% { transform: translateY(-10px); }
+            }
+          `}</style>
+        </section>
+
+        {/* Featured Events Section (New Modern Layout) */}
+        <section
+          id="events-section"
+          className="py-5"
+          style={{
+            background: '#f8f9fa',
+            padding: '6rem 0 8rem',
+            position: 'relative',
+            ...getSectionStyle(visibleSections.events)
+          }}
+        >
+          <div className="position-absolute top-0 left-0 w-100 h-100" style={{
+            backgroundImage: 'radial-gradient(circle at 20% 90%, rgba(255, 90, 142, 0.1) 0%, transparent 40%), radial-gradient(circle at 80% 30%, rgba(65, 201, 226, 0.1) 0%, transparent 40%)',
+            zIndex: 1
+          }}></div>
+          
+          <div className="container position-relative" style={{ zIndex: 2 }}>
+            <div className="row mb-5">
+              <div className="col-lg-6">
+                <h2 className="display-4 fw-bold mb-2" style={{
+                  color: theme.colors.secondary,
+                  fontWeight: '800',
+                  position: 'relative'
+                }}>
+                  Trending Events
+                </h2>
+                <div className="d-inline-block mb-3" style={{
+                  width: '120px',
+                  height: '5px',
+                  background: `linear-gradient(90deg, ${theme.colors.primary}, ${theme.colors.accent})`,
+                  borderRadius: '3px'
+                }}></div>
+                <p className="lead" style={{ color: theme.colors.textLight }}>
+                  Discover popular events curated just for you
+                </p>
+              </div>
+              <div className="col-lg-6 d-flex justify-content-lg-end align-items-end">
+                <button 
+                  className="btn btn-lg"
+                  onClick={() => navigate('/events')}
+                  style={{
+                    background: theme.colors.primary,
+                    color: 'white',
+                    borderRadius: '30px',
+                    padding: '0.75rem 2rem',
+                    fontWeight: '600',
+                    transition: theme.transitions.default,
+                    boxShadow: theme.shadows.md
+                  }}
+                >
+                  View All Events <i className="bi bi-arrow-right ms-2"></i>
+                </button>
+              </div>
+            </div>
+            
+            {loading ? (
+              <div className="d-flex justify-content-center w-100 py-5">
+                <div className="spinner-border" style={{ color: theme.colors.primary }} role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            ) : (
+              <div className="row">
+                {featuredEvents.map((event, index) => (
+                  <div 
+                    className="col-lg-4 col-md-6 mb-4" 
+                    key={event.id}
+                    style={{ 
+                      transform: `translateY(${index * 20}px)`, 
+                      zIndex: 3 - index 
+                    }}
+                  >
+                    <div
+                      className="event-card position-relative"
+                      onClick={() => navigate(`/event/${event.id}`)}
+                      style={{ 
+                        cursor: "pointer",
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        height: '450px',
+                        boxShadow: '0 15px 35px rgba(13, 27, 64, 0.1)',
+                        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                      }}
+                      onMouseEnter={() => setHoveredEventId(event.id)}
+                      onMouseLeave={() => setHoveredEventId(null)}
+                    >
+                      {/* Full height background image */}
+                      <div style={{ 
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        zIndex: 1
+                      }}>
+                        <img 
+                          src={getImageUrl(event.image)} 
+                          alt={event.title}
+                          style={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            objectFit: 'cover',
+                            transition: 'transform 0.6s ease'
+                          }}
+                        />
+                        <div style={{ 
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.8) 100%)',
+                          zIndex: 2
+                        }}></div>
+                      </div>
+                      
+                      {/* Content at the bottom of the card */}
+                      <div style={{ 
+                        position: 'absolute', 
+                        bottom: 0, 
+                        left: 0, 
+                        width: '100%',
+                        padding: '30px',
+                        zIndex: 3,
+                        color: 'white',
+                        transform: hoveredEventId === event.id ? 'translateY(0)' : 'translateY(80px)',
+                        transition: 'transform 0.5s ease'
+                      }}>
+                        {/* Category Badge */}
+                        <span className="badge mb-3" style={{ 
+                          backgroundColor: theme.colors.primary,
+                          color: 'white',
+                          padding: '8px 15px',
+                          borderRadius: '30px',
+                          fontWeight: '600',
+                          fontSize: '0.85rem',
+                          boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+                          opacity: hoveredEventId === event.id ? 0 : 1,
+                          transition: 'opacity 0.3s ease'
+                        }}>
+                          {event.category || "Event"}
+                        </span>
+                        
+                        <h3 className="fw-bold mb-3">{event.title}</h3>
+                        
+                        <div style={{ 
+                          height: hoveredEventId === event.id ? 'auto' : '0',
+                          opacity: hoveredEventId === event.id ? 1 : 0,
+                          overflow: 'hidden',
+                          transition: 'all 0.5s ease'
+                        }}>
+                          <div className="d-flex align-items-center mb-2">
+                            <i className="bi bi-calendar3 me-2"></i>
+                            <span>{format(new Date(event.date), "MMMM dd, yyyy")}</span>
+                          </div>
+                          <div className="d-flex align-items-center mb-2">
+                            <i className="bi bi-clock me-2"></i>
+                            <span>{event.time ? format(new Date(`2000-01-01T${event.time}`), "h:mm a") : "TBA"}</span>
+                          </div>
+                          <div className="d-flex align-items-center mb-3">
+                            <i className="bi bi-geo-alt me-2"></i>
+                            <span>{event.location}</span>
+                          </div>
+                          
+                          <button 
+                            className="btn btn-sm mt-2"
+                            style={{
+                              background: 'white',
+                              color: theme.colors.primary,
+                              borderRadius: '30px',
+                              padding: '8px 20px',
+                              fontWeight: '600',
+                              boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+                              border: 'none'
+                            }}
+                          >
+                            View Details <i className="bi bi-chevron-right ms-1"></i>
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Date Chip */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '20px',
+                        right: '20px',
+                        zIndex: 4,
+                        background: 'white',
+                        color: theme.colors.secondary,
+                        padding: '10px 15px',
+                        borderRadius: '12px',
+                        boxShadow: '0 5px 15px rgba(0,0,0,0.2)',
+                        fontWeight: 'bold',
+                        textAlign: 'center',
+                        minWidth: '80px'
+                      }}>
+                        <div style={{ fontSize: '1.5rem', fontWeight: '800' }}>
+                          {format(new Date(event.date), "dd")}
+                        </div>
+                        <div style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>
+                          {format(new Date(event.date), "MMM")}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Floating decorative elements */}
+          <div className="position-absolute" style={{ 
+            bottom: '10%', 
+            left: '5%', 
+            width: '150px',
+            height: '150px',
+            borderRadius: '50%',
+            background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.accent} 100%)`,
+            opacity: 0.1,
+            zIndex: 1
+          }}></div>
+          
+          <div className="position-absolute" style={{ 
+            top: '15%', 
+            right: '8%', 
+            width: '100px',
+            height: '100px',
+            borderRadius: '50%',
+            background: theme.colors.accent,
+            opacity: 0.1,
+            zIndex: 1
+          }}></div>
         </section>
         
         {/* Features Section */}
@@ -334,6 +709,22 @@ const LandingPage = () => {
             </div>
           </div>
         </section>
+
+        {/* Add Event Card Animation Styles */}
+        <style jsx>{`
+          .event-card {
+            transition: all 0.3s ease;
+          }
+          
+          .event-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(13, 27, 64, 0.2) !important;
+          }
+          
+          .event-card:hover img {
+            transform: scale(1.1);
+          }
+        `}</style>
       </div>
     </>
   );
