@@ -12,6 +12,7 @@ import Home from "./pages/Home";
 import CreateEvent from "./pages/CreateEvent";
 import Event from "./pages/Event";
 import LandingPage from "./pages/LandingPage";
+import EventRegistration from "./pages/EventRegistration";
 import AIReviewsPage from "./pages/AIReviewsPage";
 import AIInsights from "./pages/AIInsights";
 import AdminAIReviewsDashboard from "./pages/AdminAIReviewsDashboard";
@@ -300,6 +301,7 @@ function App() {
             <Route path="/event/:id" element={<Event />} />
             <Route path="/response/:id" element={<Response />} />
             <Route path="/chatbot" element={<Chatbot />} />
+            <Route path="/register/:id" element={<EventRegistration />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/admin/edit-event/:id" element={authState.isAdmin ? <EditEvent /> : <Navigate to="/" />} />

@@ -4,7 +4,8 @@ import axios from 'axios';
 import { AuthContext } from '../helpers/AuthContext';
 import { FaCalendarAlt, FaImage, FaMapMarkerAlt, FaArrowLeft, 
          FaSave, FaTimes, FaInfoCircle, FaCheck,
-         FaHeart, FaClock, FaTags, FaEdit } from 'react-icons/fa';
+         FaHeart, FaClock, FaTags, FaEdit, FaDollarSign,
+         FaTicketAlt, FaCalendarCheck, FaUsers, FaUserPlus } from 'react-icons/fa';
 
 function EditEvent() {
   const { id } = useParams();
@@ -24,12 +25,26 @@ function EditEvent() {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [currentImage, setCurrentImage] = useState('');
+  
+  // New fields for paid events
+  const [isPaid, setIsPaid] = useState(false);
+  const [price, setPrice] = useState(0);
+  const [ticketsAvailable, setTicketsAvailable] = useState(100);
+  const [registrationDeadline, setRegistrationDeadline] = useState('');
+  const [maxRegistrations, setMaxRegistrations] = useState('');
+  const [minRegistrations, setMinRegistrations] = useState(1);
+  const [status, setStatus] = useState('active');
 
   // Options for category dropdown
   const categoryOptions = [
     'Conference', 'Workshop', 'Seminar', 'Networking', 
     'Social Gathering', 'Corporate Event', 'Trade Show', 
     'Charity', 'Festival', 'Concert', 'Sports', 'Other'
+  ];
+  
+  // Options for status dropdown
+  const statusOptions = [
+    'active', 'cancelled', 'completed', 'draft'
   ];
 
   // Custom color constants
@@ -69,6 +84,19 @@ function EditEvent() {
         setDate(formatDateForInput(eventData.date));
         setTime(eventData.time);
         setCategory(eventData.category);
+        
+        // Set fields for paid events
+        setIsPaid(eventData.isPaid || false);
+        setPrice(eventData.price || 0);
+        setTicketsAvailable(eventData.ticketsAvailable || 100);
+        
+        if (eventData.registrationDeadline) {
+          setRegistrationDeadline(formatDateForInput(eventData.registrationDeadline));
+        }
+        
+        setMaxRegistrations(eventData.maxRegistrations || '');
+        setMinRegistrations(eventData.minRegistrations || 1);
+        setStatus(eventData.status || 'active');
         
         if (eventData.image) {
           setCurrentImage(getImageUrl(eventData.image));
@@ -123,6 +151,13 @@ function EditEvent() {
     if (!date) return 'Date is required';
     if (!time) return 'Time is required';
     if (!category) return 'Category is required';
+    if (!status) return 'Status is required';
+    if (isPaid && (price <= 0)) return 'Price must be greater than 0 for paid events';
+    if (ticketsAvailable < 1) return 'Tickets available must be at least 1';
+    if (minRegistrations < 1) return 'Minimum registrations must be at least 1';
+    if (maxRegistrations && maxRegistrations < minRegistrations) {
+      return 'Maximum registrations cannot be less than minimum registrations';
+    }
     return null;
   };
 
@@ -157,6 +192,22 @@ function EditEvent() {
       formData.append('date', date);
       formData.append('time', time);
       formData.append('category', category);
+      formData.append('status', status);
+      
+      // Add fields for paid events
+      formData.append('isPaid', isPaid);
+      formData.append('price', isPaid ? price : 0);
+      formData.append('ticketsAvailable', ticketsAvailable);
+      
+      if (registrationDeadline) {
+        formData.append('registrationDeadline', registrationDeadline);
+      }
+      
+      if (maxRegistrations) {
+        formData.append('maxRegistrations', maxRegistrations);
+      }
+      
+      formData.append('minRegistrations', minRegistrations);
       
       if (imageFile) {
         formData.append('image', imageFile);
@@ -175,9 +226,9 @@ function EditEvent() {
       // Scroll to top to show success message
       window.scrollTo(0, 0);
       
-      // Navigate back to admin page after a short delay
+      // Navigate back to event page after a short delay
       setTimeout(() => {
-        navigate(`/response/${id}`);
+        navigate(`/event/${id}`);
       }, 2000);
       
     } catch (err) {
@@ -191,8 +242,9 @@ function EditEvent() {
   };
 
   const cancelEdit = () => {
-    navigate(`/response/${id}`);
+    navigate(`/event/${id}`);
   };
+  
   // Footer component
   const Footer = () => {
     const currentYear = new Date().getFullYear();
@@ -425,6 +477,28 @@ function EditEvent() {
                 </select>
               </div>
               
+              {/* Status */}
+              <div className="mb-3">
+                <label htmlFor="status" className="form-label" style={{ color: colors.navy, fontWeight: "500" }}>
+                  <FaCalendarCheck className="me-2" style={{ color: colors.coral }} />
+                  Status*
+                </label>
+                <select
+                  className="form-select"
+                  id="status"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  required
+                  style={{ borderColor: colors.gray }}
+                >
+                  {statusOptions.map((statusOption) => (
+                    <option key={statusOption} value={statusOption}>
+                      {statusOption.charAt(0).toUpperCase() + statusOption.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
               {/* Description */}
               <div className="mb-3">
                 <label htmlFor="description" className="form-label" style={{ color: colors.navy, fontWeight: "500" }}>
@@ -439,6 +513,120 @@ function EditEvent() {
                   required
                   style={{ borderColor: colors.gray }}
                 />
+              </div>
+              
+              {/* Paid Event Toggle */}
+              <div className="mb-3">
+                <div className="form-check">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    id="isPaid"
+                    checked={isPaid}
+                    onChange={(e) => setIsPaid(e.target.checked)}
+                    style={{ cursor: "pointer" }}
+                  />
+                  <label 
+                    className="form-check-label" 
+                    htmlFor="isPaid"
+                    style={{ color: colors.navy, fontWeight: "500", cursor: "pointer" }}
+                  >
+                    <FaDollarSign className="me-2" style={{ color: colors.coral }} />
+                    This is a paid event
+                  </label>
+                </div>
+              </div>
+              
+              {/* Price - Show only if paid event is checked */}
+              {isPaid && (
+                <div className="mb-3">
+                  <label htmlFor="price" className="form-label" style={{ color: colors.navy, fontWeight: "500" }}>
+                    Price*
+                  </label>
+                  <div className="input-group">
+                    <span className="input-group-text">$</span>
+                    <input
+                      type="number"
+                      className="form-control"
+                      id="price"
+                      value={price}
+                      onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
+                      min="0.01"
+                      step="0.01"
+                      required={isPaid}
+                      style={{ borderColor: colors.gray }}
+                    />
+                  </div>
+                </div>
+              )}
+              
+              {/* Ticket Information */}
+              <div className="row mb-3">
+                <div className="col-md-6 mb-3 mb-md-0">
+                  <label htmlFor="ticketsAvailable" className="form-label" style={{ color: colors.navy, fontWeight: "500" }}>
+                    <FaTicketAlt className="me-2" style={{ color: colors.coral }} />
+                    Available Tickets*
+                  </label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    id="ticketsAvailable"
+                    value={ticketsAvailable}
+                    onChange={(e) => setTicketsAvailable(parseInt(e.target.value) || 0)}
+                    min="1"
+                    required
+                    style={{ borderColor: colors.gray }}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label htmlFor="registrationDeadline" className="form-label" style={{ color: colors.navy, fontWeight: "500" }}>
+                    <FaCalendarCheck className="me-2" style={{ color: colors.coral }} />
+                    Registration Deadline
+                  </label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    id="registrationDeadline"
+                    value={registrationDeadline}
+                    onChange={(e) => setRegistrationDeadline(e.target.value)}
+                    style={{ borderColor: colors.gray }}
+                  />
+                </div>
+              </div>
+              
+              {/* Min and Max Registration */}
+              <div className="row mb-3">
+                <div className="col-md-6 mb-3 mb-md-0">
+                  <label htmlFor="minRegistrations" className="form-label" style={{ color: colors.navy, fontWeight: "500" }}>
+                    <FaUserPlus className="me-2" style={{ color: colors.coral }} />
+                    Minimum Registrations*
+                  </label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    id="minRegistrations"
+                    value={minRegistrations}
+                    onChange={(e) => setMinRegistrations(parseInt(e.target.value) || 1)}
+                    min="1"
+                    required
+                    style={{ borderColor: colors.gray }}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label htmlFor="maxRegistrations" className="form-label" style={{ color: colors.navy, fontWeight: "500" }}>
+                    <FaUsers className="me-2" style={{ color: colors.coral }} />
+                    Maximum Registrations
+                  </label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    id="maxRegistrations"
+                    value={maxRegistrations}
+                    onChange={(e) => setMaxRegistrations(e.target.value ? parseInt(e.target.value) : '')}
+                    min={minRegistrations}
+                    style={{ borderColor: colors.gray }}
+                  />
+                </div>
               </div>
               
               {/* Image Upload */}

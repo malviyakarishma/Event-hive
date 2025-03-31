@@ -1,52 +1,89 @@
 module.exports = (sequelize, DataTypes) => {
     const Events = sequelize.define("Events", {
-        title: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        location: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        description: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        date: {
-            type: DataTypes.DATEONLY,
-            allowNull: false,
-        },
-        time: {  // Time column (for event's start time)
-            type: DataTypes.TIME,
-            allowNull: false,  // Make time required for each event
-        },
-        username: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        category: {  // Category column (for event's category)
-            type: DataTypes.STRING,
-            allowNull: false,  // Make category required
-        },
-        image: {  // Image column (to store the path/URL to the event's image)
-            type: DataTypes.STRING,
-            allowNull: true,  // Image is optional for each event
-        }
+      title: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      location: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      description: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      date: {
+        type: DataTypes.DATEONLY,
+        allowNull: false,
+      },
+      time: {
+        type: DataTypes.TIME,
+        allowNull: false,
+      },
+      category: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      image: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      username: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      // New fields for paid events support
+      price: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0.00,
+      },
+      isPaid: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      ticketsAvailable: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      registrationDeadline: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      maxRegistrations: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      minRegistrations: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 1,
+      },
+      status: {
+        type: DataTypes.ENUM('active', 'cancelled', 'completed', 'draft'),
+        defaultValue: 'active',
+      },
     });
-
-    // Association with Reviews (optional, if you have Reviews model)
+  
+    // Define associations
     Events.associate = (models) => {
-        Events.hasMany(models.Reviews, {
-            foreignKey: "eventId",  // Match Reviews model's eventId field
-            onDelete: "CASCADE",
-        });
-
-        Events.hasOne(models.EventAnalytics, {
-            foreignKey: 'event_id',
-            onDelete: 'CASCADE'
-          });
+      Events.hasMany(models.Reviews, {
+        onDelete: "cascade",
+      });
+      
+      // Add association for registrations
+      Events.hasMany(models.Registrations, {
+        onDelete: "cascade",
+      });
+      
+      // Add association with user who created the event
+      Events.belongsTo(models.Users, {
+        foreignKey: 'userId',
+        as: 'organizer',
+        allowNull: true,
+      });
     };
-
-
+  
     return Events;
-};
+  };

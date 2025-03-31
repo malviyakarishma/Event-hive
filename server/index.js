@@ -25,6 +25,8 @@ const recommendationsRouter = require('./routes/Recommendations');
 const notificationRouter = require("./routes/Notifications");
 // Add the new admin analytics router
 const adminAnalyticsRouter = require("./routes/AdminAnalytics");
+// Add the new registrations router
+const registrationRouter = require("./routes/Registrations");
 
 // Create HTTP server and initialize socket.io
 const server = http.createServer(app);
@@ -97,18 +99,29 @@ app.use("/notifications", notificationRouter);
 app.use('/uploads', express.static('uploads'));
 // Add the new admin analytics routes
 app.use("/analytics", adminAnalyticsRouter);
+// Add the new registrations routes
+app.use("/registrations", registrationRouter);
 app.use("/AIInsightsRoutes", insightRouter);
 app.use('/api/recommendations', recommendationsRouter);
 
-// Sync database and start the server
-db.sequelize.sync().then(() => {
-    // Add EventAnalytics model to database if not already exist
-    if (!db.EventAnalytics) {
+// Modified sync method to prevent duplicate column issues
+if (process.env.NODE_ENV === 'development') {
+    // In development, only sync if needed, but don't alter existing tables
+    db.sequelize.sync({ alter: false }).then(() => {
+      // Add EventAnalytics model to database if not already exist
+      if (!db.EventAnalytics) {
         console.warn("EventAnalytics model not found. Make sure to add it to your models.");
-    }
-    
+      }
+      
+      const PORT = process.env.PORT || 3001;
+      server.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+      });
+    });
+  } else {
+    // In production, don't sync at all - rely on migrations
     const PORT = process.env.PORT || 3001;
     server.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
+      console.log(`Server running on port ${PORT}`);
     });
-});
+  }

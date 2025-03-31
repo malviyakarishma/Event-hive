@@ -6,7 +6,8 @@ import * as Yup from "yup"
 import axios from "axios"
 import { useNavigate } from "react-router-dom"
 import "bootstrap/dist/css/bootstrap.min.css"
-import { FaCalendarAlt, FaMapMarkerAlt, FaFileAlt, FaPlus, FaHeart, FaClock, FaTag, FaImage } from "react-icons/fa"
+import { FaCalendarAlt, FaMapMarkerAlt, FaFileAlt, FaPlus, FaHeart, FaClock, FaTag, 
+         FaImage, FaDollarSign, FaTicketAlt, FaCalendarCheck, FaUsers, FaUserPlus } from "react-icons/fa"
 import { AuthContext } from "../helpers/AuthContext"
 
 
@@ -18,6 +19,7 @@ function CreateEvent() {
   const [errorMessage, setErrorMessage] = useState("")
   const [isHovered, setIsHovered] = useState(false)
   const [previewImage, setPreviewImage] = useState(null)
+  const [isPaidEvent, setIsPaidEvent] = useState(false)
 
   const initialValues = {
     title: "",
@@ -27,6 +29,14 @@ function CreateEvent() {
     time: "12:00", // Default time - noon
     category: "", // New field for category
     image: null, // New field for image
+    // New fields for paid events
+    isPaid: false,
+    price: 0,
+    ticketsAvailable: 100,
+    registrationDeadline: "",
+    maxRegistrations: "",
+    minRegistrations: 1,
+    status: "active"
   }
 
   useEffect(() => {
@@ -47,6 +57,17 @@ function CreateEvent() {
       .required("Time is required"),
     category: Yup.string().trim().required("Category is required"),
     image: Yup.mixed(), // Optional field
+    isPaid: Yup.boolean(),
+    price: Yup.number()
+      .when('isPaid', {
+        is: true,
+        then: Yup.number().min(0.01, "Price must be greater than 0").required("Price is required for paid events")
+      }),
+    ticketsAvailable: Yup.number().integer("Must be a whole number").min(1, "Must have at least one ticket"),
+    registrationDeadline: Yup.string().nullable(),
+    maxRegistrations: Yup.number().integer("Must be a whole number").nullable(),
+    minRegistrations: Yup.number().integer("Must be a whole number").min(1, "Minimum registrations must be at least 1"),
+    status: Yup.string().required("Status is required")
   })
 
   const onSubmit = async (data, { setSubmitting, resetForm }) => {
@@ -69,6 +90,22 @@ function CreateEvent() {
       formData.append("date", data.date)
       formData.append("time", data.time)
       formData.append("category", data.category)
+
+      // Add the new fields for paid events
+      formData.append("isPaid", data.isPaid)
+      formData.append("price", data.isPaid ? data.price : 0)
+      formData.append("ticketsAvailable", data.ticketsAvailable)
+      
+      if (data.registrationDeadline) {
+        formData.append("registrationDeadline", data.registrationDeadline)
+      }
+      
+      if (data.maxRegistrations) {
+        formData.append("maxRegistrations", data.maxRegistrations)
+      }
+      
+      formData.append("minRegistrations", data.minRegistrations)
+      formData.append("status", data.status)
       
       // Append image if it exists
       if (data.image) {
@@ -102,6 +139,7 @@ function CreateEvent() {
       setSuccessMessage("Event created successfully! Notifications sent to all users.")
       resetForm()
       setPreviewImage(null)
+      setIsPaidEvent(false)
 
       setTimeout(() => {
         navigate("/admin")
@@ -143,6 +181,14 @@ function CreateEvent() {
     "Entertainment",
     "Fundraising",
     "Other"
+  ]
+
+  // List of event status options
+  const statusOptions = [
+    "active",
+    "cancelled",
+    "completed",
+    "draft"
   ]
 
   // Color palette
@@ -432,6 +478,12 @@ function CreateEvent() {
     boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
   }
 
+  const checkboxStyle = {
+    cursor: "pointer",
+    width: "1.2rem", 
+    height: "1.2rem"
+  }
+
   // Handle hover state for the button
   const handleMouseEnter = () => setIsHovered(true)
   const handleMouseLeave = () => setIsHovered(false)
@@ -477,7 +529,7 @@ function CreateEvent() {
 
           <div style={formContainerStyle}>
             <Formik initialValues={initialValues} onSubmit={onSubmit} validationSchema={validationSchema}>
-              {({ isSubmitting, touched, setFieldTouched, setFieldValue }) => (
+              {({ isSubmitting, touched, setFieldTouched, setFieldValue, values }) => (
                 <Form>
                   {/* Success Message */}
                   {successMessage && <div style={alertSuccessStyle}>{successMessage}</div>}
@@ -589,6 +641,30 @@ function CreateEvent() {
                       <ErrorMessage name="time" component="div" style={errorStyle} />
                     </div>
                   </div>
+                  
+                  {/* Status - New field */}
+                  <div style={formGroupStyle}>
+                    <label htmlFor="status" style={inputLabelStyle}>Event Status</label>
+                    <div style={inputGroupStyle}>
+                      <div style={inputIconStyle}>
+                        <FaCalendarCheck size={16} color={colors.darkGray} />
+                      </div>
+                      <Field
+                        as="select"
+                        id="status"
+                        name="status"
+                        style={touched.status ? inputFocusStyle : inputBaseStyle}
+                        onFocus={() => setFieldTouched('status', true)}
+                      >
+                        {statusOptions.map((status) => (
+                          <option key={status} value={status}>
+                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                          </option>
+                        ))}
+                      </Field>
+                    </div>
+                    <ErrorMessage name="status" component="div" style={errorStyle} />
+                  </div>
 
                   {/* Description */}
                   <div style={formGroupStyle}>
@@ -604,6 +680,140 @@ function CreateEvent() {
                       />
                     </div>
                     <ErrorMessage name="description" component="div" style={errorStyle} />
+                  </div>
+                  
+                  {/* Paid Event Toggle and Price */}
+                  <div style={formGroupStyle}>
+                    <div style={{ display: "flex", alignItems: "center", marginBottom: "0.75rem" }}>
+                      <Field
+                        type="checkbox"
+                        id="isPaid"
+                        name="isPaid"
+                        style={checkboxStyle}
+                        onChange={(e) => {
+                          setIsPaidEvent(e.target.checked);
+                          setFieldValue("isPaid", e.target.checked);
+                          if (!e.target.checked) {
+                            setFieldValue("price", 0);
+                          }
+                        }}
+                        checked={values.isPaid}
+                      />
+                      <label 
+                        htmlFor="isPaid" 
+                        style={{ 
+                          ...inputLabelStyle, 
+                          marginLeft: "0.5rem", 
+                          marginBottom: 0,
+                          cursor: "pointer" 
+                        }}
+                      >
+                        This is a paid event
+                      </label>
+                    </div>
+                    
+                    {values.isPaid && (
+                      <div style={inputGroupStyle}>
+                        <div style={inputIconStyle}>
+                          <FaDollarSign size={16} color={colors.darkGray} />
+                        </div>
+                        <Field
+                          type="number"
+                          id="price"
+                          name="price"
+                          placeholder="Ticket price"
+                          min="0.01"
+                          step="0.01"
+                          style={touched.price ? inputFocusStyle : inputBaseStyle}
+                          onFocus={() => setFieldTouched('price', true)}
+                        />
+                        <ErrorMessage name="price" component="div" style={errorStyle} />
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Ticket Information */}
+                  <div style={{ display: "flex", gap: "1.5rem" }}>
+                    {/* Tickets Available */}
+                    <div style={{ ...formGroupStyle, flex: 1 }}>
+                      <label htmlFor="ticketsAvailable" style={inputLabelStyle}>Available Tickets</label>
+                      <div style={inputGroupStyle}>
+                        <div style={inputIconStyle}>
+                          <FaTicketAlt size={16} color={colors.darkGray} />
+                        </div>
+                        <Field
+                          type="number"
+                          id="ticketsAvailable"
+                          name="ticketsAvailable"
+                          min="1"
+                          placeholder="100"
+                          style={touched.ticketsAvailable ? inputFocusStyle : inputBaseStyle}
+                          onFocus={() => setFieldTouched('ticketsAvailable', true)}
+                        />
+                      </div>
+                      <ErrorMessage name="ticketsAvailable" component="div" style={errorStyle} />
+                    </div>
+
+                    {/* Registration Deadline */}
+                    <div style={{ ...formGroupStyle, flex: 1 }}>
+                      <label htmlFor="registrationDeadline" style={inputLabelStyle}>Registration Deadline</label>
+                      <div style={inputGroupStyle}>
+                        <div style={inputIconStyle}>
+                          <FaCalendarCheck size={16} color={colors.darkGray} />
+                        </div>
+                        <Field
+                          type="date"
+                          id="registrationDeadline"
+                          name="registrationDeadline"
+                          style={touched.registrationDeadline ? inputFocusStyle : inputBaseStyle}
+                          onFocus={() => setFieldTouched('registrationDeadline', true)}
+                        />
+                      </div>
+                      <ErrorMessage name="registrationDeadline" component="div" style={errorStyle} />
+                    </div>
+                  </div>
+                  
+                  {/* Min/Max Registration */}
+                  <div style={{ display: "flex", gap: "1.5rem" }}>
+                    {/* Min Registrations */}
+                    <div style={{ ...formGroupStyle, flex: 1 }}>
+                      <label htmlFor="minRegistrations" style={inputLabelStyle}>Minimum Registrations</label>
+                      <div style={inputGroupStyle}>
+                        <div style={inputIconStyle}>
+                          <FaUserPlus size={16} color={colors.darkGray} />
+                        </div>
+                        <Field
+                          type="number"
+                          id="minRegistrations"
+                          name="minRegistrations"
+                          min="1"
+                          placeholder="1"
+                          style={touched.minRegistrations ? inputFocusStyle : inputBaseStyle}
+                          onFocus={() => setFieldTouched('minRegistrations', true)}
+                        />
+                      </div>
+                      <ErrorMessage name="minRegistrations" component="div" style={errorStyle} />
+                    </div>
+
+                    {/* Max Registrations */}
+                    <div style={{ ...formGroupStyle, flex: 1 }}>
+                      <label htmlFor="maxRegistrations" style={inputLabelStyle}>Maximum Registrations</label>
+                      <div style={inputGroupStyle}>
+                        <div style={inputIconStyle}>
+                          <FaUsers size={16} color={colors.darkGray} />
+                        </div>
+                        <Field
+                          type="number"
+                          id="maxRegistrations"
+                          name="maxRegistrations"
+                          min="1"
+                          placeholder="Optional"
+                          style={touched.maxRegistrations ? inputFocusStyle : inputBaseStyle}
+                          onFocus={() => setFieldTouched('maxRegistrations', true)}
+                        />
+                      </div>
+                      <ErrorMessage name="maxRegistrations" component="div" style={errorStyle} />
+                    </div>
                   </div>
 
                   {/* Image Upload */}
@@ -695,4 +905,4 @@ function CreateEvent() {
   )
 }
 
-export default CreateEvent
+export default CreateEvent;
