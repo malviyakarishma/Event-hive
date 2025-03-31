@@ -103,6 +103,9 @@ app.use("/analytics", adminAnalyticsRouter);
 app.use("/registrations", registrationRouter);
 app.use("/AIInsightsRoutes", insightRouter);
 app.use('/api/recommendations', recommendationsRouter);
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'OK' });
+});
 
 // Modified sync method to prevent duplicate column issues
 if (process.env.NODE_ENV === 'development') {
