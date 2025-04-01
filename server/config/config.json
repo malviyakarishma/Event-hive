@@ -1,9 +1,10 @@
 {
   "development": {
     "username": "root",
-    "password": "",
-    "database": "event_reviewdb",
-    "host": "localhost",
+    "password": "NgigQWwhrHbmSExwaywBPkMWViapwhgW",
+    "database": "railway",
+    "host": "yamabiko.proxy.rlwy.net",
+    "port": 24337,
     "dialect": "mysql"
   },
   "test": {
@@ -15,15 +16,14 @@
   },
   "production": {
     "username": "root",
-    "password": null,
-    "database": "database_production",
-    "host": "127.0.0.1",
+    "password": "NgigQWwhrHbmSExwaywBPkMWViapwhgW",
+    "database": "railway",
+    "host": "yamabiko.proxy.rlwy.net",
+    "port": 24337,
     "dialect": "mysql"
   },
   "scripts": {
-  "start": "node index.js",
-  "dev": "nodemon index.js"
-}
-
-
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  }
 }
