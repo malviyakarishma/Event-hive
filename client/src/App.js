@@ -30,6 +30,8 @@ import EditEvent from "./pages/EditEvent";
 import AdminDashboard from "./pages/AdminDashboard";
 import ResetPassword from "./pages/ResetPassword"; // Add this
 import ForgotPassword from "./pages/ForgotPassword"; // Add this
+import AdminRegistrations from "./pages/AdminRegistrations";
+import MyRegistrations from "./pages/MyRegistrations";
 
 import { AuthContext } from "./helpers/AuthContext";
 import { NotificationProvider, useNotifications } from "./helpers/NotificationContext";
@@ -172,11 +174,11 @@ function App() {
                       <i className="bi bi-house-door me-1"></i> Home
                     </Link>
                   </li>
-                  {/* <li className="nav-item px-2">
-                    <Link className="nav-link" to="/chatbot">
-                      <i className="bi bi-chat-dots me-1"></i> Chatbot
-                    </Link>
-                  </li> */}
+                  <li className="nav-item px-2">
+    <Link className="nav-link" to="/my-registrations">
+      <i className="bi bi-ticket-perforated me-1"></i> My Tickets
+    </Link>
+  </li>
                   <li className="nav-item px-2">
                     <Link className="nav-link" to="/calendar">
                       <i className="bi bi-calendar3 me-1"></i> Calendar
@@ -211,6 +213,11 @@ function App() {
                       <i className="bi bi-plus-circle me-1"></i> Create Event
                     </Link>
                   </li>
+                  <li className="nav-item px-2">
+    <Link className="nav-link" to="/admin/registrations">
+      <i className="bi bi-person-badge me-1"></i> Registrations
+    </Link>
+  </li>
                   <li className="nav-item px-2">
                     <Link className="nav-link" to="/admincalendar">
                       <i className="bi bi-calendar3 me-1"></i> Calendar
@@ -305,6 +312,14 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/admin/edit-event/:id" element={authState.isAdmin ? <EditEvent /> : <Navigate to="/" />} />
+            <Route 
+    path="/admin/registrations" 
+    element={authState.isAdmin ? <AdminRegistrations /> : <Navigate to="/home" />} 
+  />
+  <Route 
+    path="/my-registrations" 
+    element={authState.status ? <MyRegistrations /> : <Navigate to="/login" />} 
+  />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
           {authState.status && !hideNavbarRoutes.includes(location.pathname) && <FloatingChatbot />}

@@ -27,6 +27,7 @@ const notificationRouter = require("./routes/Notifications");
 const adminAnalyticsRouter = require("./routes/AdminAnalytics");
 // Add the new registrations router
 const registrationRouter = require("./routes/Registrations");
+const paymentsRouter = require('./routes/Payments');
 
 // Create HTTP server and initialize socket.io
 const server = http.createServer(app);
@@ -103,6 +104,7 @@ app.use("/analytics", adminAnalyticsRouter);
 app.use("/registrations", registrationRouter);
 app.use("/AIInsightsRoutes", insightRouter);
 app.use('/api/recommendations', recommendationsRouter);
+app.use("/payments", paymentsRouter);
 
 // Modified sync method to prevent duplicate column issues
 if (process.env.NODE_ENV === 'development') {

@@ -19,7 +19,8 @@ function CreateEvent() {
   const [errorMessage, setErrorMessage] = useState("")
   const [isHovered, setIsHovered] = useState(false)
   const [previewImage, setPreviewImage] = useState(null)
-  const [isPaidEvent, setIsPaidEvent] = useState(false)
+  // Remove the unused state variable
+  // const [isPaidEvent, setIsPaidEvent] = useState(false)
 
   const initialValues = {
     title: "",
@@ -45,30 +46,32 @@ function CreateEvent() {
     }
   }, [authState, navigate])
 
-  const validationSchema = Yup.object().shape({
-    title: Yup.string().trim().required("Title is required"),
-    location: Yup.string().trim().required("Location is required"),
-    description: Yup.string().trim().required("Description is required"),
-    date: Yup.string()
-      .matches(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
-      .required("Date is required"),
-    time: Yup.string()
-      .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Time must be in HH:MM format")
-      .required("Time is required"),
-    category: Yup.string().trim().required("Category is required"),
-    image: Yup.mixed(), // Optional field
-    isPaid: Yup.boolean(),
-    price: Yup.number()
-      .when('isPaid', {
-        is: true,
-        then: Yup.number().min(0.01, "Price must be greater than 0").required("Price is required for paid events")
-      }),
-    ticketsAvailable: Yup.number().integer("Must be a whole number").min(1, "Must have at least one ticket"),
-    registrationDeadline: Yup.string().nullable(),
-    maxRegistrations: Yup.number().integer("Must be a whole number").nullable(),
-    minRegistrations: Yup.number().integer("Must be a whole number").min(1, "Minimum registrations must be at least 1"),
-    status: Yup.string().required("Status is required")
-  })
+  // Modify the validationSchema in CreateEvent.js
+const validationSchema = Yup.object().shape({
+  title: Yup.string().trim().required("Title is required"),
+  location: Yup.string().trim().required("Location is required"),
+  description: Yup.string().trim().required("Description is required"),
+  date: Yup.string()
+    .matches(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
+    .required("Date is required"),
+  time: Yup.string()
+    .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Time must be in HH:MM format")
+    .required("Time is required"),
+  category: Yup.string().trim().required("Category is required"),
+  image: Yup.mixed(), // Optional field
+  isPaid: Yup.boolean(),
+  // Fix for the price field validation
+  price: Yup.number().when('isPaid', {
+    is: true,
+    then: () => Yup.number().min(0.01, "Price must be greater than 0").required("Price is required for paid events"),
+    otherwise: () => Yup.number().nullable()
+  }),
+  ticketsAvailable: Yup.number().integer("Must be a whole number").min(1, "Must have at least one ticket"),
+  registrationDeadline: Yup.string().nullable(),
+  maxRegistrations: Yup.number().integer("Must be a whole number").nullable(),
+  minRegistrations: Yup.number().integer("Must be a whole number").min(1, "Minimum registrations must be at least 1"),
+  status: Yup.string().required("Status is required")
+});
 
   const onSubmit = async (data, { setSubmitting, resetForm }) => {
     setErrorMessage("")
@@ -139,8 +142,7 @@ function CreateEvent() {
       setSuccessMessage("Event created successfully! Notifications sent to all users.")
       resetForm()
       setPreviewImage(null)
-      setIsPaidEvent(false)
-
+      
       setTimeout(() => {
         navigate("/admin")
       }, 2000)
@@ -691,7 +693,6 @@ function CreateEvent() {
                         name="isPaid"
                         style={checkboxStyle}
                         onChange={(e) => {
-                          setIsPaidEvent(e.target.checked);
                           setFieldValue("isPaid", e.target.checked);
                           if (!e.target.checked) {
                             setFieldValue("price", 0);

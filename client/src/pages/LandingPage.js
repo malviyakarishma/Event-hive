@@ -6,6 +6,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.min.css';
 import reviewsImage from "../images/reviews.jpg";
 import eventImage from "../images/flex.jpg";
+import BannerSlideshow from '../components/BannerSlideshow';
 
 // Add global style reset
 const globalStyle = `
@@ -287,19 +288,17 @@ const LandingPage = () => {
                 </div>
               </div>
               
-              <div className="col-lg-6 d-none d-lg-block">
-                <img 
-                  src="/api/placeholder/600/600" 
-                  alt="Event experience" 
-                  className="img-fluid rounded-circle p-3" 
-                  style={{ 
-                    border: '5px solid rgba(255, 255, 255, 0.2)',
-                    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    backdropFilter: 'blur(5px)'
-                  }}
-                />
-              </div>
+              {/* Update this section in your LandingPage component */}
+<div className="col-lg-6 d-none d-lg-block d-flex align-items-center justify-content-center">
+  <div className="position-relative" style={{ 
+    width: '100%',
+    maxWidth: '500px',
+    aspectRatio: '1/1',
+    margin: '0 auto'
+  }}>
+    <BannerSlideshow theme={theme} isCircular={true} />
+  </div>
+</div>
             </div>
           </div>
           

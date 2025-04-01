@@ -52,7 +52,21 @@ router.post("/", validateToken, upload.single("image"), async (req, res) => {
     try {
         console.log("Received Event Data:", req.body); // Debugging
         
-        const { title, location, description, date, time, category } = req.body;
+        const { 
+            title, 
+            location, 
+            description, 
+            date, 
+            time, 
+            category, 
+            isPaid, 
+            price, 
+            ticketsAvailable, 
+            registrationDeadline, 
+            maxRegistrations, 
+            minRegistrations,
+            status
+        } = req.body;
         
         // Validate required fields
         if (!title || !location || !description || !date || !time || !category) {
@@ -67,7 +81,15 @@ router.post("/", validateToken, upload.single("image"), async (req, res) => {
             date,
             time,
             category,
-            username: req.user.username
+            username: req.user.username,
+            // Add paid event fields
+            isPaid: isPaid === 'true' || isPaid === true,
+            price: isPaid === 'true' || isPaid === true ? parseFloat(price) : 0,
+            ticketsAvailable: parseInt(ticketsAvailable || 100),
+            registrationDeadline: registrationDeadline || null,
+            maxRegistrations: maxRegistrations ? parseInt(maxRegistrations) : null,
+            minRegistrations: parseInt(minRegistrations || 1),
+            status: status || 'active'
         };
 
         // Add image path if an image was uploaded
@@ -94,7 +116,11 @@ router.get("/:eventId", async (req, res) => {
         }
 
         const event = await Events.findByPk(eventId, {
-            attributes: ["id", "title", "location", "description", "date", "time", "category", "image", "username"],
+            attributes: [
+                "id", "title", "location", "description", "date", "time", "category", 
+                "image", "username", "isPaid", "price", "ticketsAvailable", 
+                "registrationDeadline", "maxRegistrations", "minRegistrations", "status"
+            ],
         });
 
         if (!event) {
@@ -128,7 +154,21 @@ router.put("/:eventId", validateToken, upload.single("image"), async (req, res) 
             return res.status(403).json({ error: "You are not authorized to update this event" });
         }
 
-        const { title, location, description, date, time, category } = req.body;
+        const { 
+            title, 
+            location, 
+            description, 
+            date, 
+            time, 
+            category,
+            isPaid, 
+            price, 
+            ticketsAvailable, 
+            registrationDeadline, 
+            maxRegistrations, 
+            minRegistrations,
+            status
+        } = req.body;
         
         // Update event data
         const updateData = {
@@ -137,7 +177,15 @@ router.put("/:eventId", validateToken, upload.single("image"), async (req, res) 
             description: description || event.description,
             date: date || event.date,
             time: time || event.time,
-            category: category || event.category
+            category: category || event.category,
+            // Update paid event fields
+            isPaid: isPaid === 'true' || isPaid === true,
+            price: isPaid === 'true' || isPaid === true ? parseFloat(price) : 0,
+            ticketsAvailable: ticketsAvailable ? parseInt(ticketsAvailable) : event.ticketsAvailable,
+            registrationDeadline: registrationDeadline || event.registrationDeadline,
+            maxRegistrations: maxRegistrations ? parseInt(maxRegistrations) : event.maxRegistrations,
+            minRegistrations: minRegistrations ? parseInt(minRegistrations) : event.minRegistrations,
+            status: status || event.status
         };
 
         // Update image if a new one was uploaded

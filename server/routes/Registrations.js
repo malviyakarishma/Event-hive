@@ -275,10 +275,67 @@ router.get("/user/me", validateToken, async (req, res) => {
   }
 });
 
-// Update check-in status (admin/organizer only)
+// Add to server/routes/Registrations.js if not already there
+
+// Get all registrations (admin only)
+router.get("/all", validateToken, async (req, res) => {
+  try {
+    // Check if user is admin
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: "Not authorized. Admin access required." });
+    }
+
+    // Get all registrations with event info
+    const registrations = await Registrations.findAll({
+      include: [{ model: Events, attributes: ['id', 'title', 'date'] }],
+      order: [["registrationDate", "DESC"]],
+    });
+
+    res.json(registrations);
+  } catch (error) {
+    console.error("Error fetching all registrations:", error);
+    res.status(500).json({ error: "Failed to fetch registrations" });
+  }
+});
+
+// Resend confirmation email
+router.post("/:registrationId/resend-email", validateToken, async (req, res) => {
+  try {
+    const { registrationId } = req.params;
+    
+    // Check if user is admin
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: "Not authorized. Admin access required." });
+    }
+    
+    const registration = await Registrations.findByPk(registrationId, {
+      include: [{ model: Events }],
+    });
+    
+    if (!registration) {
+      return res.status(404).json({ error: "Registration not found" });
+    }
+    
+    // Send confirmation email
+    const emailSent = await sendConfirmationEmail(registration, registration.Event);
+    
+    if (emailSent) {
+      res.json({ message: "Confirmation email sent successfully" });
+    } else {
+      res.status(500).json({ error: "Failed to send confirmation email" });
+    }
+  } catch (error) {
+    console.error("Error resending confirmation email:", error);
+    res.status(500).json({ error: "Failed to resend confirmation email" });
+  }
+});
+
+// Update check-in status route in server/routes/Registrations.js
 router.put("/:registrationId/check-in", validateToken, async (req, res) => {
   try {
     const { registrationId } = req.params;
+    const { checkInStatus } = req.body; // Get the new status from the request
+    
     const registration = await Registrations.findByPk(registrationId, {
       include: [{ model: Events }],
     });
@@ -294,13 +351,15 @@ router.put("/:registrationId/check-in", validateToken, async (req, res) => {
     }
 
     // Update check-in status
+    const newCheckInStatus = checkInStatus === undefined ? true : checkInStatus;
+    
     await registration.update({
-      checkInStatus: true,
-      checkInTime: new Date(),
+      checkInStatus: newCheckInStatus,
+      checkInTime: newCheckInStatus ? new Date() : null, // Set or clear time based on status
     });
 
     res.json({
-      message: "Check-in successful",
+      message: newCheckInStatus ? "Check-in successful" : "Check-out successful",
       registration: {
         id: registration.id,
         checkInStatus: registration.checkInStatus,
