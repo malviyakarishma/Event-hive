@@ -2,12 +2,12 @@
 module.exports = (sequelize, DataTypes) => {
     const EventAnalytics = sequelize.define("EventAnalytics", {
       id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         primaryKey: true,
-        autoIncrement: true
+        defaultValue: DataTypes.UUIDV4
       },
       event_id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         allowNull: false
       },
       attendance_data: {

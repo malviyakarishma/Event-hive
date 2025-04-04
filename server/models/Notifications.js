@@ -1,5 +1,10 @@
 module.exports = (sequelize, DataTypes) => {
   const Notifications = sequelize.define("Notifications", {
+    id: {
+      type: DataTypes.UUID,
+      primaryKey: true,
+      defaultValue: DataTypes.UUIDV4,
+    },
     message: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -9,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     relatedId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: true,
     },
     isAdminNotification: {
