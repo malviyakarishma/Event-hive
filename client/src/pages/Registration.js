@@ -154,6 +154,43 @@ function Registration() {
                 />
               </div>
 
+              {/* Email Field */}
+              <div className="mb-4">
+                <label className="form-label small fw-bold" style={{ color: colors.text }}>
+                  Email
+                </label>
+                <div className="input-group">
+                  <span 
+                    className="input-group-text"
+                    style={{ 
+                      backgroundColor: colors.primary,
+                      borderColor: colors.primary,
+                      color: "white"
+                    }}
+                  >
+                    <FaUser />
+                  </span>
+                  <Field 
+                    type="text" 
+                    className="form-control" 
+                    name="email" 
+                    placeholder="Create an email" 
+                    style={{ 
+                      backgroundColor: colors.light,
+                      borderColor: "#dee2e6",
+                      fontSize: "0.95rem",
+                      padding: "0.75rem 0.75rem",
+                    }}
+                  />
+                </div>
+                <ErrorMessage 
+                  name="username" 
+                  component="div" 
+                  className="text-danger mt-1" 
+                  style={{ fontSize: "0.85rem" }}
+                />
+              </div>
+
               {/* Password Field */}
               <div className="mb-4">
                 <label className="form-label small fw-bold" style={{ color: colors.text }}>
@@ -214,7 +251,7 @@ function Registration() {
                     style={{ 
                       cursor: "pointer",
                       borderColor: colors.textLight,
-                      backgroundColor: "white"
+                      // backgroundColor: "white"
                     }}
                   />
                   <label 

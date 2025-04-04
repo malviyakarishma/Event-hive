@@ -5,6 +5,14 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: false,
             unique: true,
         },
+        email: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true,
+            validate: {
+                isEmail: true,
+            },
+        },
         password: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -22,6 +30,8 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.DATE,
             allowNull: true,
         }
+
+    
     });
 
     Users.associate = (models) => {

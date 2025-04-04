@@ -18,7 +18,7 @@ const theme = {
 };
 
 function Login() {
-  const [username, setUsername] = useState("");
+  const [identifier, setIdentifier] = useState(""); // ✅ renamed from "username"
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -26,15 +26,14 @@ function Login() {
   const { setAuthState } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  // Animation mounting effect
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const validateFields = () => {
-    if (!username.trim()) {
-      setMessage({ text: "Username is required", type: "danger" });
+    if (!identifier.trim()) {
+      setMessage({ text: "Email or Username is required", type: "danger" });
       return false;
     }
     if (!password) {
@@ -45,43 +44,40 @@ function Login() {
   };
 
   const login = async (e) => {
-    e && e.preventDefault(); // Handle form submission properly
+    e && e.preventDefault();
     if (!validateFields()) return;
-  
+
     setLoading(true);
     setMessage(null);
-  
+
     try {
-      const { data } = await axios.post("http://localhost:3001/auth/login", { 
-        username: username.trim(), 
-        password 
+      const { data } = await axios.post("http://localhost:3001/auth/login", {
+        identifier: identifier.trim(),
+        password
       });
-  
+
       if (data?.error) {
         setMessage({ text: data.error, type: "danger" });
       } else {
         setMessage({ text: "Login successful!", type: "success" });
-  
-        // Store token in localStorage with expiration
+
         localStorage.setItem("accessToken", data.token);
-        const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000); // 24 hours
+        const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000);
         localStorage.setItem("tokenExpiry", expiryTime);
-  
-        // Set the AuthContext
+
         setAuthState({
-          username: data.user.username || username,
+          username: data.user.username || identifier,
           id: data.user.id,
           isAdmin: data.user.isAdmin,
           status: true,
         });
-  
-        // Redirect after successful login with slight delay for feedback
+
         setTimeout(() => {
           navigate(data.user.isAdmin ? "/admin" : "/home");
         }, 800);
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.error || 
+      const errorMessage = error.response?.data?.error ||
         "Authentication failed. Please check your credentials.";
       setMessage({ text: errorMessage, type: "danger" });
       console.error("Login error:", error);
@@ -89,6 +85,7 @@ function Login() {
       setLoading(false);
     }
   };
+  
 
   // Handle enter key submission
   const handleKeyPress = (e) => {
@@ -158,7 +155,7 @@ function Login() {
           {/* Username Field with Icon */}
           <div className="mb-4">
             <label className="form-label small fw-bold" style={{ color: theme.dark }}>
-              Username
+              Username/Email
             </label>
             <div className="input-group">
               <span 
@@ -174,9 +171,9 @@ function Login() {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Enter your username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your username/email"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 onKeyPress={handleKeyPress}
                 style={{ 
                   backgroundColor: theme.inputBg,

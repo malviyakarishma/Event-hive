@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const { sign } = require("jsonwebtoken");
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const { Op } = require("sequelize");
 require("dotenv").config();
 const { validateToken } = require("../middlewares/AuthMiddleware");
 
@@ -34,74 +35,90 @@ const validateAdmin = (req, res, next) => {
 
 // Register a new user (Admin or Regular User)
 router.post("/", async (req, res) => {
-    try {
-        console.log("Received Registration Request:", req.body);
+  try {
+      console.log("Received Registration Request:", req.body);
 
-        const { username, password, isAdmin } = req.body;
+      const { username, email, password, isAdmin } = req.body;
 
-        // Check if user already exists
-        const existingUser = await Users.findOne({ where: { username } });
-        if (existingUser) {
-            return sendError(res, 400, "Username already taken");
-        }
+      // Check if username already exists
+      const existingUser = await Users.findOne({ where: { username } });
+      if (existingUser) {
+          return sendError(res, 400, "Username already taken");
+      }
 
-        // Password strength check
-        if (password.length < 8) {
-            return sendError(res, 400, "Password must be at least 8 characters long");
-        }
+      // Optional: Check if email already exists
+      const existingEmail = await Users.findOne({ where: { email } });
+      if (existingEmail) {
+          return sendError(res, 400, "Email already in use");
+      }
 
-        // Hash password before storing it
-        const hash = await bcrypt.hash(password, 10);
+      // Password strength check
+      if (password.length < 8) {
+          return sendError(res, 400, "Password must be at least 8 characters long");
+      }
 
-        // Create new user in the database
-        const newUser = await Users.create({ 
-            username, 
-            password: hash, 
-            isAdmin: isAdmin || false 
-        });
+      // Hash password before storing it
+      const hash = await bcrypt.hash(password, 10);
 
-        console.log("New User Created:", newUser);
-        return res.json({ message: "SUCCESS", user: newUser });
-    } catch (error) {
-        console.error("Registration Error Details:", error);
-        return sendError(res, 500, `Registration failed: ${error.message}`);
-    }
+      // Create new user in the database
+      const newUser = await Users.create({ 
+          username, 
+          email,
+          password: hash, 
+          isAdmin: isAdmin || false 
+      });
+
+      console.log("New User Created:", newUser);
+      return res.json({ message: "SUCCESS", user: newUser });
+  } catch (error) {
+      console.error("Registration Error Details:", error);
+      return sendError(res, 500, `Registration failed: ${error.message}`);
+  }
 });
 
 // Login user
 router.post("/login", async (req, res) => {
-    try {
-        console.log("Login Request:", req.body);
-        const { username, password } = req.body;
+  try {
+      console.log("Login Request:", req.body);
+      const { identifier, password } = req.body; // 'identifier' can be username or email
 
-        const user = await Users.findOne({ where: { username } });
+      // Find user by username OR email
+      const user = await Users.findOne({
+          where: {
+              [Op.or]: [
+                  { username: identifier },
+                  { email: identifier }
+              ]
+          }
+      });
 
-        if (!user) {
-            return sendError(res, 401, "User doesn't exist");
-        }
+      if (!user) {
+          return sendError(res, 401, "User doesn't exist");
+      }
 
-        const match = await bcrypt.compare(password, user.password);
+      const match = await bcrypt.compare(password, user.password);
 
-        if (!match) {
-            return sendError(res, 401, "Wrong Username and Password Combination");
-        }
+      if (!match) {
+          return sendError(res, 401, "Wrong username/email or password");
+      }
 
-        // Generate JWT with user role
-        const accessToken = sign(
-            { username: user.username, id: user.id, isAdmin: user.isAdmin }, 
-            SECRET_KEY, 
-            { expiresIn: "1h" }
-        );
+      // Generate JWT
+      const accessToken = sign(
+          { username: user.username, id: user.id, isAdmin: user.isAdmin },
+          SECRET_KEY,
+          { expiresIn: "1h" }
+      );
 
-        return res.json({ 
-            token: accessToken, 
-            user: { id: user.id, username: user.username, isAdmin: user.isAdmin } 
-        });
-    } catch (error) {
-        console.error("Login error:", error);
-        return sendError(res, 500, "Server error");
-    }
+      return res.json({
+          token: accessToken,
+          user: { id: user.id, username: user.username, isAdmin: user.isAdmin }
+      });
+  } catch (error) {
+      console.error("Login error:", error);
+      return sendError(res, 500, "Server error");
+  }
 });
+
 
 // Auth route to get the authenticated user's details
 router.get('/auth', validateToken, (req, res) => {
