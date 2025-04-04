@@ -4,7 +4,7 @@ import axios from 'axios';
 import { AuthContext } from '../helpers/AuthContext';
 import { FaCalendarAlt, FaImage, FaMapMarkerAlt, FaArrowLeft, 
          FaSave, FaTimes, FaInfoCircle, FaCheck,
-         FaHeart, FaClock, FaTags, FaEdit, FaDollarSign,
+         FaHeart, FaClock, FaTags, FaEdit, FaRupeeSign,
          FaTicketAlt, FaCalendarCheck, FaUsers, FaUserPlus } from 'react-icons/fa';
 
 function EditEvent() {
@@ -531,7 +531,7 @@ function EditEvent() {
                     htmlFor="isPaid"
                     style={{ color: colors.navy, fontWeight: "500", cursor: "pointer" }}
                   >
-                    <FaDollarSign className="me-2" style={{ color: colors.coral }} />
+                    <FaRupeeSign className="me-2" style={{ color: colors.coral }} />
                     This is a paid event
                   </label>
                 </div>
@@ -544,7 +544,7 @@ function EditEvent() {
                     Price*
                   </label>
                   <div className="input-group">
-                    <span className="input-group-text">$</span>
+                    <span className="input-group-text">₹</span>
                     <input
                       type="number"
                       className="form-control"

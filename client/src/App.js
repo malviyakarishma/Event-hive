@@ -40,10 +40,65 @@ import UserNotificationIcon from "./pages/UserNotificationIcon"; // Adjust path 
 // Add this import at the top of App.js with other imports
 import AdminNotificationIcon from "./pages/AdminNotificationIcon";
 
+// function App() {
+//   const location = useLocation();
+//   const navigate = useNavigate();
+//   const { notifications, markAsRead, markAllAsRead } = useNotifications(); // Use the hook here
+//   const [authState, setAuthState] = useState({
+//     username: "",
+//     id: 0,
+//     status: false,
+//     isAdmin: false,
+//   });
+
+//   const useSocketNotifications = true;
+
+//   useEffect(() => {
+//     const token = localStorage.getItem("accessToken");
+
+//     if (!token) {
+//       setAuthState({ username: "", id: 0, status: false, isAdmin: false });
+//       return;
+//     }
+
+//     axios
+//       .get("http://localhost:3001/auth/auth", {
+//         headers: { Authorization: `Bearer ${token}` },
+//       })
+//       .then((response) => {
+//         if (response.data.error) {
+//           setAuthState({ username: "", id: 0, status: false, isAdmin: false });
+//           localStorage.removeItem("accessToken");
+//         } else {
+//           setAuthState({
+//             username: response.data.username || "User",
+//             id: response.data.id,
+//             status: true,
+//             isAdmin: response.data.isAdmin || false,
+//           });
+
+//           if (response.data.isAdmin && window.location.pathname === "/login") {
+//             navigate("/admin");
+//           }
+//         }
+//       })
+//       .catch(() => {
+//         setAuthState({ username: "", id: 0, status: false, isAdmin: false });
+//         localStorage.removeItem("accessToken");
+//       });
+//   }, [navigate]);
+
+//   const logout = () => {
+//     localStorage.removeItem("accessToken");
+//     setAuthState({ username: "", id: 0, status: false, isAdmin: false });
+//     navigate("/login");
+//   };
+
 function App() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { notifications, markAsRead, markAllAsRead } = useNotifications(); // Use the hook here
+  const { notifications, markAsRead, markAllAsRead } = useNotifications();
+
   const [authState, setAuthState] = useState({
     username: "",
     id: 0,
@@ -56,6 +111,17 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
 
+    // ✅ Optional: Check client-side token expiry
+    const expiryTime = localStorage.getItem("tokenExpiry");
+    if (expiryTime && Date.now() > parseInt(expiryTime, 10)) {
+      console.warn("Token expired. Logging out.");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("tokenExpiry");
+      setAuthState({ username: "", id: 0, status: false, isAdmin: false });
+      navigate("/login");
+      return;
+    }
+
     if (!token) {
       setAuthState({ username: "", id: 0, status: false, isAdmin: false });
       return;
@@ -66,30 +132,36 @@ function App() {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
-        if (response.data.error) {
-          setAuthState({ username: "", id: 0, status: false, isAdmin: false });
-          localStorage.removeItem("accessToken");
-        } else {
-          setAuthState({
-            username: response.data.username || "User",
-            id: response.data.id,
-            status: true,
-            isAdmin: response.data.isAdmin || false,
-          });
+        const { username, id, isAdmin } = response.data;
 
-          if (response.data.isAdmin && window.location.pathname === "/login") {
-            navigate("/admin");
-          }
+        setAuthState({
+          username: username || "User",
+          id,
+          status: true,
+          isAdmin: isAdmin || false,
+        });
+
+        // ✅ Redirect user based on role if stuck at login
+        if (window.location.pathname === "/login") {
+          navigate(isAdmin ? "/admin" : "/home");
         }
       })
-      .catch(() => {
-        setAuthState({ username: "", id: 0, status: false, isAdmin: false });
+      .catch((err) => {
+        console.error("Token validation failed:", err);
         localStorage.removeItem("accessToken");
+        localStorage.removeItem("tokenExpiry");
+        setAuthState({ username: "", id: 0, status: false, isAdmin: false });
+
+        // Redirect only if not already on login page
+        if (window.location.pathname !== "/login") {
+          navigate("/login");
+        }
       });
   }, [navigate]);
 
   const logout = () => {
     localStorage.removeItem("accessToken");
+    localStorage.removeItem("tokenExpiry");
     setAuthState({ username: "", id: 0, status: false, isAdmin: false });
     navigate("/login");
   };
@@ -132,8 +204,10 @@ function App() {
     <div className="container">
       {/* Brand/Logo */}
       <Link className="navbar-brand d-flex align-items-center" to="/">
-        <i className="bi bi-calendar-event fs-4 me-2"></i>
-        <span className="fw-bold">VibeCatcher</span>
+        {/* <i className="bi bi-calendar-event fs-4 me-2"></i> */}
+        <span className="me-2" role="img" aria-label="Bee" style={{ fontSize: "25px" }}>🍯</span>
+
+        <span className="fw-bold">Event Hive</span>
       </Link>
 
       {/* Navbar Toggler */}
@@ -151,7 +225,7 @@ function App() {
 
       {/* Navbar Links */}
       <div className="collapse navbar-collapse" id="navbarNav">
-        <ul className="navbar-nav mx-auto">
+        <ul className="navbar-nav mx-1">
           {!authState.status ? (
             <>
               <li className="nav-item px-2">
@@ -184,7 +258,7 @@ function App() {
                       <i className="bi bi-calendar3 me-1"></i> Calendar
                     </Link>
                   </li>
-                  <li className="nav-item px-2">
+                  {/* <li className="nav-item px-2">
                     <Link className="nav-link" to="/AIReviewsPage">
                     <i className="bi bi-bar-chart-line me-1"></i> AI Reviews
                     </Link>
@@ -198,7 +272,7 @@ function App() {
                   <Link className="nav-link" to="/PersonalizedRecommendations">
   <i className="bi bi-bullseye me-1"></i> Recommendations
 </Link>
-</li>
+</li> */}
                 </>
               )}
               {authState.isAdmin && (
@@ -294,9 +368,9 @@ function App() {
   path="/AdminAIReviewsDashboard" 
   element={authState.status && authState.isAdmin ? <AdminAIReviewsDashboard /> : <Navigate to="/login" />} 
 />
-            <Route path="/AIReviewsPage" element={<AIReviewsPage />} />
+            {/* <Route path="/AIReviewsPage" element={<AIReviewsPage />} />
             <Route path="/AIInsights" element={<AIInsights />} />
-            <Route path="/PersonalizedRecommendations" element={<PersonalizedRecommendations />} />
+            <Route path="/PersonalizedRecommendations" element={<PersonalizedRecommendations />} /> */}
             <Route path="/home" element={<Home />} />
             <Route path="/admin" element={authState.isAdmin ? <AdminDashboard /> : <Navigate to="/home" />} />
             <Route path="/create_event" element={authState.isAdmin ? <CreateEvent /> : <Navigate to="/home" />} />

@@ -11,7 +11,7 @@ body {
 
 /* Navbar Styles */
 .navbar {
-  background-color: #001F3F !important; /* Dark blue-grey */
+  background-color: #231942 !important; /* Dark blue-grey */
   padding: 10px 50px;
   position: fixed;
   top: 0;
@@ -32,7 +32,7 @@ body {
 }
 
 .nav-item .nav-link {
-  color: white !important;
+  color: black !important;
   font-size: 1.2rem;
   font-weight: bold !important;
   text-align: center;
@@ -157,7 +157,7 @@ body {
 }
 
 .event-card:hover {
-  transform: scale(1.05);
-  transition: all 0.3s ease;
+  transform: scale(1.5);
+  transition:all 0.3s ease;
 }
 

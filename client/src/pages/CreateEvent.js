@@ -7,7 +7,7 @@ import axios from "axios"
 import { useNavigate } from "react-router-dom"
 import "bootstrap/dist/css/bootstrap.min.css"
 import { FaCalendarAlt, FaMapMarkerAlt, FaFileAlt, FaPlus, FaHeart, FaClock, FaTag, 
-         FaImage, FaDollarSign, FaTicketAlt, FaCalendarCheck, FaUsers, FaUserPlus } from "react-icons/fa"
+         FaImage, FaRupeeSign, FaTicketAlt, FaCalendarCheck, FaUsers, FaUserPlus } from "react-icons/fa"
 import { AuthContext } from "../helpers/AuthContext"
 
 
@@ -716,7 +716,7 @@ const validationSchema = Yup.object().shape({
                     {values.isPaid && (
                       <div style={inputGroupStyle}>
                         <div style={inputIconStyle}>
-                          <FaDollarSign size={16} color={colors.darkGray} />
+                          <FaRupeeSign size={16} color={colors.darkGray} />
                         </div>
                         <Field
                           type="number"

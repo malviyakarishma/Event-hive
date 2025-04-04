@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { format } from "date-fns";
 
+
 const Profile = () => {
   const [user, setUser] = useState(null);
   const [reviews, setReviews] = useState([]);
@@ -15,9 +16,10 @@ const Profile = () => {
   const [aboutMeText, setAboutMeText] = useState("");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
+
   const [notificationSettings, setNotificationSettings] = useState({
     emailNotifications: true,
-    pushNotifications: false,
+    pushNotifications: true,
     eventReminders: true,
     reviewRequests: true,
   });
@@ -737,12 +739,12 @@ const Profile = () => {
               >
                 My Reviews
               </button>
-              <button
+              {/* <button
                 onClick={() => setActiveTab("settings")}
                 style={activeTab === "settings" ? styles.tabButtonActive : styles.tabButton}
               >
                 Settings
-              </button>
+              </button> */}
             </div>
 
             {/* Tab Content */}

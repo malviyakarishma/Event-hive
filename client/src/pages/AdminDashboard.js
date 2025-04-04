@@ -304,10 +304,10 @@ export default function AdminDashboard() {
                               textAlign: "center"
                             }}
                           >
-                            <h5>{event.title}</h5>
+                            {/* <h5>{event.title}</h5>
                             <p className="mb-1"><i className="bi bi-calendar-event-fill me-2"></i>{format(new Date(event.date), "MMM dd, yyyy")}</p>
                             <p className="mb-1"><i className="bi bi-clock-fill me-2"></i>{event.time ? format(new Date(`2000-01-01T${event.time}`), "h:mm a") : "N/A"}</p>
-                            <p className="mb-1"><i className="bi bi-geo-alt-fill me-2"></i>{event.location}</p>
+                            <p className="mb-1"><i className="bi bi-geo-alt-fill me-2"></i>{event.location}</p> */}
                             <button className="btn btn-sm btn-light mt-2">View Details</button>
                           </div>
                         )}
