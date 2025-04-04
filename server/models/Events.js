@@ -78,11 +78,11 @@ module.exports = (sequelize, DataTypes) => {
       });
       
       // Add association with user who created the event
-      Events.belongsTo(models.Users, {
-        foreignKey: 'userId',
-        as: 'organizer',
-        allowNull: true,
-      });
+      // Events.belongsTo(models.Users, {
+      //   foreignKey: 'userId',
+      //   as: 'organizer',
+      //   allowNull: true,
+      // });
     };
   
     return Events;

@@ -1155,7 +1155,7 @@ const backgroundStyle = {
                 <button 
                   className="btn"
                   style={{ backgroundColor: colors.primary, color: 'white' }}
-                  onClick={() => navigate('/create-event')}
+                  onClick={() => navigate('/create_event')}
                 >
                   <i className="bi bi-plus-circle me-1"></i> Add Your First Event
                 </button>

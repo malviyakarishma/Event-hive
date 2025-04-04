@@ -111,9 +111,9 @@ router.get("/:eventId", async (req, res) => {
     try {
         const eventId = req.params.eventId;
 
-        if (!eventId || isNaN(eventId)) {
-            return res.status(400).json({ error: "Invalid event ID" });
-        }
+        // if (!eventId || isNaN(eventId)) {
+        //     return res.status(400).json({ error: "Invalid event ID" });
+        // }
 
         const event = await Events.findByPk(eventId, {
             attributes: [

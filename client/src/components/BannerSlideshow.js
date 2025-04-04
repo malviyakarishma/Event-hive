@@ -24,28 +24,29 @@ const BannerSlideshow = ({ theme, isCircular = false }) => {
   // Centralized transition logic to ensure consistency
   // Using useCallback to memoize the function
   const handleTransition = useCallback((newIndex) => {
-    if (fading) return; // Prevent transition if one is already in progress
-    
-    // Start fade out animation
+    if (fading) return;
+  
+    // Begin fade out
     setFading(true);
-    
-    // After the fade out completes, update indices and start fade in
+  
+    // Fade out lasts 500ms, then switch image, then fade in
     setTimeout(() => {
       setCurrentIndex(newIndex);
       setNextIndex((newIndex + 1) % banners.length);
-      
-      // Small delay to ensure the current image is set before starting fade in
-      setTimeout(() => {
+  
+      // Allow time for re-render and apply fade-in
+      requestAnimationFrame(() => {
+        // Using rAF ensures DOM has painted with new image
         setFading(false);
-      }, 50);
-    }, 1000); // 1 second fade transition
+      });
+    }, 500); // Match this with your CSS fade-out duration
   }, [fading, banners.length]);
 
   useEffect(() => {
     // Change image every 5 seconds for a slower, more elegant transition
     const interval = setInterval(() => {
       handleTransition((currentIndex + 1) % banners.length);
-    }, 5000); // 5 seconds between transitions for better viewing
+    }, 3000); // 5 seconds between transitions for better viewing
 
     return () => clearInterval(interval);
   }, [currentIndex, banners.length, handleTransition]);
@@ -91,13 +92,13 @@ const BannerSlideshow = ({ theme, isCircular = false }) => {
       />
       
       {/* Subtle overlay for better text readability if needed */}
-      <div 
+      {/* <div 
         className="position-absolute w-100 h-100"
         style={{
           background: 'radial-gradient(circle, rgba(0,0,0,0) 50%, rgba(0,0,0,0.3) 100%)',
           zIndex: 2
         }}
-      />
+      /> */}
       
       {/* Improved indicators with active animation */}
       <div 
@@ -121,7 +122,7 @@ const BannerSlideshow = ({ theme, isCircular = false }) => {
       </div>
       
       {/* Navigation buttons with improved styling */}
-      <button 
+      {/* <button 
         className="banner-nav-button position-absolute top-50 start-0 translate-middle-y ms-3"
         style={{ 
           zIndex: 3, 
@@ -147,8 +148,8 @@ const BannerSlideshow = ({ theme, isCircular = false }) => {
       >
         <i className="bi bi-chevron-left"></i>
       </button>
-      
-      <button 
+       */}
+      {/* <button 
         className="banner-nav-button position-absolute top-50 end-0 translate-middle-y me-3"
         style={{ 
           zIndex: 3, 
@@ -173,7 +174,7 @@ const BannerSlideshow = ({ theme, isCircular = false }) => {
         aria-label="Next banner"
       >
         <i className="bi bi-chevron-right"></i>
-      </button>
+      </button> */}
     </div>
   );
 };

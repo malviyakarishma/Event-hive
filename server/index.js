@@ -117,7 +117,7 @@ app.get('/api/health', (req, res) => {
 // Modified sync method to prevent duplicate column issues
 if (process.env.NODE_ENV === 'development') {
   // In development, only sync if needed, but don't alter existing tables
-  db.sequelize.sync({ alter: false }).then(() => {
+  db.sequelize.sync({ alter:false}).then(() => {
     // Add EventAnalytics model to database if not already exist
     if (!db.EventAnalytics) {
       console.warn("EventAnalytics model not found. Make sure to add it to your models.");

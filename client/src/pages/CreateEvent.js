@@ -494,24 +494,24 @@ const validationSchema = Yup.object().shape({
   useEffect(() => {
     const styleElement = document.createElement('style')
     styleElement.textContent = `
-      @keyframes float {
-        0% {
-          transform: translateY(0px);
-          box-shadow: 0 20px 60px rgba(26, 42, 86, 0.15), 0 10px 20px rgba(26, 42, 86, 0.12);
-        }
-        50% {
-          transform: translateY(-10px);
-          box-shadow: 0 30px 70px rgba(26, 42, 86, 0.2), 0 15px 30px rgba(26, 42, 86, 0.15);
-        }
-        100% {
-          transform: translateY(0px);
-          box-shadow: 0 20px 60px rgba(26, 42, 86, 0.15), 0 10px 20px rgba(26, 42, 86, 0.12);
-        }
-      }
-      .floating-card {
-        animation: float 6s ease-in-out infinite;
-      }
-    `
+      // @keyframes float {
+      //   0% {
+      //     transform: translateY(0px);
+      //     box-shadow: 0 20px 60px rgba(26, 42, 86, 0.15), 0 10px 20px rgba(26, 42, 86, 0.12);
+      //   }
+      //   50% {
+      //     transform: translateY(-10px);
+      //     box-shadow: 0 30px 70px rgba(26, 42, 86, 0.2), 0 15px 30px rgba(26, 42, 86, 0.15);
+      //   }
+      //   100% {
+      //     transform: translateY(0px);
+      //     box-shadow: 0 20px 60px rgba(26, 42, 86, 0.15), 0 10px 20px rgba(26, 42, 86, 0.12);
+      //   }
+      // }
+    //   .floating-card {
+    //     animation: float 6s ease-in-out infinite;
+    //   }
+    // `
     document.head.appendChild(styleElement)
     
     return () => {

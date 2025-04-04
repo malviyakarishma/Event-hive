@@ -7,6 +7,7 @@ import 'bootstrap-icons/font/bootstrap-icons.min.css';
 import reviewsImage from "../images/reviews.jpg";
 import eventImage from "../images/flex.jpg";
 import BannerSlideshow from '../components/BannerSlideshow';
+import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn } from 'react-icons/fa';
 
 // Add global style reset
 const globalStyle = `
@@ -251,7 +252,7 @@ const LandingPage = () => {
                     letterSpacing: '-0.5px',
                     textShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
                   }}>
-                    Experience Events Through <span style={{ color: theme.colors.primary }}>Vibe</span>Catcher
+                    Experience Events Through <span style={{ color: theme.colors.primary }}>Event</span>Hive
                   </h1>
                   
                   <p className="lead mb-5" style={{
@@ -259,7 +260,7 @@ const LandingPage = () => {
                     fontSize: '1.25rem',
                     lineHeight: '1.6'
                   }}>
-                    VibeCatcher transforms how you discover, experience, and remember events with cutting-edge artificial intelligence that personalizes every moment.
+                    From underground gems to major festivals, EventHive helps you explore your city like never before - one event at a time.
                   </p>
                   
                   {/* Updated buttons for clearer navigation */}
@@ -364,7 +365,7 @@ const LandingPage = () => {
               <div className="col-lg-6 d-flex justify-content-lg-end align-items-end">
                 <button 
                   className="btn btn-lg"
-                  onClick={() => navigate('/events')}
+                  onClick={() => navigate('/home')}
                   style={{
                     background: theme.colors.primary,
                     color: 'white',
@@ -393,13 +394,13 @@ const LandingPage = () => {
                     className="col-lg-4 col-md-6 mb-4" 
                     key={event.id}
                     style={{ 
-                      transform: `translateY(${index * 20}px)`, 
+                      // transform: `translateY(${index * 20}px)`, 
                       zIndex: 3 - index 
                     }}
                   >
                     <div
                       className="event-card position-relative"
-                      onClick={() => navigate(`/event/${event.id}`)}
+                      // onClick={() => navigate(`/event/${event.id}`)}
                       style={{ 
                         cursor: "pointer",
                         borderRadius: '16px',
@@ -489,7 +490,7 @@ const LandingPage = () => {
                             <span>{event.location}</span>
                           </div>
                           
-                          <button 
+                          {/* <button 
                             className="btn btn-sm mt-2"
                             style={{
                               background: 'white',
@@ -500,9 +501,9 @@ const LandingPage = () => {
                               boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
                               border: 'none'
                             }}
-                          >
-                            View Details <i className="bi bi-chevron-right ms-1"></i>
-                          </button>
+                          > */}
+                            {/* View Details <i className="bi bi-chevron-right ms-1"></i>
+                          </button> */}
                         </div>
                       </div>
                       
@@ -560,7 +561,7 @@ const LandingPage = () => {
         </section>
         
         {/* Features Section */}
-        <section 
+        {/* <section 
           id="features-section"
           className="py-5"
           style={{
@@ -593,9 +594,9 @@ const LandingPage = () => {
                 Discover the power of AI in simplifying your event experiences.
               </p>
             </div>
-            <div className="row">
+            <div className="row"> */}
               {/* Card Component */}
-              {[
+              {/* {[
                 {
                   title: "Event Personalization",
                   description: "Let AI recommend events that match your interests and preferences.",
@@ -657,10 +658,10 @@ const LandingPage = () => {
               ))}
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Call to Action Section */}
-        <section 
+        {/* <section 
           id="cta-section"
           className="py-5 text-center"
           style={{
@@ -705,6 +706,62 @@ const LandingPage = () => {
               >
                 Login
               </button>
+            </div>
+          </div>
+        </section> */}
+
+        <section 
+          id="cta-section"
+          className="py-4"
+          style={{
+            background: theme.colors.primary,
+            color: 'white',
+            ...getSectionStyle(visibleSections.cta)
+          }}
+        >
+          <div className="container d-flex flex-column flex-md-row justify-content-between align-items-center">
+            <div className="mb-3 mb-md-0 text-center text-md-start">
+              <h5 className="mb-1">EventHive © 2025</h5>
+              <small>Buzzing With Possibilities 🐝</small>
+            </div>
+
+            <div className="d-flex gap-3">
+              <a 
+                href="https://facebook.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{ color: 'white' }}
+                aria-label="Facebook"
+              >
+                <FaFacebookF size={20} />
+              </a>
+              <a 
+                href="https://twitter.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{ color: 'white' }}
+                aria-label="Twitter"
+              >
+                <FaTwitter size={20} />
+              </a>
+              <a 
+                href="https://instagram.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{ color: 'white' }}
+                aria-label="Instagram"
+              >
+                <FaInstagram size={20} />
+              </a>
+              <a 
+                href="https://linkedin.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{ color: 'white' }}
+                aria-label="LinkedIn"
+              >
+                <FaLinkedinIn size={20} />
+              </a>
             </div>
           </div>
         </section>

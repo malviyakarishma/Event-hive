@@ -357,7 +357,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Category View Toggle */}
-        <div className="row mt-5">
+        {/* <div className="row mt-5">
           <div className="col-12">
             <h3 className="mb-4">Events by Category</h3>
             <div className="accordion" id="categoryAccordion">
@@ -441,7 +441,7 @@ export default function AdminDashboard() {
               ))}
             </div>
           </div>
-        </div>
+        </div> */}
 
         <style jsx>{`
           .event-card:hover .card-img-top {
