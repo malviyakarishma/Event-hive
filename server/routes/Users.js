@@ -22,8 +22,12 @@ const transporter = nodemailer.createTransport({
 
 // Helper function for sending error responses
 const sendError = (res, statusCode, message) => {
-    return res.status(statusCode).json({ error: message });
+  return res.status(statusCode).json({
+      error: true,
+      message
+  });
 };
+
 
 // Middleware to check if the user is an admin
 const validateAdmin = (req, res, next) => {
@@ -104,14 +108,14 @@ router.post("/login", async (req, res) => {
 
       // Generate JWT
       const accessToken = sign(
-          { username: user.username, id: user.id, isAdmin: user.isAdmin },
+          { username: user.username, email:user.email,id: user.id, isAdmin: user.isAdmin },
           SECRET_KEY,
           { expiresIn: "1h" }
       );
 
       return res.json({
           token: accessToken,
-          user: { id: user.id, username: user.username, isAdmin: user.isAdmin }
+          user: { id: user.id,email:user.email, username: user.username, isAdmin: user.isAdmin }
       });
   } catch (error) {
       console.error("Login error:", error);

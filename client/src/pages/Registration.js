@@ -184,7 +184,7 @@ function Registration() {
                   />
                 </div>
                 <ErrorMessage 
-                  name="username" 
+                  name="email" 
                   component="div" 
                   className="text-danger mt-1" 
                   style={{ fontSize: "0.85rem" }}
