@@ -1,1 +1,1 @@
-# AI-Powered-Event
+# Event Management System
