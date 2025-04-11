@@ -1,10 +1,9 @@
 {
   "development": {
     "username": "root",
-    "password": "Karishma@mysql123",
-    "database": "event-hive",
-    "host": "127.0.0.1",
-    "port": 3306,
+    "password": "nimble123",
+    "database": "event",
+    "host": "localhost",
     "dialect": "mysql"
   },
   "test": {
