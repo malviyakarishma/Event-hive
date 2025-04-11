@@ -729,18 +729,6 @@ const Profile = () => {
               >
                 My Events
               </button>
-              <button
-                onClick={() => setActiveTab("reviews")}
-                style={activeTab === "reviews" ? styles.tabButtonActive : styles.tabButton}
-              >
-                My Reviews
-              </button>
-              {/* <button
-                onClick={() => setActiveTab("settings")}
-                style={activeTab === "settings" ? styles.tabButtonActive : styles.tabButton}
-              >
-                Settings
-              </button> */}
             </div>
 
             {/* Tab Content */}

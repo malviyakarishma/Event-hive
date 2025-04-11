@@ -177,7 +177,7 @@ export default function Response() {
             
         } catch (err) {
             console.error("Error submitting response:", err);
-            console.log("Error response:", err.response?.data || "No response data");
+            console.log("Error response:", err.response?.data.message || "No response data");
             alert(`Failed to submit response: ${err.response?.data?.error || err.message}`);
         }
     };
@@ -319,7 +319,7 @@ export default function Response() {
     };
 
     const editEvent = () => {
-        navigate(`/admin/edit-event/${id}`);
+        navigate(`/home`);
     };
 
     const toggleExpandReview = (reviewId) => {
@@ -591,7 +591,7 @@ export default function Response() {
                                             color: "white" 
                                         }}
                                     >
-                                        <FaEdit className="me-2" />Edit Event
+                                        Home Page
                                     </button>
                                 </div>
                             </div>
@@ -755,24 +755,24 @@ export default function Response() {
                             All Reviews ({reviews.length})
                         </button>
                     </li>
-                    <li className="nav-item">
+                    {/* <li className="nav-item">
                         <button 
                             className="nav-link" 
                             style={{ color: colors.coral }}
-                            onClick={() => {/* Handle filter change */}}
+                            onClick={() => {}}
                         >
                             Pending ({stats.pendingCount})
                         </button>
-                    </li>
-                    <li className="nav-item">
+                    </li> */}
+                    {/* <li className="nav-item">
                         <button 
                             className="nav-link" 
                             style={{ color: colors.successGreen }}
-                            onClick={() => {/* Handle filter change */}}
+                            onClick={() => {}}
                         >
                             Responded ({stats.respondedCount})
                         </button>
-                    </li>
+                    </li> */}
                 </ul>
 
                 {reviews.length > 0 ? (
