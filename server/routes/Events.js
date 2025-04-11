@@ -5,6 +5,7 @@ const { validateToken } = require("../middlewares/AuthMiddleware");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const { error } = require("console");
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -50,61 +51,107 @@ router.get("/", async (req, res) => {
 // Create a new event (Requires Authentication)
 router.post("/", validateToken, upload.single("image"), async (req, res) => {
     try {
-        console.log("Received Event Data:", req.body); // Debugging
-        
-        const { 
-            title, 
-            location, 
-            description, 
-            date, 
-            time, 
-            category, 
-            isPaid, 
-            price, 
-            ticketsAvailable, 
-            registrationDeadline, 
-            maxRegistrations, 
-            minRegistrations,
-            status
-        } = req.body;
-        
-        // Validate required fields
-        if (!title || !location || !description || !date || !time || !category) {
-            return res.status(400).json({ error: "Missing required fields" });
+      console.log("Received Event Data:", req.body);
+  
+      const { 
+        title, 
+        location, 
+        description, 
+        date, 
+        time, 
+        category, 
+        isPaid, 
+        price, 
+        ticketsAvailable, 
+        registrationDeadline, 
+        maxRegistrations, 
+        minRegistrations,
+        status
+      } = req.body;
+  
+      // Basic required fields check
+      if (!title || !location || !description || !date || !time || !category) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+  
+      // 👇 Convert types upfront for validation logic
+      const eventDate = new Date(date);
+      const isPaidBool = isPaid === 'true' || isPaid === true;
+      const priceNum = parseFloat(price);
+      const maxRegNum = parseInt(maxRegistrations);
+      const ticketsNum = parseInt(ticketsAvailable);
+      const regDeadlineDate = registrationDeadline ? new Date(registrationDeadline) : null;
+      // ✨ Custom Validations
+      const today = new Date();
+    //   today.setHours(0, 0, 0, 0); // remove time part for comparison
+  
+      if (eventDate <= today) {
+        return res.status(400).json({ error: "Oh sure, let's register people in the past. Time machines are in beta, right?" });
+      }
+  
+      if (isPaidBool && (!price || priceNum <= 0)) {
+        return res.status(400).json({ error: "Paid events must have a price greater than 0" });
+      }
+  
+      if (maxRegNum > ticketsNum) {
+        return res.status(400).json({ error: "Maximum registrations cannot exceed available tickets" });
+      }
+
+      if (
+        regDeadlineDate instanceof Date &&
+        !isNaN(regDeadlineDate) &&
+        eventDate instanceof Date &&
+        !isNaN(eventDate)
+      ) {
+        // Strip time for accurate day comparison
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        regDeadlineDate.setHours(0, 0, 0, 0);
+        eventDate.setHours(0, 0, 0, 0);
+      
+        // 1. Deadline must be in the future (not today or past)
+        if (regDeadlineDate <= today) {
+          return res.status(400).json({ error: "How is this possible.....! " });
         }
-
-        // Create new event object
-        const newEventData = {
-            title,
-            location,
-            description,
-            date,
-            time,
-            category,
-            username: req.user.username,
-            // Add paid event fields
-            isPaid: isPaid === 'true' || isPaid === true,
-            price: isPaid === 'true' || isPaid === true ? parseFloat(price) : 0,
-            ticketsAvailable: parseInt(ticketsAvailable || 100),
-            registrationDeadline: registrationDeadline || null,
-            maxRegistrations: maxRegistrations ? parseInt(maxRegistrations) : null,
-            minRegistrations: parseInt(minRegistrations || 1),
-            status: status || 'active'
-        };
-
-        // Add image path if an image was uploaded
-        if (req.file) {
-            newEventData.image = `/uploads/events/${req.file.filename}`;
+      
+        // 2. Deadline must be before the event date
+        if (regDeadlineDate >= eventDate) {
+          return res.status(400).json({ error: "Registration deadline must be before event date" });
         }
-
-        const newEvent = await Events.create(newEventData);
-
-        res.status(201).json(newEvent);
+      }
+      
+  
+      // 🧠 Construct event data
+      const newEventData = {
+        title,
+        location,
+        description,
+        date,
+        time,
+        category,
+        username: req.user.username,
+        isPaid: isPaidBool,
+        price: isPaidBool ? priceNum : 0,
+        ticketsAvailable: ticketsNum || 100,
+        registrationDeadline: registrationDeadline || null,
+        maxRegistrations: maxRegNum || null,
+        minRegistrations: parseInt(minRegistrations || 1),
+        status: status || 'active'
+      };
+  
+      if (req.file) {
+        newEventData.image = `/uploads/events/${req.file.filename}`;
+      }
+  
+      const newEvent = await Events.create(newEventData);
+      res.status(201).json(newEvent);
+  
     } catch (error) {
-        console.error("Error creating event:", error);
-        res.status(500).json({ error: "Failed to create event" });
+      console.error("Error creating event:", error);
+      res.status(500).json({ error: "Failed to create event" });
     }
-});
+  });
+  
 
 // Fetch specific event details and its reviews
 router.get("/:eventId", async (req, res) => {

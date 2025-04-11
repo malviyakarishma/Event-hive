@@ -293,7 +293,7 @@ function App() {
                             </li> */}
                             <li className="nav-item px-2">
                               <Link className="nav-link" to="/AIInsights">
-                                <i className="bi bi-lightbulb me-1"></i> AI
+                                <i className="bi bi-lightbulb me-1"></i>
                                 Insights
                               </Link>
                             </li>
@@ -342,13 +342,13 @@ function App() {
                                 className="nav-link"
                                 to="/AdminAIReviewsDashboard"
                               >
-                                <i className="bi bi-bar-chart-line me-1"></i> AI
+                                <i className="bi bi-bar-chart-line me-1"></i> 
                                 Analytics
                               </Link>
                             </li>
                             <li className="nav-item px-2">
                               <Link className="nav-link" to="/AIInsights">
-                                <i className="bi bi-lightbulb me-1"></i> AI
+                                <i className="bi bi-lightbulb me-1"></i> 
                                 Insights
                               </Link>
                             </li>

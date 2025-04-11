@@ -808,7 +808,7 @@ const validationSchema = Yup.object().shape({
                           id="maxRegistrations"
                           name="maxRegistrations"
                           min="1"
-                          placeholder="Optional"
+                          placeholder="Can't be more than available ticktes"
                           style={touched.maxRegistrations ? inputFocusStyle : inputBaseStyle}
                           onFocus={() => setFieldTouched('maxRegistrations', true)}
                         />
@@ -832,7 +832,7 @@ const validationSchema = Yup.object().shape({
                       <label htmlFor="image" style={{ cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
                         <FaImage size={24} color={colors.darkGray} />
                         <p style={fileInputTextStyle}>
-                          {previewImage ? "Change image" : "Upload an event image (optional)"}
+                          {previewImage ? "Change image" : "Upload an event image"}
                         </p>
                       </label>
                     </div>
