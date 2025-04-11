@@ -426,7 +426,7 @@ export default function Event() {
       <footer style={footerStyle}>
         <div style={footerContentStyle}>
           <p style={{ ...footerTextStyle, fontWeight: "600", fontSize: "1rem" }}>
-            <i className="fas fa-heart" style={footerIconStyle}></i> EventHub Community
+            <i className="fas fa-heart" style={footerIconStyle}></i> Event Hive
           </p>
           <p style={footerTextStyle}>
             Connect with event organizers and attendees from around the world
@@ -452,7 +452,7 @@ export default function Event() {
             </button>
           </p>
           <p style={{ ...footerTextStyle, marginTop: "0.5rem", fontSize: "0.8rem" }}>
-            © {new Date().getFullYear()} EventHub. All rights reserved.
+            © {new Date().getFullYear()} EventHive. All rights reserved.
           </p>
         </div>
       </footer>
@@ -479,7 +479,7 @@ export default function Event() {
       <footer style={footerStyle}>
         <div style={footerContentStyle}>
           <p style={{ ...footerTextStyle, fontWeight: "600", fontSize: "1rem" }}>
-            <i className="fas fa-heart" style={footerIconStyle}></i> EventHub Community
+            <i className="fas fa-heart" style={footerIconStyle}></i> Event Hive
           </p>
           <p style={footerTextStyle}>
             Connect with event organizers and attendees from around the world
@@ -505,7 +505,7 @@ export default function Event() {
             </button>
           </p>
           <p style={{ ...footerTextStyle, marginTop: "0.5rem", fontSize: "0.8rem" }}>
-            © {new Date().getFullYear()} EventHub. All rights reserved.
+            © {new Date().getFullYear()} EventHive. All rights reserved.
           </p>
         </div>
       </footer>
@@ -1003,7 +1003,7 @@ export default function Event() {
       }}>
         <div style={footerContentStyle}>
           <p style={{ ...footerTextStyle, fontWeight: "600", fontSize: "1rem" }}>
-            <i className="fas fa-heart" style={footerIconStyle}></i> EventHub Community
+            <i className="fas fa-heart" style={footerIconStyle}></i> Event Hive
           </p>
           <p style={footerTextStyle}>
             Connect with event organizers and attendees from around the world
@@ -1029,7 +1029,7 @@ export default function Event() {
             </button>
           </p>
           <p style={{ ...footerTextStyle, marginTop: "0.5rem", fontSize: "0.8rem" }}>
-            © {new Date().getFullYear()} EventHub. All rights reserved.
+            © {new Date().getFullYear()} EventHive. All rights reserved.
           </p>
         </div>
       </footer>

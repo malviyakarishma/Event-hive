@@ -37,9 +37,18 @@ function EditEvent() {
 
   // Options for category dropdown
   const categoryOptions = [
-    'Conference', 'Workshop', 'Seminar', 'Networking', 
-    'Social Gathering', 'Corporate Event', 'Trade Show', 
-    'Charity', 'Festival', 'Concert', 'Sports', 'Other'
+    "Art",
+    "Workshop",
+    "Seminar",
+    "Social",
+    "Concert",
+    "Exhibition",
+    "Fitness",
+    "Comedy",
+    "Education",
+    "Entertainment",
+    "Fundraising",
+    "Other"
   ];
   
   // Options for status dropdown
@@ -271,7 +280,7 @@ function EditEvent() {
             fontWeight: "600", 
             fontSize: "1rem" 
           }}>
-            <FaHeart style={{ color: colors.coral, marginRight: "0.5rem" }} /> EventHub Community
+            <FaHeart style={{ color: colors.coral, marginRight: "0.5rem" }} /> Event Hive
           </p>
           <p style={{ margin: "0.5rem 0", fontSize: "0.9rem", color: colors.lightGray }}>
             Connect with event organizers and attendees from around the world
@@ -325,7 +334,7 @@ function EditEvent() {
             </button>
           </p>
           <p style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: colors.lightGray }}>
-            © {currentYear} EventHub. All rights reserved.
+            © {currentYear} EventHive. All rights reserved.
           </p>
         </div>
       </footer>

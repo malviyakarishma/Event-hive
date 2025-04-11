@@ -75,19 +75,15 @@ module.exports = (sequelize, DataTypes) => {
     Events.associate = (models) => {
       Events.hasMany(models.Reviews, {
         onDelete: "cascade",
+        hooks:true
       });
       
       // Add association for registrations
       Events.hasMany(models.Registrations, {
-        onDelete: "cascade",
+        onDelete: "CASCADE",
+        hooks: true, // 🔥 This is necessary for CASCADE to actually work
       });
       
-      // Add association with user who created the event
-      // Events.belongsTo(models.Users, {
-      //   foreignKey: 'userId',
-      //   as: 'organizer',
-      //   allowNull: true,
-      // });
     };
   
     return Events;

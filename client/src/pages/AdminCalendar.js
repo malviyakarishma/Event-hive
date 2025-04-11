@@ -193,10 +193,10 @@ export default function CalendarView() {
             fontWeight: "600", 
             fontSize: "1rem" 
           }}>
-            <FaHeart style={{ color: colors.coral, marginRight: "0.5rem" }} /> EventHub Community
+            <FaHeart style={{ color: colors.coral, marginRight: "0.5rem" }} /> Event Hive
           </p>
           <p style={{ margin: "0.5rem 0", fontSize: "0.9rem", color: colors.lightGray }}>
-            Connect with event organizers and attendees from around the world
+            Connect with event organizers and attendees from around the world, Buzzing With Possibilities 🐝
           </p>
           <p style={{ margin: "0.5rem 0", fontSize: "0.9rem", color: colors.lightGray }}>
             <button 
@@ -247,7 +247,7 @@ export default function CalendarView() {
             </button>
           </p>
           <p style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: colors.lightGray }}>
-            © {currentYear} EventHub. All rights reserved.
+            © {currentYear} EventHive. All rights reserved.
           </p>
         </div>
       </footer>

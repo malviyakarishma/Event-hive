@@ -203,7 +203,7 @@ const Profile = () => {
         profileData.password = newPassword;
       }
 
-      const response = await axios.put("http://localhost:3001/api/user/profile", profileData, {
+      const response = await axios.put("http://localhost:3001/api/user/edit-profile", profileData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -695,14 +695,10 @@ const Profile = () => {
                     </span>
                   )}
                   
-                  <span className="badge d-inline-block" style={styles.badge}>
-                    {reviews.length} Reviews
-                  </span>
+                  
                 </div>
                 
-                <div style={styles.rating} title="User Rating">
-                  {renderStars(4.5)}
-                </div>
+                
                 
                 <p style={styles.aboutMeText}>
                   {aboutMeText || "No description provided. Click 'Edit Profile' to add information about yourself."}
@@ -807,7 +803,7 @@ const Profile = () => {
                     ) : (
                       <div className="text-center py-5">
                         <h5 style={{color: "#6c757d"}}>
-                          Edit your profile by clicking the "Edit Profile" button in the left panel.
+                          You want to edit your profile, Hit the button!
                         </h5>
                       </div>
                     )}

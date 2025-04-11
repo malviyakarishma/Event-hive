@@ -52,4 +52,52 @@ router.get("/profile", validateToken, async (req, res) => {
     }
 });
 
+//edit profile api
+const bcrypt = require("bcrypt");
+
+// Edit Profile - update only username and password
+router.put("/edit-profile", validateToken, async (req, res) => {
+    try {
+        const { username, password, aboutMe } = req.body;
+
+        if (!req.user || !req.user.id) {
+            return res.status(400).json({ message: "Invalid user data" });
+        }
+
+        // Ensure at least one field is provided
+        if (!username && !password) {
+            return res.status(400).json({ message: "Username or password is required to update" });
+        }
+
+        const user = await Users.findByPk(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Update username if provided
+        if (username) {
+            user.username = username;
+        }
+        if (aboutMe) user.aboutMe = aboutMe;
+
+        // Update password if provided
+        if (password) {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            user.password = hashedPassword;
+        }
+
+        await user.save();
+
+        res.json({ message: "Profile updated successfully" });
+    } catch (error) {
+        console.error("Error updating profile:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+
+
 module.exports = router;
+
+

@@ -111,7 +111,7 @@ router.post("/", validateToken, upload.single("image"), async (req, res) => {
       
         // 1. Deadline must be in the future (not today or past)
         if (regDeadlineDate <= today) {
-          return res.status(400).json({ error: "How is this possible.....! " });
+          return res.status(400).json({ error: "Do you even understand the meaning of deadline? " });
         }
       
         // 2. Deadline must be before the event date
@@ -216,6 +216,52 @@ router.put("/:eventId", validateToken, upload.single("image"), async (req, res) 
             minRegistrations,
             status
         } = req.body;
+
+        // 👇 Convert types upfront for validation logic
+      const eventDate = new Date(date);
+      const isPaidBool = isPaid === 'true' || isPaid === true;
+      const priceNum = parseFloat(price);
+      const maxRegNum = parseInt(maxRegistrations);
+      const ticketsNum = parseInt(ticketsAvailable);
+      const regDeadlineDate = registrationDeadline ? new Date(registrationDeadline) : null;
+      // ✨ Custom Validations
+      const today = new Date();
+    //   today.setHours(0, 0, 0, 0); // remove time part for comparison
+  
+      // if (eventDate <= today) {
+      //   return res.status(400).json({ error: "Oh sure, let's register people in the past. Time machines are in beta, right?" });
+      // }
+  
+      if (isPaidBool && (!price || priceNum <= 0)) {
+        return res.status(400).json({ error: "Paid events must have a price greater than 0" });
+      }
+  
+      if (maxRegNum > ticketsNum) {
+        return res.status(400).json({ error: "Maximum registrations cannot exceed available tickets" });
+      }
+
+      if (
+        regDeadlineDate instanceof Date &&
+        !isNaN(regDeadlineDate) &&
+        eventDate instanceof Date &&
+        !isNaN(eventDate)
+      ) {
+        // Strip time for accurate day comparison
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        regDeadlineDate.setHours(0, 0, 0, 0);
+        eventDate.setHours(0, 0, 0, 0);
+      
+        // 1. Deadline must be in the future (not today or past)
+        if (regDeadlineDate <= today) {
+          return res.status(400).json({ error: "Do you even understand the meaning of deadline? " });
+        }
+      
+        // 2. Deadline must be before the event date
+        if (regDeadlineDate >= eventDate) {
+          return res.status(400).json({ error: "Registration deadline must be before event date" });
+        }
+      }
         
         // Update event data
         const updateData = {

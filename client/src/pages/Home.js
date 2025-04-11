@@ -525,7 +525,7 @@ export default function Home() {
       <footer style={footerStyle}>
         <div style={footerContentStyle}>
           <p style={{ ...footerTextStyle, fontWeight: "600", fontSize: "1rem" }}>
-            <i className="bi bi-heart-fill" style={footerIconStyle}></i> EventHub Community
+            <i className="bi bi-heart-fill" style={footerIconStyle}></i> Event Hive
           </p>
           <p style={footerTextStyle}>
             Connect with event organizers and attendees from around the world
@@ -551,7 +551,7 @@ export default function Home() {
             </button>
           </p>
           <p style={{ ...footerTextStyle, marginTop: "0.5rem", fontSize: "0.8rem" }}>
-            © {new Date().getFullYear()} EventHub. All rights reserved.
+            © {new Date().getFullYear()} EventHive. All rights reserved.
           </p>
         </div>
       </footer>

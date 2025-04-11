@@ -25,7 +25,7 @@ const userRoutes = require("./routes/userRoutes");
 const reviewRouter = require("./routes/Reviews");
 const usersRouter = require("./routes/Users");
 const responseRouter = require("./routes/Response");
-const recommendationsRouter = require('./routes/Recommendations');
+
 const notificationRouter = require("./routes/Notifications");
 // Add the new admin analytics router
 const adminAnalyticsRouter = require("./routes/AdminAnalytics");
@@ -107,7 +107,7 @@ app.use("/analytics", adminAnalyticsRouter);
 // Add the new registrations routes
 app.use("/registrations", registrationRouter);
 app.use("/AIInsightsRoutes", insightRouter);
-app.use('/api/recommendations', recommendationsRouter);
+
 app.use("/payments", paymentsRouter);
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'OK' });

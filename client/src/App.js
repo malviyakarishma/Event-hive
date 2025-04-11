@@ -23,8 +23,8 @@ import EventRegistration from "./pages/EventRegistration";
 import AIReviewsPage from "./pages/AIReviewsPage";
 import AIInsights from "./pages/AIInsights";
 import AdminAIReviewsDashboard from "./pages/AdminAIReviewsDashboard";
-import EventPersonalization from "./pages/EventPersonalization";
-import PersonalizedRecommendations from "./pages/PersonalizedRecommendations";
+
+
 import Profile from "./pages/Profile";
 import Calendar from "./pages/Calendar";
 import AdminCalendar from "./pages/AdminCalendar";
@@ -417,10 +417,10 @@ function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/landingPage" element={<LandingPage />} />
-            <Route
+            {/* <Route
               path="/EventPersonalization"
               element={<EventPersonalization />}
-            />
+            /> */}
             <Route
               path="/AdminAIReviewsDashboard"
               element={

@@ -41,10 +41,10 @@ const sendConfirmationEmail = async (registration, event) => {
             </ul>
             <p><strong>Confirmation Code:</strong> ${registration.confirmationCode}</p>
             <p>Please keep this email for your records. You may be asked to show this confirmation when checking in at the event.</p>
-            <p>If you have any questions, please contact us at support@eventhub.com.</p>
+            <p>If you have any questions, please contact us at support@EventHive.com.</p>
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center;">
               <p style="font-size: 12px; color: #666;">
-                © ${new Date().getFullYear()} EventHub. All rights reserved.
+                © ${new Date().getFullYear()} EventHive. All rights reserved.
               </p>
             </div>
           </div>
@@ -90,6 +90,17 @@ router.post("/", async (req, res) => {
     const event = await Events.findByPk(eventId);
     if (!event) {
       return res.status(404).json({ error: "Event not found" });
+    }
+
+    const phoneRegex = /^[6-9]\d{9}$/;
+    const zipCodeRegex = /^[1-9][0-9]{5}$/;
+
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({ error: "That's not a valid phone number, unless your phone dials into another dimension." });
+    }
+
+    if (!zipCodeRegex.test(zipCode)) {
+      return res.status(400).json({ error: "That's not a valid PIN code — unless India added a secret zone." });
     }
 
     // Generate a unique confirmation code
