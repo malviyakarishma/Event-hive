@@ -103,7 +103,7 @@ router.post("/login", async (req, res) => {
       const match = await bcrypt.compare(password, user.password);
 
       if (!match) {
-          return sendError(res, 401, "Wrong username/email or password");
+          return sendError(res, 401, "Please check your credentials");
       }
 
       // Generate JWT

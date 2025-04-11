@@ -21,6 +21,7 @@ function Login() {
   const [identifier, setIdentifier] = useState(""); // ✅ renamed from "username"
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState(null);
+  console.log(message)
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { setAuthState } = useContext(AuthContext);
@@ -53,7 +54,7 @@ function Login() {
     try {
       const { data } = await axios.post("http://localhost:3001/auth/login", {
         identifier: identifier.trim(),
-        password
+        password,
       });
 
       if (data?.error) {
@@ -62,7 +63,7 @@ function Login() {
         setMessage({ text: "Login successful!", type: "success" });
 
         localStorage.setItem("accessToken", data.token);
-        const expiryTime = new Date().getTime() + (24 * 60 * 60 * 1000);
+        const expiryTime = new Date().getTime() + 24 * 60 * 60 * 1000;
         localStorage.setItem("tokenExpiry", expiryTime);
 
         setAuthState({
@@ -77,15 +78,16 @@ function Login() {
         }, 800);
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.error ||
-        "Authentication failed. Please check your credentials.";
+      console.error("Full error object:", error);
+      const errorMessage =
+        error.response?.data?.message || "Please check your credentials";
+      console.log("Extracted error message:", errorMessage);
       setMessage({ text: errorMessage, type: "danger" });
       console.error("Login error:", error);
     } finally {
       setLoading(false);
     }
   };
-  
 
   // Handle enter key submission
   const handleKeyPress = (e) => {
@@ -93,47 +95,55 @@ function Login() {
       login();
     }
   };
-  
+
   return (
-    <div className="container d-flex justify-content-center align-items-center min-vh-100" 
-      style={{ 
+    <div
+      className="container d-flex justify-content-center align-items-center min-vh-100"
+      style={{
         background: `linear-gradient(135deg, ${theme.light} 0%, ${theme.light}ee 100%)`,
-        padding: "20px"
-      }}>
-      <div 
-        className={`card shadow-lg p-4 col-lg-4 col-md-6 col-sm-10 col-12 ${mounted ? 'animate-in' : ''}`}
-        style={{ 
+        padding: "20px",
+      }}
+    >
+      <div
+        className={`card shadow-lg p-4 col-lg-4 col-md-6 col-sm-10 col-12 ${
+          mounted ? "animate-in" : ""
+        }`}
+        style={{
           backgroundColor: theme.cardBg,
           borderRadius: "12px",
           border: "none",
           boxShadow: "0 12px 24px rgba(0,0,0,0.1)",
           transition: "all 0.3s ease-in-out",
           opacity: mounted ? 1 : 0,
-          transform: mounted ? "translateY(0)" : "translateY(20px)"
+          transform: mounted ? "translateY(0)" : "translateY(20px)",
         }}
       >
         {/* Back to Landing Page Button */}
         <div className="text-start mb-3">
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="btn btn-sm d-inline-flex align-items-center"
-            style={{ 
+            style={{
               color: theme.primary,
               fontWeight: "500",
               padding: "6px 12px",
               borderRadius: "6px",
               backgroundColor: `${theme.primary}10`,
-              transition: "all 0.2s ease"
+              transition: "all 0.2s ease",
             }}
           >
             <FaArrowLeft size={14} className="me-2" />
             Back to Home
           </Link>
         </div>
-        
+
         <div className="text-center mb-4">
-          <h1 className="h3 mb-3 fw-bold" style={{ color: theme.dark }}>Sign In</h1>
-          <div className="small text-muted">Please enter your credentials to access your account</div>
+          <h1 className="h3 mb-3 fw-bold" style={{ color: theme.dark }}>
+            Sign In
+          </h1>
+          <div className="small text-muted">
+            Please enter your credentials to access your account
+          </div>
         </div>
 
         {message && (
@@ -150,20 +160,23 @@ function Login() {
             <div>{message.text}</div>
           </div>
         )}
-
+        
         <form onSubmit={login}>
           {/* Username Field with Icon */}
           <div className="mb-4">
-            <label className="form-label small fw-bold" style={{ color: theme.dark }}>
+            <label
+              className="form-label small fw-bold"
+              style={{ color: theme.dark }}
+            >
               Username/Email
             </label>
             <div className="input-group">
-              <span 
+              <span
                 className="input-group-text"
-                style={{ 
+                style={{
                   backgroundColor: theme.primary,
                   borderColor: theme.primary,
-                  color: "white"
+                  color: "white",
                 }}
               >
                 <FaUser />
@@ -175,7 +188,7 @@ function Login() {
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 onKeyPress={handleKeyPress}
-                style={{ 
+                style={{
                   backgroundColor: theme.inputBg,
                   borderColor: "#dee2e6",
                   fontSize: "0.95rem",
@@ -188,16 +201,19 @@ function Login() {
 
           {/* Password Field with Icon and Toggle */}
           <div className="mb-4">
-            <label className="form-label small fw-bold" style={{ color: theme.dark }}>
+            <label
+              className="form-label small fw-bold"
+              style={{ color: theme.dark }}
+            >
               Password
             </label>
             <div className="input-group">
-              <span 
+              <span
                 className="input-group-text"
-                style={{ 
+                style={{
                   backgroundColor: theme.primary,
                   borderColor: theme.primary,
-                  color: "white"
+                  color: "white",
                 }}
               >
                 <FaLock />
@@ -209,7 +225,7 @@ function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyPress={handleKeyPress}
-                style={{ 
+                style={{
                   backgroundColor: theme.inputBg,
                   borderColor: "#dee2e6",
                   fontSize: "0.95rem",
@@ -220,10 +236,10 @@ function Login() {
                 className="btn input-group-text"
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                style={{ 
+                style={{
                   backgroundColor: theme.inputBg,
                   borderColor: "#dee2e6",
-                  cursor: "pointer"
+                  cursor: "pointer",
                 }}
               >
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
@@ -233,28 +249,28 @@ function Login() {
 
           <div className="d-flex justify-content-between align-items-center mb-4">
             <div className="form-check">
-              <input 
-                className="form-check-input" 
-                type="checkbox" 
-                id="rememberMe" 
-                style={{ 
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="rememberMe"
+                style={{
                   cursor: "pointer",
-                  borderColor: "#ced4da" 
+                  borderColor: "#ced4da",
                 }}
               />
-              <label 
-                className="form-check-label small" 
+              <label
+                className="form-check-label small"
                 htmlFor="rememberMe"
-                style={{ 
+                style={{
                   cursor: "pointer",
-                  color: theme.dark 
+                  color: theme.dark,
                 }}
               >
                 Remember me
               </label>
             </div>
-            <Link 
-              to="/forgot-password" 
+            <Link
+              to="/forgot-password"
               className="small text-decoration-none"
               style={{ color: theme.primary }}
             >
@@ -262,11 +278,11 @@ function Login() {
             </Link>
           </div>
 
-          <button 
-            className="btn w-100 mb-3" 
-            type="submit" 
+          <button
+            className="btn w-100 mb-3"
+            type="submit"
             disabled={loading}
-            style={{ 
+            style={{
               backgroundColor: theme.primary,
               color: "white",
               padding: "0.75rem",
@@ -274,12 +290,16 @@ function Login() {
               fontWeight: "500",
               border: "none",
               transition: "all 0.2s ease",
-              opacity: loading ? 0.8 : 1
+              opacity: loading ? 0.8 : 1,
             }}
           >
             {loading ? (
               <>
-                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                <span
+                  className="spinner-border spinner-border-sm me-2"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
                 <span>Authenticating...</span>
               </>
             ) : (
@@ -290,8 +310,8 @@ function Login() {
 
         <div className="text-center mt-3">
           <span className="small text-muted">Don't have an account? </span>
-          <Link 
-            to="/registration" 
+          <Link
+            to="/registration"
             className="small text-decoration-none fw-bold"
             style={{ color: theme.primary }}
           >
@@ -304,7 +324,7 @@ function Login() {
         .animate-in {
           animation: fadeInUp 0.5s ease-out forwards;
         }
-        
+
         @keyframes fadeInUp {
           from {
             opacity: 0;
@@ -315,8 +335,9 @@ function Login() {
             transform: translateY(0);
           }
         }
-        
-        .form-control:focus, .btn:focus {
+
+        .form-control:focus,
+        .btn:focus {
           box-shadow: 0 0 0 0.25rem ${theme.primary}30;
           border-color: ${theme.primary};
         }
