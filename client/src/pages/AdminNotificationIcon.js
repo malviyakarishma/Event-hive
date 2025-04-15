@@ -278,7 +278,7 @@ const AdminNotificationIcon = () => {
                   className={`list-group-item list-group-item-action d-flex justify-content-between align-items-start ${
                     notification.isRead ? "bg-white" : "bg-light"
                   }`}
-                  // onClick={() => handleNotificationClick(notification)}
+                  onClick={() => handleNotificationClick(notification)}
                   style={{ cursor: "pointer", transition: "background-color 0.2s" }}
                 >
                   <div className="w-100">
