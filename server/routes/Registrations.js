@@ -65,20 +65,7 @@ const sendConfirmationEmail = async (registration, event) => {
 // Create a new registration
 router.post("/", async (req, res) => {
   try {
-    const {
-      eventId,
-      userId,
-      fullName,
-      email,
-      phone,
-      address,
-      city,
-      state,
-      zipCode,
-      specialRequirements,
-      ticketQuantity,
-      paymentStatus,
-      totalAmount,
+    const {eventId,userId,fullName,email,phone,address,city,state,zipCode,specialRequirements,ticketQuantity,paymentStatus,totalAmount,
     } = req.body;
 
     // Validate required fields

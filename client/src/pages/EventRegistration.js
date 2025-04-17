@@ -114,19 +114,7 @@ function EventRegistration() {
     
     try {
       // Prepare registration data
-      const registrationPayload = {
-        eventId: id,
-        fullName,
-        email,
-        phone,
-        address,
-        city,
-        state,
-        zipCode,
-        specialRequirements,
-        ticketQuantity,
-        paymentStatus: event.isPaid ? 'pending' : 'free',
-        totalAmount: event.isPaid ? totalAmount : 0
+      const registrationPayload = {eventId: id,fullName,email,phone,address,city,state,zipCode,specialRequirements,ticketQuantity,paymentStatus: event.isPaid ? 'pending' : 'free',$totalAmount: event.isPaid ? totalAmount : 0
       };
       
       // Add userId if logged in

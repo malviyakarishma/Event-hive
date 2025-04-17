@@ -4,8 +4,6 @@ import axios from 'axios';
 import { format } from 'date-fns';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.min.css';
-import reviewsImage from "../images/reviews.jpg";
-import eventImage from "../images/flex.jpg";
 import BannerSlideshow from '../components/BannerSlideshow';
 import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn } from 'react-icons/fa';
 
@@ -489,21 +487,6 @@ const LandingPage = () => {
                             <i className="bi bi-geo-alt me-2"></i>
                             <span>{event.location}</span>
                           </div>
-                          
-                          {/* <button 
-                            className="btn btn-sm mt-2"
-                            style={{
-                              background: 'white',
-                              color: theme.colors.primary,
-                              borderRadius: '30px',
-                              padding: '8px 20px',
-                              fontWeight: '600',
-                              boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
-                              border: 'none'
-                            }}
-                          > */}
-                            {/* View Details <i className="bi bi-chevron-right ms-1"></i>
-                          </button> */}
                         </div>
                       </div>
                       
@@ -560,155 +543,7 @@ const LandingPage = () => {
           }}></div>
         </section>
         
-        {/* Features Section */}
-        {/* <section 
-          id="features-section"
-          className="py-5"
-          style={{
-            background: `linear-gradient(135deg, ${theme.colors.light} 0%, rgba(13, 27, 64, 0.05) 100%)`,
-            padding: '5rem 0',
-            ...getSectionStyle(visibleSections.features)
-          }}
-        >
-          <div className="container">
-            <div className="text-center mb-5">
-              <h2 className="fw-bold mb-3" style={{
-                color: theme.colors.secondary,
-                fontSize: '2.5rem',
-                position: 'relative',
-                display: 'inline-block'
-              }}>
-                Intelligent Features
-                <span style={{
-                  position: 'absolute',
-                  bottom: '-10px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: '80px',
-                  height: '4px',
-                  background: `linear-gradient(90deg, ${theme.colors.primary}, ${theme.colors.secondary})`,
-                  borderRadius: '2px'
-                }}></span>
-              </h2>
-              <p className="lead mb-4" style={{ color: theme.colors.textLight }}>
-                Discover the power of AI in simplifying your event experiences.
-              </p>
-            </div>
-            <div className="row"> */}
-              {/* Card Component */}
-              {/* {[
-                {
-                  title: "Event Personalization",
-                  description: "Let AI recommend events that match your interests and preferences.",
-                  image: eventImage,
-                  buttonText: "Explore Recommendations",
-                  path: "/EventPersonalization"
-                },
-                {
-                  title: "AI Reviews & Insights",
-                  description: "Get intelligent insights and detailed analytics on events.",
-                  image: reviewsImage,
-                  buttonText: "View Insights",
-                  path: "/AIReviewsPage"
-                }
-              ].map((card, index) => (
-                <div className="col-lg-6 col-md-6 mb-4" key={index}>
-                  <div 
-                    className="card shadow-sm border-0 rounded-lg h-100" 
-                    style={{ 
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      transition: theme.transitions.default
-                    }}
-                    onClick={() => navigate(card.path)}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-5px)';
-                      e.currentTarget.style.boxShadow = theme.shadows.md;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = theme.shadows.sm;
-                    }}
-                  >
-                    <img src={card.image} alt={card.title} className="card-img-top" />
-                    <div className="card-body" style={{ background: theme.colors.light }}>
-                      <h5 className="card-title" style={{ color: theme.colors.primary }}>{card.title}</h5>
-                      <p className="card-text" style={{ color: theme.colors.textLight }}>
-                        {card.description}
-                      </p>
-                      <div className="mt-3">
-                        <button 
-                          className="btn btn-sm" 
-                          style={{
-                            background: theme.colors.primary,
-                            color: 'white',
-                            borderRadius: theme.borderRadius.sm,
-                            padding: '8px 16px',
-                            fontWeight: '600',
-                            transition: theme.transitions.default,
-                            border: 'none'
-                          }}
-                        >
-                          {card.buttonText}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section> */}
-
-        {/* Call to Action Section */}
-        {/* <section 
-          id="cta-section"
-          className="py-5 text-center"
-          style={{
-            background: theme.colors.primary,
-            color: 'white',
-            ...getSectionStyle(visibleSections.cta)
-          }}
-        >
-          <div className="container">
-            <h3 className="display-4 mb-4">Join the Future of Event Discovery</h3>
-            <p className="lead mb-5">
-              Register now to start exploring and experiencing events powered by AI!
-            </p>
-            <div className="d-flex flex-wrap justify-content-center gap-3">
-              <button 
-                className="btn btn-lg" 
-                onClick={() => navigate('/register')}
-                style={{
-                  background: 'white', 
-                  color: theme.colors.primary,
-                  padding: '1rem 3rem',
-                  borderRadius: theme.borderRadius.md,
-                  fontSize: '1.25rem',
-                  fontWeight: '700',
-                  boxShadow: '0 10px 20px rgba(255, 255, 255, 0.2)'
-                }}
-              >
-                Register
-              </button>
-              <button 
-                className="btn btn-lg" 
-                onClick={() => navigate('/login')}
-                style={{
-                  background: 'transparent', 
-                  color: 'white',
-                  padding: '1rem 3rem',
-                  borderRadius: theme.borderRadius.md,
-                  fontSize: '1.25rem',
-                  fontWeight: '700',
-                  border: '2px solid white'
-                }}
-              >
-                Login
-              </button>
-            </div>
-          </div>
-        </section> */}
+        
 
         <section 
           id="cta-section"

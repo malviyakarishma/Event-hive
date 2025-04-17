@@ -353,7 +353,7 @@ const AIInsights = () => {
             <div className="text-center p-4 bg-light rounded">
               <i className="bi bi-robot me-2 fs-1" style={{ color: colors.accent }}></i>
               <p className="lead">Not enough reviews to generate meaningful insights yet.</p>
-              <p>AI insights become available when more users submit reviews for this event.</p>
+              <p>Insights become available when more users submit reviews for this event.</p>
             </div>
           )}
           
@@ -364,7 +364,7 @@ const AIInsights = () => {
                   style={{ backgroundColor: colors.secondary, color: "white" }}>
                 <h5 className="mb-0">
                   <i className="bi bi-lightbulb-fill me-2" style={{ color: colors.accent }}></i>
-                  Advanced AI Review Analysis
+                  Advanced Review Analysis
                 </h5>
               </div>
               <div className="card-body p-4">
@@ -582,7 +582,7 @@ const AIInsights = () => {
                 textShadow: '1px 1px 2px rgba(13, 27, 64, 0.05)'
               }}
             >
-              AI Insights
+            Insights
             </h1>
             <p 
               className="lead text-muted"

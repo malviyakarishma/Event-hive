@@ -18,7 +18,7 @@ const theme = {
 };
 
 function Login() {
-  const [identifier, setIdentifier] = useState(""); // ✅ renamed from "username"
+  const [identifier, setIdentifier] = useState(""); 
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState(null);
   console.log(message)

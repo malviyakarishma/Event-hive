@@ -615,15 +615,15 @@ export default function CalendarView() {
             </div>
 
             <div className="col-md-4">
-              <div className="card shadow-sm mb-4">
-                <div className="card-header text-white" style={{ backgroundColor: colors.navy }}>
-                  <h5 className="mb-0">
+              {/* <div className="card shadow-sm mb-4"> */}
+                {/* <div className="card-header text-white" style={{ backgroundColor: colors.navy }}> */}
+                  {/* <h5 className="mb-0">
                     <i className="bi bi-funnel me-2" style={{ color: colors.coral }}></i>
                     Filter Events
-                  </h5>
-                </div>
-                <div className="card-body">
-                  <form>
+                  </h5> */}
+                {/* </div> */}
+                {/* <div className="card-body"> */}
+                  {/* <form>
                     <div className="mb-3">
                       <label htmlFor="categoryFilter" className="form-label" style={{ color: colors.navy }}>Category</label>
                       <select className="form-select" id="categoryFilter" style={{ borderColor: colors.coral }}>
@@ -652,9 +652,9 @@ export default function CalendarView() {
                         <i className="bi bi-search me-1"></i> Apply Filters
                       </button>
                     </div>
-                  </form>
-                </div>
-              </div>
+                  </form> */}
+                {/* </div> */}
+              {/* </div> */}
 
               <div className="card shadow-sm">
                 <div className="card-header text-white" style={{ backgroundColor: colors.coral }}>
