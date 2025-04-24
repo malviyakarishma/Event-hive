@@ -328,19 +328,7 @@ export default function Event() {
     }
   };
 
-  const handleShareSubmit = (provider) => {
-    // Check if we already have a token for this provider
-    const existingToken = sessionStorage.getItem(`${provider}Token`);
-
-    if (existingToken) {
-      // If we have a token, use it directly
-      shareToSocialMedia(provider, existingToken);
-    } else {
-      // Otherwise, initiate OAuth flow
-      initiateOAuth(provider);
-    }
-  };
-
+  
   const closeShareModal = () => {
     setShowShareModal(false);
     setSharingProvider(null);
@@ -882,7 +870,7 @@ export default function Event() {
                 <div className="modal-header" style={{ backgroundColor: primaryColor, color: 'white' }}>
                   <h5 className="modal-title">
                     <i className="fas fa-share-alt me-2"></i>
-                    Share Your Review
+                    Follow us On Social Media
                   </h5>
                   <button
                     type="button"
@@ -892,24 +880,7 @@ export default function Event() {
                   ></button>
                 </div>
                 <div className="modal-body">
-                  <p>Your review has been submitted successfully! Would you like to share this event on social media?</p>
-
-                  <div className="form-group mb-3">
-                    <label htmlFor="shareMessage" className="form-label">
-                      Share Message:
-                      <small className="text-muted ms-2">
-                        Customize your message for social media
-                      </small>
-                    </label>
-                    <textarea
-                      id="shareMessage"
-                      className="form-control"
-                      value={shareMessage}
-                      onChange={(e) => setShareMessage(e.target.value)}
-                      rows="3"
-                      style={{ borderColor: primaryColor }}
-                    />
-                  </div>
+                  <p>Your review has been submitted successfully! Would you like to check this event on social media?</p>
 
                   {/* Share Success/Error Message */}
                   {shareSuccess && (
@@ -926,7 +897,7 @@ export default function Event() {
                   <div className="d-flex justify-content-center flex-wrap gap-2 mb-3">
                     <button
                       className="btn"
-                      onClick={() => handleShareSubmit('facebook')}
+                      onClick={() => window.open("https://facebook.com", "_blank")}
                       disabled={isAuthenticating}
                       style={{
                         backgroundColor: '#4267B2',
@@ -940,7 +911,7 @@ export default function Event() {
 
                     <button
                       className="btn"
-                      onClick={() => handleShareSubmit('linkedin')}
+                      onClick={() =>window.open("https://instagram.com", "_blank")}
                       disabled={isAuthenticating}
                       style={{
                         backgroundColor: '#0077B5',
@@ -948,13 +919,13 @@ export default function Event() {
                         width: '140px'
                       }}
                     >
-                      <i className="fab fa-linkedin me-2"></i>
-                      LinkedIn
+                      <i className="fab fa-instagram me-2"></i>
+                      Instagram
                     </button>
 
                     <button
                       className="btn"
-                      onClick={() => handleShareSubmit('twitter')}
+                      onClick={() => window.open("https://twitter.com", "_blank")}
                       disabled={isAuthenticating}
                       style={{
                         backgroundColor: '#1DA1F2',

@@ -39,6 +39,8 @@ module.exports = (sequelize, DataTypes) => {
         //     foreignKey: "UserId",  // ✅ Match SQL script
         //     onDelete: "CASCADE",
         // });
+        Reviews.belongsTo(models.Users, { foreignKey: 'userId' });
+
     };
 
     return Reviews;
