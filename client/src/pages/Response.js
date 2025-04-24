@@ -319,7 +319,7 @@ export default function Response() {
     };
 
     const editEvent = () => {
-        navigate(`/home`);
+        navigate(`/admin/edit-event/${id}`);
     };
 
     const toggleExpandReview = (reviewId) => {
@@ -590,8 +590,8 @@ export default function Response() {
                                             backgroundColor: colors.coral, 
                                             color: "white" 
                                         }}
-                                    >
-                                        Home Page
+                                    ><FaEdit className="me-2" />
+                                        Edit Event
                                     </button>
                                 </div>
                             </div>

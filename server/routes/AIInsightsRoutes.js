@@ -3,7 +3,6 @@ const express = require('express');
 const router = express.Router();
 const { validateToken } = require('../middlewares/AuthMiddleware');
 const SentimentService = require('../services/SentimentService');
-const RecommendationService = require('../services/RecommendationService');
 const { Events, Reviews, EventAnalytics, Users } = require('../models');
 const Sequelize = require('sequelize');
 const { Op } = Sequelize;
@@ -117,12 +116,6 @@ router.get('/recommendations', validateToken, async (req, res) => {
       include: [{ model: Events }]
     });
     
-    // Get recommendations using the service
-    const recommendations = await RecommendationService.getPersonalizedRecommendations(
-      userId,
-      interestsArray,
-      userReviews
-    );
     
     res.json({
       recommendations,
