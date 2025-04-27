@@ -4,19 +4,38 @@ const { Registrations, Events, Users, Notifications } = require("../models");
 const { validateToken } = require("../middlewares/AuthMiddleware");
 const uuid = require("uuid");
 const nodemailer = require("nodemailer");
+
 require("dotenv").config();
+
 
 // Configure mail transporter
 const transporter = nodemailer.createTransport({
   service: process.env.EMAIL_SERVICE || "gmail",
   auth: {
     user: process.env.EMAIL_USER || "your-email@gmail.com",
-    pass: process.env.EMAIL_PASSWORD || "your-app-password",
+    pass: process.env.EMAIL_PASSWORD || "your-gmail-password",
   },
+});
+
+// Verify SMTP connection configuration
+transporter.verify(function(error, success) {
+  if (error) {
+    console.log("SMTP Connection Error:", error);
+  } else {
+    console.log("SMTP server connection verified and ready to send emails");
+  }
 });
 
 // Helper function to send confirmation emails
 const sendConfirmationEmail = async (registration, event) => {
+  console.log("Attempting to send confirmation email to:", registration.email);
+  console.log("Event details:", {
+    title: event.title,
+    date: event.date,
+    time: event.time,
+    location: event.location
+  });
+  
   try {
     // Email content
     const mailOptions = {
@@ -37,7 +56,7 @@ const sendConfirmationEmail = async (registration, event) => {
               <li><strong>Time:</strong> ${event.time}</li>
               <li><strong>Location:</strong> ${event.location}</li>
               <li><strong>Tickets:</strong> ${registration.ticketQuantity}</li>
-              ${registration.totalAmount > 0 ? `<li><strong>Total Paid:</strong> $${registration.totalAmount}</li>` : ''}
+              ${registration.totalAmount > 0 ? `<li><strong>Total Paid:</strong> ₹${registration.totalAmount}</li>` : ''}
             </ul>
             <p><strong>Confirmation Code:</strong> ${registration.confirmationCode}</p>
             <p>Please keep this email for your records. You may be asked to show this confirmation when checking in at the event.</p>
@@ -52,46 +71,75 @@ const sendConfirmationEmail = async (registration, event) => {
       `,
     };
 
-    // Send email
-    await transporter.sendMail(mailOptions);
+    // Send email and get info about the delivery
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`Email sent successfully! Message ID: ${info.messageId}`);
     console.log(`Confirmation email sent to ${registration.email}`);
     return true;
   } catch (error) {
     console.error("Error sending confirmation email:", error);
+    // Log more specific error details
+    if (error.response) {
+      console.error("SMTP Response Error:", error.response);
+    }
+    if (error.code) {
+      console.error("Error code:", error.code);
+    }
     return false;
   }
 };
 
 // Create a new registration
 router.post("/", async (req, res) => {
+  console.log("Received registration request:", req.body);
   try {
-    const {eventId,userId,fullName,email,phone,address,city,state,zipCode,specialRequirements,ticketQuantity,paymentStatus,totalAmount,
+    const {
+      eventId,
+      userId,
+      fullName,
+      email,
+      phone,
+      address,
+      city,
+      state,
+      zipCode,
+      specialRequirements,
+      ticketQuantity,
+      paymentStatus,
+      totalAmount,
     } = req.body;
 
     // Validate required fields
     if (!eventId || !fullName || !email || !phone) {
+      console.log("Missing required fields:", { eventId, fullName, email, phone });
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     // Verify the event exists
     const event = await Events.findByPk(eventId);
     if (!event) {
+      console.log("Event not found with ID:", eventId);
       return res.status(404).json({ error: "Event not found" });
     }
+
+    console.log("Found event:", event.title);
 
     const phoneRegex = /^[6-9]\d{9}$/;
     const zipCodeRegex = /^[1-9][0-9]{5}$/;
 
     if (!phoneRegex.test(phone)) {
-      return res.status(400).json({ error: "That's not a valid phone number, unless your phone dials into another dimension." });
+      console.log("Invalid phone number:", phone);
+      return res.status(400).json({ error: "That's not a valid phone number" });
     }
 
-    if (!zipCodeRegex.test(zipCode)) {
-      return res.status(400).json({ error: "That's not a valid PIN code — unless India added a secret zone." });
+    if (zipCode && !zipCodeRegex.test(zipCode)) {
+      console.log("Invalid PIN code:", zipCode);
+      return res.status(400).json({ error: "That's not a valid PIN code" });
     }
 
     // Generate a unique confirmation code
     const confirmationCode = uuid.v4().substring(0, 8).toUpperCase();
+    console.log("Generated confirmation code:", confirmationCode);
 
     // Create the registration
     const registration = await Registrations.create({
@@ -111,17 +159,26 @@ router.post("/", async (req, res) => {
       confirmationCode,
     });
 
-    // If it's a free event, send confirmation email immediately
-    if (paymentStatus === "free") {
-      sendConfirmationEmail(registration, event);
+    console.log("Registration created successfully:", registration.id);
+
+    // Send confirmation email in all cases - free or paid events
+    console.log("Sending confirmation email...");
+    const emailSent = await sendConfirmationEmail(registration, event);
+    
+    if (emailSent) {
+      console.log("Email sent successfully for registration:", registration.id);
+    } else {
+      console.log("Failed to send email for registration:", registration.id);
     }
 
     // Notify event organizer of new registration
     try {
       // Create a notification for the event organizer
       if (event.username) {
+        console.log("Looking up organizer:", event.username);
         const organizer = await Users.findOne({ where: { username: event.username } });
         if (organizer) {
+          console.log("Creating notification for organizer:", organizer.id);
           await Notifications.create({
             message: `New registration from ${fullName} for your event "${event.title}"`,
             type: "registration",
@@ -132,6 +189,7 @@ router.post("/", async (req, res) => {
 
           // Send real-time notification if socket.io is configured
           if (req.app.io) {
+            console.log("Sending real-time notification to organizer");
             req.app.io.to(`user-${organizer.id}`).emit("notification", {
               message: `New registration from ${fullName} for your event "${event.title}"`,
               type: "registration",
@@ -149,6 +207,7 @@ router.post("/", async (req, res) => {
       message: "Registration successful",
       id: registration.id,
       confirmationCode: registration.confirmationCode,
+      emailSent: emailSent
     });
   } catch (error) {
     console.error("Error creating registration:", error);
