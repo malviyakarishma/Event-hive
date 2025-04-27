@@ -5,6 +5,7 @@ const socketIo = require("socket.io");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
+
 // Middleware
 const app = express();
 app.use(express.json());
@@ -25,12 +26,10 @@ const userRoutes = require("./routes/userRoutes");
 const reviewRouter = require("./routes/Reviews");
 const usersRouter = require("./routes/Users");
 const responseRouter = require("./routes/Response");
-
 const notificationRouter = require("./routes/Notifications");
-// Add the new admin analytics router
 const adminAnalyticsRouter = require("./routes/AdminAnalytics");
-// Add the new registrations router
 const registrationRouter = require("./routes/Registrations");
+const stripeRoutes = require('./routes/stripeRoutes');
 
 
 // Create HTTP server and initialize socket.io
@@ -102,9 +101,8 @@ app.use("/respond", responseRouter);
 app.use("/api/user", userRoutes);
 app.use("/notifications", notificationRouter);
 app.use('/uploads', express.static('uploads'));
-// Add the new admin analytics routes
 app.use("/analytics", adminAnalyticsRouter);
-// Add the new registrations routes
+app.use('/stripe', stripeRoutes);
 app.use("/registrations", registrationRouter);
 app.use("/AIInsightsRoutes", insightRouter);
 app.get('/api/health', (req, res) => {

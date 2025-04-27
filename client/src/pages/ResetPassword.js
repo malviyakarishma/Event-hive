@@ -91,7 +91,7 @@ function ResetPassword() {
         navigate("/login");
       }, 3000);
     } catch (error) {
-      const errorMessage = error.response?.data?.error || 
+      const errorMessage = error.response?.data?.message || 
         "An error occurred while resetting your password. Please try again.";
       setMessage({ text: errorMessage, type: "danger" });
       console.error("Password reset error:", error);

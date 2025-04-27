@@ -4,7 +4,11 @@ import * as Yup from "yup";
 import axios from "axios";
 import { useNavigate } from "react-router-dom"; 
 import "bootstrap/dist/css/bootstrap.min.css";
-import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaUser, FaLock, FaEye, FaEyeSlash, FaEnvelope } from "react-icons/fa";
+import { loadStripe } from '@stripe/stripe-js';
+
+// Initialize Stripe
+const stripePromise = loadStripe('pk_test_51RIXtyDIkdU8JRGgnw6vu49ObmAAIRI7VkHBEf4m4RiiyAxFTLBDYZFdCyW44k70mGbDuopXBBFPdCPegDlZFvzO00AKmmDfti'); // Replace with your publishable key
 
 // Custom color scheme
 const colors = {
@@ -22,6 +26,7 @@ function Registration() {
   const [message, setMessage] = useState(""); 
   const [messageType, setMessageType] = useState(""); 
   const [showPassword, setShowPassword] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
   
   // Animation mounting effect
@@ -32,6 +37,7 @@ function Registration() {
 
   const initialValues = {
     username: "",
+    email: "",
     password: "",
     isAdmin: false,
   };
@@ -41,32 +47,54 @@ function Registration() {
       .min(3, "Username must be at least 3 characters")
       .max(15, "Username can't be more than 15 characters")
       .required("Username is required"),
+    email: Yup.string()
+      .email("Invalid email format")
+      .required("Email is required"),
     password: Yup.string()
       .min(4, "Password must be at least 4 characters")
       .max(20, "Password can't be more than 20 characters")
       .required("Password is required"),
   });
 
-  const onSubmit = (data, { setSubmitting, resetForm }) => {
+  const handleSubmit = async (values, { setSubmitting, resetForm }) => {
     setMessage("");
+    setIsProcessing(true);
 
-    axios
-      .post("http://localhost:3001/auth", data)
-      .then((response) => {
-        setMessage("Successfully registered!");
-        setMessageType("success");
-        resetForm();
+    try {
+      // If registering as admin, initiate Stripe checkout
+      if (values.isAdmin) {
+        // Create a checkout session
+        const response = await axios.post("http://localhost:3001/stripe/create-checkout-session", {
+          username: values.username,
+          email: values.email,
+          password: values.password,
+          callbackUrl: window.location.origin
+        });
 
-        // Redirect to login after a short delay
-        setTimeout(() => {
-          navigate("/login");
-        }, 1500);
-      })
-      .catch((error) => {
-        setMessage(error.response?.data?.message || "Registration failed. Try again.");
-        setMessageType("error");
-      })
-      .finally(() => setSubmitting(false));
+        const { url } = response.data;
+        
+        // Redirect to Stripe Checkout
+        window.location.href = url;
+        return;
+      }
+
+      // Regular user registration process
+      const response = await axios.post("http://localhost:3001/auth", values);
+      setMessage("Successfully registered!");
+      setMessageType("success");
+      resetForm();
+
+      // Redirect to login after a short delay
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
+    } catch (error) {
+      setMessage(error.response?.data?.message || "Registration failed. Try again.");
+      setMessageType("error");
+    } finally {
+      setSubmitting(false);
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -113,9 +141,9 @@ function Registration() {
         <Formik 
           initialValues={initialValues} 
           validationSchema={validationSchema} 
-          onSubmit={onSubmit}
+          onSubmit={handleSubmit}
         >
-          {({ isSubmitting }) => (
+          {({ isSubmitting, values }) => (
             <Form>
               {/* Username Field */}
               <div className="mb-4">
@@ -168,13 +196,13 @@ function Registration() {
                       color: "white"
                     }}
                   >
-                    <FaUser />
+                    <FaEnvelope />
                   </span>
                   <Field 
-                    type="text" 
+                    type="email" 
                     className="form-control" 
                     name="email" 
-                    placeholder="Create an email" 
+                    placeholder="Enter your email" 
                     style={{ 
                       backgroundColor: colors.light,
                       borderColor: "#dee2e6",
@@ -251,7 +279,6 @@ function Registration() {
                     style={{ 
                       cursor: "pointer",
                       borderColor: colors.textLight,
-                      // backgroundColor: "white"
                     }}
                   />
                   <label 
@@ -265,13 +292,23 @@ function Registration() {
                     Register as Admin
                   </label>
                 </div>
+                {values.isAdmin && (
+                  <div className="mt-2 p-2" style={{ 
+                    backgroundColor: `${colors.accent}15`, 
+                    borderRadius: "6px",
+                    fontSize: "0.85rem",
+                    color: colors.secondary
+                  }}>
+                    <strong>Note:</strong> Admin registration requires fee of ₹500. You'll be redirected to our payment gateway.
+                  </div>
+                )}
               </div>
 
               {/* Submit Button */}
               <button 
                 type="submit" 
                 className="btn w-100 mb-3" 
-                disabled={isSubmitting}
+                disabled={isSubmitting || isProcessing}
                 style={{ 
                   backgroundColor: colors.primary,
                   color: "white",
@@ -280,16 +317,16 @@ function Registration() {
                   fontWeight: "500",
                   border: "none",
                   transition: "all 0.2s ease",
-                  opacity: isSubmitting ? 0.8 : 1
+                  opacity: (isSubmitting || isProcessing) ? 0.8 : 1
                 }}
               >
-                {isSubmitting ? (
+                {(isSubmitting || isProcessing) ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    <span>Creating Account...</span>
+                    <span>{values.isAdmin ? "Preparing Payment..." : "Creating Account..."}</span>
                   </>
                 ) : (
-                  "Sign Up"
+                  values.isAdmin ? "Sign Up & Pay" : "Sign Up"
                 )}
               </button>
 

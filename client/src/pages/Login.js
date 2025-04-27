@@ -254,7 +254,7 @@ function Login() {
               className="small text-decoration-none"
               style={{ color: theme.primary }}
             >
-              Change password?
+              Forgot password?
             </Link>
           </div>
 

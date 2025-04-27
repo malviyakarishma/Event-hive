@@ -23,8 +23,6 @@ import EventRegistration from "./pages/EventRegistration";
 import AIReviewsPage from "./pages/AIReviewsPage";
 import AIInsights from "./pages/AIInsights";
 import AdminAIReviewsDashboard from "./pages/AdminAIReviewsDashboard";
-
-
 import Profile from "./pages/Profile";
 import Calendar from "./pages/Calendar";
 import AdminCalendar from "./pages/AdminCalendar";
@@ -39,70 +37,13 @@ import ResetPassword from "./pages/ResetPassword"; // Add this
 import ForgotPassword from "./pages/ForgotPassword"; // Add this
 import AdminRegistrations from "./pages/AdminRegistrations";
 import MyRegistrations from "./pages/MyRegistrations";
-
 import { AuthContext } from "./helpers/AuthContext";
-import {
-  NotificationProvider,
-  useNotifications,
-} from "./helpers/NotificationContext";
+import {NotificationProvider,useNotifications,} from "./helpers/NotificationContext";
 import NotificationIcon from "./pages/NotificationIcon";
 import UserNotificationIcon from "./pages/UserNotificationIcon"; // Adjust path as needed
-// Add this import at the top of App.js with other imports
 import AdminNotificationIcon from "./pages/AdminNotificationIcon";
+import Success from "./pages/Success";
 
-// function App() {
-//   const location = useLocation();
-//   const navigate = useNavigate();
-//   const { notifications, markAsRead, markAllAsRead } = useNotifications(); // Use the hook here
-//   const [authState, setAuthState] = useState({
-//     username: "",
-//     id: 0,
-//     status: false,
-//     isAdmin: false,
-//   });
-
-//   const useSocketNotifications = true;
-
-//   useEffect(() => {
-//     const token = localStorage.getItem("accessToken");
-
-//     if (!token) {
-//       setAuthState({ username: "", id: 0, status: false, isAdmin: false });
-//       return;
-//     }
-
-//     axios
-//       .get("http://localhost:3001/auth/auth", {
-//         headers: { Authorization: `Bearer ${token}` },
-//       })
-//       .then((response) => {
-//         if (response.data.error) {
-//           setAuthState({ username: "", id: 0, status: false, isAdmin: false });
-//           localStorage.removeItem("accessToken");
-//         } else {
-//           setAuthState({
-//             username: response.data.username || "User",
-//             id: response.data.id,
-//             status: true,
-//             isAdmin: response.data.isAdmin || false,
-//           });
-
-//           if (response.data.isAdmin && window.location.pathname === "/login") {
-//             navigate("/admin");
-//           }
-//         }
-//       })
-//       .catch(() => {
-//         setAuthState({ username: "", id: 0, status: false, isAdmin: false });
-//         localStorage.removeItem("accessToken");
-//       });
-//   }, [navigate]);
-
-//   const logout = () => {
-//     localStorage.removeItem("accessToken");
-//     setAuthState({ username: "", id: 0, status: false, isAdmin: false });
-//     navigate("/login");
-//   };
 
 function App() {
   const location = useLocation();
@@ -417,10 +358,6 @@ function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/landingPage" element={<LandingPage />} />
-            {/* <Route
-              path="/EventPersonalization"
-              element={<EventPersonalization />}
-            /> */}
             <Route
               path="/AdminAIReviewsDashboard"
               element={
@@ -431,9 +368,7 @@ function App() {
                 )
               }
             />
-            {/* <Route path="/AIReviewsPage" element={<AIReviewsPage />} /> */}
             <Route path="/AIInsights" element={<AIInsights />} />
-            {/* <Route path="/PersonalizedRecommendations" element={<PersonalizedRecommendations />} /> */}
             <Route path="/home" element={<Home />} />
             <Route
               path="/admin"
@@ -458,6 +393,7 @@ function App() {
             <Route path="/register/:id" element={<EventRegistration />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/success" element={<Success />} />
             <Route
               path="/admin/edit-event/:id"
               element={authState.isAdmin ? <EditEvent /> : <Navigate to="/" />}
