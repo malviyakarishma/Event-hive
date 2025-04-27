@@ -358,7 +358,7 @@ function EventRegistration() {
                   <div className="card-body">
                     <div className="d-flex justify-content-between mb-2">
                       <span>Ticket Price:</span>
-                      <span>${parseFloat(event.price).toFixed(2)}</span>
+                      <span>₹{parseFloat(event.price).toFixed(2)}</span>
                     </div>
                     <div className="d-flex justify-content-between mb-2">
                       <span>Quantity:</span>
@@ -367,7 +367,7 @@ function EventRegistration() {
                     <hr />
                     <div className="d-flex justify-content-between fw-bold">
                       <span>Total Amount:</span>
-                      <span>${totalAmount.toFixed(2)}</span>
+                      <span>₹{totalAmount.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -412,7 +412,7 @@ function EventRegistration() {
                   </div>
                   <div className="card-body">
                     <p>To complete your registration, please make a payment of:</p>
-                    <h3 className="mb-4">${totalAmount.toFixed(2)}</h3>
+                    <h3 className="mb-4">₹{totalAmount.toFixed(2)}</h3>
                     
                     {/* Placeholder for future Stripe integration */}
                     <div className="alert alert-info">
