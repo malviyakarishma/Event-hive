@@ -6,6 +6,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.min.css';
 import BannerSlideshow from '../components/BannerSlideshow';
 import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn } from 'react-icons/fa';
+import { jwtDecode } from "jwt-decode";
 
 // Add global style reset
 const globalStyle = `
@@ -361,21 +362,41 @@ const LandingPage = () => {
                 </p>
               </div>
               <div className="col-lg-6 d-flex justify-content-lg-end align-items-end">
-                <button 
-                  className="btn btn-lg"
-                  onClick={() => navigate('/home')}
-                  style={{
-                    background: theme.colors.primary,
-                    color: 'white',
-                    borderRadius: '30px',
-                    padding: '0.75rem 2rem',
-                    fontWeight: '600',
-                    transition: theme.transitions.default,
-                    boxShadow: theme.shadows.md
-                  }}
-                >
-                  View All Events <i className="bi bi-arrow-right ms-2"></i>
-                </button>
+                <button
+                    className="btn btn-lg"
+                    onClick={() => {
+                      const token = localStorage.getItem("accessToken");
+                      if (!token) {
+                        navigate("/login");
+                        return;
+                      }
+
+                      try {
+                        const decoded = jwtDecode(token); // <-- fixed usage
+                        const isAdmin = decoded.isAdmin;
+
+                        if (isAdmin) {
+                          navigate("/admin");
+                        } else {
+                          navigate("/home");
+                        }
+                      } catch (error) {
+                        console.error("Error decoding token:", error);
+                        navigate("/login");
+                      }
+                    }}
+                    style={{
+                      background: theme.colors.primary,
+                      color: 'white',
+                      borderRadius: '30px',
+                      padding: '0.75rem 2rem',
+                      fontWeight: '600',
+                      transition: theme.transitions.default,
+                      boxShadow: theme.shadows.md
+                    }}
+                  >
+                    View All Events <i className="bi bi-arrow-right ms-2"></i>
+                  </button>           
               </div>
             </div>
             

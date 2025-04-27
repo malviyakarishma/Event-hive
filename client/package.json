@@ -15,6 +15,7 @@
     "dotenv": "^16.4.7",
     "font-awesome": "^4.7.0",
     "formik": "^2.4.6",
+    "jwt-decode": "^4.0.0",
     "openai": "^4.87.3",
     "react": "^19.0.0",
     "react-bootstrap": "^2.10.9",

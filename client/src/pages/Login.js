@@ -248,33 +248,13 @@ function Login() {
           </div>
 
           <div className="d-flex justify-content-between align-items-center mb-4">
-            <div className="form-check">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id="rememberMe"
-                style={{
-                  cursor: "pointer",
-                  borderColor: "#ced4da",
-                }}
-              />
-              <label
-                className="form-check-label small"
-                htmlFor="rememberMe"
-                style={{
-                  cursor: "pointer",
-                  color: theme.dark,
-                }}
-              >
-                Remember me
-              </label>
-            </div>
+            
             <Link
               to="/forgot-password"
               className="small text-decoration-none"
               style={{ color: theme.primary }}
             >
-              Forgot password?
+              Change password?
             </Link>
           </div>
 

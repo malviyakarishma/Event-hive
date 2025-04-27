@@ -112,6 +112,23 @@ router.get("/", validateToken, async (req, res) => {
 /**
  * Sentiment Analysis API (Standalone)
  */
+// router.post("/sentiment", async (req, res) => {
+//     try {
+//         const { text } = req.body;
+//         if (!text.trim()) {
+//             return res.status(400).json({ error: "Text is required for sentiment analysis" });
+//         }
+
+//         const result = sentimentAnalyzer.analyze(text);
+//         const sentimentCategory = result.score > 0 ? "positive" : result.score < 0 ? "negative" : "neutral";
+
+//         return res.json({ sentiment: sentimentCategory, score: result.score });
+//     } catch (error) {
+//         console.error("Error analyzing sentiment:", error.stack);
+//         return res.status(500).json({ error: "Internal Server Error" });
+//     }
+// });
+
 router.post("/sentiment", async (req, res) => {
     try {
         const { text } = req.body;
@@ -120,7 +137,15 @@ router.post("/sentiment", async (req, res) => {
         }
 
         const result = sentimentAnalyzer.analyze(text);
-        const sentimentCategory = result.score > 0 ? "positive" : result.score < 0 ? "negative" : "neutral";
+
+        let sentimentCategory;
+        if (result.score >= 4) {
+            sentimentCategory = "positive";
+        } else if (result.score === 1) {
+            sentimentCategory = "negative";
+        } else {
+            sentimentCategory = "neutral";
+        }
 
         return res.json({ sentiment: sentimentCategory, score: result.score });
     } catch (error) {
@@ -148,7 +173,7 @@ router.post("/", validateToken, async (req, res) => {
             return res.status(400).json({ error: "Rating must be between 1 and 5" });
         }
 
-        const existingReview = await Reviews.findOne({ where: { EventId: eventId, UserId: userId } });
+        const existingReview = await Reviews.findOne({ where: { EventId: eventId, userId: userId } });
         if (existingReview) {
             return res.status(400).json({ error: `You have already reviewed event ID ${eventId}.` });
         }
@@ -165,7 +190,7 @@ router.post("/", validateToken, async (req, res) => {
             review_text,
             rating,
             EventId: eventId,
-            UserId: userId,
+            userId: userId,
             username,
             sentiment: sentimentCategory,
         });
@@ -320,7 +345,7 @@ router.delete("/:reviewId", validateToken, async (req, res) => {
         }
 
         // Allow Admin or Review Owner to delete
-        if (req.user.isAdmin || review.UserId === req.user.id) {
+        if (req.user.isAdmin || review.userId === req.user.id) {
             await review.destroy();
             return res.status(200).json({ message: "Review deleted successfully" });
         } else {

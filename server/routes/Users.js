@@ -134,99 +134,42 @@ router.get('/admin', validateToken, validateAdmin, (req, res) => {
     res.json({ message: "Welcome Admin!", user: req.user });
 });
 
-// Forgot Password - Request Reset Link
-router.post("/forgot-password", async (req, res) => {
+// update Password - 
+router.patch("/forgot-password", async (req, res) => {
+  const { usernameOrEmail, newPassword } = req.body;
+
+  if (!usernameOrEmail || !newPassword) {
+    return res.status(400).json({ error: "Username/email and password are required." });
+  }
+
   try {
-    const { email } = req.body;
-    
-    // Find user by email (using username field since that's your email field)
-    const user = await Users.findOne({ where: { username: email } });
-    
-    if (!user) {
-      // For security reasons, always return success even if email doesn't exist
-      return res.json({ message: "If your email exists in our system, you will receive a reset link shortly." });
-    }
-    
-    // Generate a reset token
-    const resetToken = crypto.randomBytes(20).toString('hex');
-    const resetExpires = Date.now() + 3600000; // 1 hour from now
-    
-    // Store the token in the database
-    await user.update({
-      resetPasswordToken: resetToken,
-      resetPasswordExpires: resetExpires
+    // Find user by username or email
+    const user = await Users.findOne({
+      where: {
+        [Op.or]: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
+      },
     });
-    
-    // Create reset URL
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
-    
-    // Send email
-    const mailOptions = {
-      to: email,
-      from: process.env.EMAIL_USER || 'your-email@gmail.com',
-      subject: 'Password Reset Request',
-      text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n
-        Please click on the following link, or paste this into your browser to complete the process:\n\n
-        ${resetUrl}\n\n
-        If you did not request this, please ignore this email and your password will remain unchanged.\n`
-    };
-    
-    await transporter.sendMail(mailOptions);
-    
-    return res.json({ message: "If your email exists in our system, you will receive a reset link shortly." });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    user.password = hashedPassword;
+    await user.save();
+
+    return res.status(200).json({ message: "Password updated successfully." });
   } catch (error) {
-    console.error("Password reset request error:", error);
-    return sendError(res, 500, "Error processing password reset request");
+    console.error("Error resetting password:", error);
+    return res.status(500).json({ error: "An error occurred. Please try again." });
   }
 });
 
-// Reset Password - Verify token and update password
-router.post("/reset-password/:token", async (req, res) => {
-  try {
-    const { password } = req.body;
-    const { token } = req.params;
-    
-    // Find user with the reset token that hasn't expired
-    const user = await Users.findOne({
-      where: {
-        resetPasswordToken: token,
-        resetPasswordExpires: { [require('sequelize').Op.gt]: Date.now() }
-      }
-    });
-    
-    if (!user) {
-      return sendError(res, 400, "Password reset token is invalid or has expired");
-    }
-    
-    // Password strength check
-    if (password.length < 8) {
-      return sendError(res, 400, "Password must be at least 8 characters long");
-    }
-    
-    // Update the user's password
-    const hash = await bcrypt.hash(password, 10);
-    
-    await user.update({
-      password: hash,
-      resetPasswordToken: null,
-      resetPasswordExpires: null
-    });
-    
-    // Send confirmation email
-    const mailOptions = {
-      to: user.username, // Assuming username is the email
-      from: process.env.EMAIL_USER || 'your-email@gmail.com',
-      subject: 'Your password has been changed',
-      text: `Hello,\n\nThis is a confirmation that the password for your account ${user.username} has just been changed.\n`
-    };
-    
-    await transporter.sendMail(mailOptions);
-    
-    return res.json({ message: "Password has been updated successfully" });
-  } catch (error) {
-    console.error("Password reset error:", error);
-    return sendError(res, 500, "Error resetting password");
-  }
-});
+module.exports = router;
+
+
 
 module.exports = router;

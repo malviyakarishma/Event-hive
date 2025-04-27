@@ -699,11 +699,6 @@ const Profile = () => {
                 </div>
                 
                 
-                
-                <p style={styles.aboutMeText}>
-                  {aboutMeText || "No description provided. Click 'Edit Profile' to add information about yourself."}
-                </p>
-                
                 {!editMode && (
                   <button onClick={() => setEditMode(true)} className="btn w-100" style={styles.button}>
                     Edit Profile
@@ -762,17 +757,6 @@ const Profile = () => {
                             style={styles.inputField}
                             placeholder="Enter new password"
                             className="form-control"
-                          />
-                        </div>
-                        <div className="mb-3">
-                          <label className="form-label" style={styles.labelText}>About Me</label>
-                          <textarea
-                            value={aboutMeText}
-                            onChange={handleAboutMeChange}
-                            style={styles.textArea}
-                            rows="6"
-                            className="form-control"
-                            placeholder="Tell others about yourself..."
                           />
                         </div>
                         <div className="d-flex">

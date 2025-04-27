@@ -657,13 +657,6 @@ export default function Event() {
 
               {eventData?.username && authState.username === eventData.username && (
                 <div className="card-footer bg-white text-end border-top-0">
-                  <button
-                    className="btn"
-                    onClick={() => deleteEvent(eventData.id)}
-                    style={{ backgroundColor: accentColor, color: "white" }}
-                  >
-                    <i className="fas fa-trash me-2"></i>Delete Event
-                  </button>
                 </div>
               )}
             </div>

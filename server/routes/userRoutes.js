@@ -58,7 +58,7 @@ const bcrypt = require("bcrypt");
 // Edit Profile - update only username and password
 router.put("/edit-profile", validateToken, async (req, res) => {
     try {
-        const { username, password, aboutMe } = req.body;
+        const { username, password } = req.body;
 
         if (!req.user || !req.user.id) {
             return res.status(400).json({ message: "Invalid user data" });
@@ -75,11 +75,19 @@ router.put("/edit-profile", validateToken, async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
+        const oldUsername = user.username;  // Store the old username
+
         // Update username if provided
         if (username) {
             user.username = username;
         }
-        if (aboutMe) user.aboutMe = aboutMe;
+        // ⭐ Update all Events where username was the old username
+        if (username) {
+            await Events.update(
+                { username: username }, // new username
+                { where: { username: oldUsername } } // match old username
+            );
+            }
 
         // Update password if provided
         if (password) {
