@@ -109,26 +109,33 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'OK' });
 });
 
-
-// Modified sync method to prevent duplicate column issues
-if (process.env.NODE_ENV === 'development') {
-  // In development, only sync if needed, but don't alter existing tables
-  db.sequelize.sync({alter:false}).then(() => {
-    // Add EventAnalytics model to database if not already exist
-    if (!db.EventAnalytics) {
-      console.warn("EventAnalytics model not found. Make sure to add it to your models.");
-    }
-
-    const port = process.env.PORT || 3001;
-    app.listen(port, () => {
-      console.log(`Server running on port ${port}`);
-    });
-  });
-} else {
-  // In production, don't sync at all - rely on migrations
+db.sequelize.sync({ alter: false }).then(() => {
   const PORT = process.env.PORT || 3001;
-  server.listen(PORT, () => {
+  app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
-}
+});
+
+
+// // Modified sync method to prevent duplicate column issues
+// if (process.env.NODE_ENV === 'development') {
+//   // In development, only sync if needed, but don't alter existing tables
+//   db.sequelize.sync({alter:false}).then(() => {
+//     // Add EventAnalytics model to database if not already exist
+//     if (!db.EventAnalytics) {
+//       console.warn("EventAnalytics model not found. Make sure to add it to your models.");
+//     }
+
+//     const port = process.env.PORT || 3001;
+//     app.listen(port, () => {
+//       console.log(`Server running on port ${port}`);
+//     });
+//   });
+// } else {
+//   // In production, don't sync at all - rely on migrations
+//   const PORT = process.env.PORT || 3001;
+//   server.listen(PORT, () => {
+//     console.log(`Server running on port ${PORT}`);
+//   });
+// }
 
