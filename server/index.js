@@ -119,7 +119,7 @@ if (process.env.NODE_ENV === 'development') {
       console.warn("EventAnalytics model not found. Make sure to add it to your models.");
     }
 
-    const port = process.env.PORT || 3000;
+    const port = process.env.PORT || 3001;
     app.listen(port, () => {
       console.log(`Server running on port ${port}`);
     });
